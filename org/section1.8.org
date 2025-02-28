@@ -1,0 +1,271 @@
+#+TITLE: Section 1.8
+#+AUTHOR: Nicky
+
+#+OPTIONS: toc:nil author:nil date:nil title:t
+
+#+LATEX_CLASS: subfiles
+#+LATEX_CLASS_OPTIONS: [sicm_sagemath]
+
+#+PROPERTY: header-args:sage :session section18 :eval never-export :exports code :results none :tangle sage/section1.8.sage
+
+#+begin_src emacs-lisp :exports results :results none :eval export
+  (make-variable-buffer-local 'org-latex-title-command)
+  ; (setq org-latex-title-command (concat "\\section{%t}\n"))
+#+end_src
+
+
+* Conserved Quantities
+
+
+** Standard imports
+
+#+ATTR_LATEX: :options label=section1.8.sage
+#+begin_src sage
+import numpy as np
+
+load(
+    "utils.sage",
+    "utils1.4.sage",
+    "utils1.5.sage",
+    "utils1.6.sage",
+)
+#+end_src
+
+
+#+ATTR_LATEX: :options label=don't tangle
+#+begin_src sage :exports code  :tangle no
+load("show_expression.sage")
+#+end_src
+
+** 1.8.2 Energy Conservation
+
+From the Lagrangian we can construct the energy function.
+Here are two implementations, where the second is closed to the one in the book.
+I have my doubts whether this is carrying functional programming a bit too far; I prefer the first implementation. Note that we should cast $P = \partial_{2}L$ to a ~vector~ so that ~P * v~ becomes a number instead of a $1\times1$ matrix.
+
+#+ATTR_LATEX: :options label=section1.8.sage
+#+begin_src sage
+def Lagrangian_to_energy(L):
+    P = partial(L, 2)
+
+    def f(local):
+        v = velocity(local)
+        return vector(P(local)) * v - L(local)
+
+    return f
+
+
+def Lagrangian_to_energy(L):
+    P = partial(L, 2)
+    return lambda local: Sum(Product(Compose(vector, P), velocity), Min(L))(
+        local
+    )
+#+end_src
+
+
+** Central  Forces in  Three Dimensions
+
+Instead of building the kinetic energy in spherical coordinates, I am going to use the ideas that have been expounded in the book in earlier sections: define the Lagrangian in convenient coordinates, and then use a coordinate transform to obtain it in coordinates that show the symmetries of the system.
+
+
+
+#+ATTR_LATEX: :options label=section1.8.sage
+#+begin_src sage
+var("t x y", domain="real")
+
+space = make_named_space(["r", "\\theta", "\\phi"])
+#+end_src
+
+
+This the transformation from spherical to 3D rectangular coordinates.
+
+#+ATTR_LATEX: :options label=section1.8.sage
+#+begin_src sage
+def s_to_r(sperical_state):
+    r, theta, phi = coordinate(sperical_state)[:]
+    return vector(
+        [r * sin(theta) * cos(phi), r * sin(theta) * sin(phi), r * cos(theta)]
+    )
+#+end_src
+
+
+#+ATTR_LATEX: :options label=section1.8.sage
+#+begin_src sage
+def U(r):
+    return function("V")(r)
+
+def L_3D_central(m, V):
+    def Lagrangian(local):
+        return L_central_rectangular(m, V)(F_to_C(s_to_r)(local))
+
+    return Lagrangian
+#+end_src
+
+#+ATTR_LATEX: :options label=section1.8.sage
+#+begin_src sage :exports both :results replace latex
+show(partial(L_3D_central(m, U), 1)(space).simplify_full())
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[\left(\begin{array}{rrr}
+\frac{m {\dot \phi}^{2} {r} {\left| {r} \right|} \sin\left({\theta}\right)^{2} + m {r} {\dot \theta}^{2} {\left| {r} \right|} - {r} \mathrm{D}_{0}\left(V\right)\left({\left| {r} \right|}\right)}{{\left| {r} \right|}} & m {\dot \phi}^{2} {r}^{2} \cos\left({\theta}\right) \sin\left({\theta}\right) & 0
+\end{array}\right)\]
+#+end_export
+
+#+ATTR_LATEX: :options label=section1.8.sage
+#+begin_src sage :exports both :results replace latex
+show(partial(L_3D_central(m, U), 2)(space).simplify_full())
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[\left(\begin{array}{rrr}
+m {\dot r} & m {r}^{2} {\dot \theta} & m {\dot \phi} {r}^{2} \sin\left({\theta}\right)^{2}
+\end{array}\right)\]
+#+end_export
+
+#+ATTR_LATEX: :options label=section1.8.sage
+#+begin_src sage :exports both :results replace latex
+def ang_mom_z(m):
+    def f(rectangular_state):
+        xyx = coordinate(rectangular_state)
+        v = velocity(rectangular_state)
+        return xyx.cross_product(m * v)[2]
+
+    return f
+
+
+show(Compose(ang_mom_z(m), F_to_C(s_to_r))(space).simplify_full())
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[m {\dot \phi} {r}^{2} \sin\left({\theta}\right)^{2}\]
+#+end_export
+
+
+This is check that $E= T + V$.
+#+ATTR_LATEX: :options label=section1.8.sage
+#+begin_src sage :exports both :results replace latex
+show(Lagrangian_to_energy(L_central_spherical(m, U))(space).simplify_full())
+#+end_src
+
+** The Restricted Three-Body Problem
+
+I decompose the potential energy function into smaller functions; I find the implementation in the book somewhat heavy.
+
+
+#+ATTR_LATEX: :options label=section1.8.sage
+#+begin_src sage
+var("G M0 M1 a")
+assume(G > 0, M0 > 0, M1 > 0, a > 0)
+
+
+def distance(x, y):
+    return sqrt(square(x - y))
+
+
+def angular_freq(M0, M1, a):
+    return sqrt(G * (M0 + M1) / a ^ 3)
+
+
+def V(a, M0, M1, m):
+    Omega = angular_freq(M0, M1, a)
+    a0, a1 = M1 / (M0 + M1) * a, M0 / (M0 + M1) * a
+
+    def f(t, origin):
+        pos0 = -a0 * vector([cos(Omega * t), sin(Omega * t)])
+        pos1 = a1 * vector([cos(Omega * t), sin(Omega * t)])
+        r0 = distance(origin, pos0)
+        r1 = distance(origin, pos1)
+        return -G * m * (M0 / r0 + M1 / r1)
+
+    return f
+
+
+def L0(m, V):
+    def f(local):
+        t, q, v = time(local), coordinate(local), velocity(local)
+        return 1 / 2 * m * square(v) - V(t, q)
+
+    return f
+#+end_src
+
+For the computer it's easy to compute the energy, but the formula is pretty long.
+#+ATTR_LATEX: :options label=section1.8.sage
+#+begin_src sage :exports code :eval never
+space = make_named_space(["x", "y"])
+show(Lagrangian_to_energy(L0(m, V(a, M0, M1, m)))(space).simplify_full().expand())
+#+end_src
+
+I skip the rest of the code of this part as it is just copy work from the mathematical formulas.
+
+
+** Noether's theorem
+
+#+ATTR_LATEX: :options label=section1.8.sage
+#+begin_src sage
+def F_tilde(angle_x, angle_y, angle_z):
+    def f(local):
+        return (
+            rotation_matrix([1, 0, 0], angle_x)
+            * rotation_matrix([0, 1, 0], angle_y)
+            * rotation_matrix([0, 0, 1], angle_z)
+            * coordinate(local)
+        )
+
+    return f
+#+end_src
+
+#+ATTR_LATEX: :options label=section1.8.sage
+#+begin_src sage
+space = make_named_space(["x", "y", "z"])
+
+var("s t u")
+#+end_src
+
+Let's see what we get when we exercise a rotation of $s$ radians round the $x$ axis.
+#+ATTR_LATEX: :options label=section1.8.sage
+#+begin_src sage :exports both :results replace latex
+def Rx(s):
+    return F_tilde(s, 0, 0)(space)
+
+
+show(Rx(s))
+show(diff(Rx(s), s)(s=0))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[\left({x},\,{y} \cos\left(s\right) - {z} \sin\left(s\right),\,{z} \cos\left(s\right) + {y} \sin\left(s\right)\right)\]
+\[\left(0,\,-{z},\,{y}\right)\]
+#+end_export
+
+And now we check the result of the book.
+The computation of ~D F_tilde~ is somewhat complicated.
+Observe that ~F_tilde~ is a function of the angles, but returns a function that takes ~local~ as argument.
+We want to differentiate the function $(s, t, u) \to \tilde F(s, t, u)(l)$ where $l$ is the fixed local point.
+This gives the first part: ~jacobian(F_tilde(s, t, u)(space), (s, t, u))~.
+Finally, we can fill in $s=t=u=0$.
+
+As for the result, I don't see why my result differs by a minus sign from the result in the book.
+
+
+#+ATTR_LATEX: :options label=section1.8.sage
+#+begin_src sage :exports both :results replace latex
+def the_Noether_integral(local):
+    L = L_central_rectangular(m, U)
+    DF0 = jacobian(F_tilde(s, t, u)(local), (s, t, u))(s=0, t=0, u=0)
+    return partial(L, 2)(local) * DF0
+
+
+show(the_Noether_integral(space))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[\left(\begin{array}{rrr}
+-m {\dot y} {z} + m {y} {\dot z} & m {\dot x} {z} - m {x} {\dot z} & -m {\dot x} {y} + m {x} {\dot y}
+\end{array}\right)\]
+#+end_export

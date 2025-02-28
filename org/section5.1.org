@@ -1,0 +1,175 @@
+#+TITLE: Section 5.1
+#+AUTHOR: Nicky
+
+#+OPTIONS: toc:nil author:nil date:nil title:t
+
+#+LATEX_CLASS: subfiles
+#+LATEX_CLASS_OPTIONS: [sicm_sagemath]
+
+#+PROPERTY: header-args:sage :session section51 :eval never-export :exports code :results none :tangle sage/section5.1.sage
+
+#+begin_src emacs-lisp :exports results :results none :eval export
+  (make-variable-buffer-local 'org-latex-title-command)
+  ; (setq org-latex-title-command (concat "\\chapter{%t}\n"))
+#+end_src
+
+
+* Point Transformations
+
+
+** The standard imports.
+
+#+ATTR_LATEX: :options label=section5.1.sage
+#+begin_src sage
+load(
+    "utils.sage",
+    "utils1.6.sage",
+    "utils3.1.sage",
+)
+
+var("t x y", domain="real")
+#+end_src
+
+
+
+#+ATTR_LATEX: :options label=don't tangle
+#+begin_src sage :exports code  :tangle no
+load("show_expression.sage")
+#+end_src
+
+** Implementing point transformations
+
+#+ATTR_LATEX: :options label=utils5.1.sage
+#+begin_src sage :tangle sage/utils5.1.sage
+def F_to_CH(F):
+    M = partial(F, 1)
+
+    def f(state):
+        return up(time(state), F(state), M(state).solve_left(momentum(state)))
+
+    return f
+#+end_src
+
+Let's test this function.
+#+ATTR_LATEX: :options label=section5.1.sage
+#+begin_src sage
+var("r, phi, p_r, p_phi", domain="real")
+assume(r > 0)
+
+q = vector([r, phi])
+p = vector([p_r, p_phi])
+local = up(t, q, p)
+#+end_src
+
+#+ATTR_LATEX: :options label=section5.1.sage
+#+begin_src sage :exports both :results replace latex
+show((F_to_CH(p_to_r))(local)[0].simplify_full())
+show((F_to_CH(p_to_r))(local)[1].simplify_full())
+show((F_to_CH(p_to_r))(local)[2].simplify_full())
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[t\]
+\[\left(r \cos\left(\phi\right),\,r \sin\left(\phi\right)\right)\]
+\[\left(\frac{p_{r} r \cos\left(\phi\right) - p_{\phi} \sin\left(\phi\right)}{r},\,\frac{p_{r} r \sin\left(\phi\right) + p_{\phi} \cos\left(\phi\right)}{r}\right)\]
+#+end_export
+
+The central Hamiltonian in rectangular coordinates.
+#+ATTR_LATEX: :options label=section5.1.sage
+#+begin_src sage
+def H_central(m, V):
+    def f(state):
+        x, p = coordinate(state), momentum(state)
+        return square(p) / (2 * m) + V(sqrt(square(x)))
+
+    return f
+#+end_src
+
+Now we convert it to polar coordinates.
+#+ATTR_LATEX: :options label=section5.1.sage
+#+begin_src sage
+var("r, phi, p_r, p_phi", domain="real")
+assume(r > 0)
+var("m", domain="positive")
+#+end_src
+
+#+ATTR_LATEX: :options label=section5.1.sage
+#+begin_src sage :exports both :results replace latex
+show(
+    Compose(H_central(m, function("V")), (F_to_CH(p_to_r)))(local)
+    .simplify_full()
+    .expand()
+)
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[\frac{p_{r}^{2}}{2 \, m} + \frac{p_{\phi}^{2}}{2 \, m r^{2}} + V\left(r\right)\]
+#+end_export
+
+The correction term for time dependent Hamiltonians.
+#+ATTR_LATEX: :options label=utils5.1.sage
+#+begin_src sage :tangle sage/utils5.1.sage
+def F_to_K(F):
+    M = partial(F, 1)
+
+    def f(state):
+        p = M(state).solve_left(momentum(state))
+        return -vector(p) * vector(partial(F, 0)(state))
+
+    return f
+#+end_src
+
+We apply this to a 2D translation.
+#+ATTR_LATEX: :options label=utils5.1.sage
+#+begin_src sage :tangle sage/utils5.1.sage
+def translating(v):
+    def f(state):
+        return coordinate(state) + v * time(state)
+
+    return f
+#+end_src
+
+#+ATTR_LATEX: :options label=section5.1.sage
+#+begin_src sage
+var("q_x q_y v_x v_y p_x p_y", domain="real")
+q = vector([q_x, q_y])
+v = vector([v_x, v_y])
+p = vector([p_x, p_y])
+local = up(t, q, p)
+#+end_src
+
+#+ATTR_LATEX: :options label=section5.1.sage
+#+begin_src sage :exports both :results replace latex
+show(F_to_K(translating(v))(local))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[-p_{x} v_{x} - p_{y} v_{y}\]
+#+end_export
+
+Finally, we transform the Hamiltonian of a particle not subject to forces due to a potential field.
+#+ATTR_LATEX: :options label=section5.1.sage
+#+begin_src sage :exports both :results replace latex
+def H_free(m):
+    def f(state):
+        return square(momentum(state)) / (2 * m)
+
+    return f
+
+
+def H_prime():
+    return Sum(
+        Compose(H_free(m), F_to_CH(translating(v))), F_to_K(translating(v))
+    )
+
+
+show(H_prime()(local))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[-p_{x} v_{x} - p_{y} v_{y} + \frac{p_{x}^{2} + p_{y}^{2}}{2 \, m}\]
+#+end_export

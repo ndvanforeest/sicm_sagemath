@@ -1,0 +1,202 @@
+#+TITLE: Section 3.2
+#+AUTHOR: Nicky
+
+#+OPTIONS: toc:nil author:nil date:nil title:t
+
+#+LATEX_CLASS: subfiles
+#+LATEX_CLASS_OPTIONS: [sicm_sagemath]
+
+#+PROPERTY: header-args:sage :session section32 :eval never-export :exports code :results none :tangle sage/section3.2.sage
+
+#+begin_src emacs-lisp :exports results :results none :eval export
+  (make-variable-buffer-local 'org-latex-title-command)
+  ; (setq org-latex-title-command (concat "\\chapter{%t}\n"))
+#+end_src
+
+
+* Poisson Brackets
+
+
+** The standard imports.
+
+#+ATTR_LATEX: :options label=section3.5.sage
+#+begin_src sage
+load(
+    "utils.sage",
+    "utils1.6.sage",
+    "utils3.1.sage",
+)
+
+var("t x y", domain="real")
+#+end_src
+
+
+
+#+ATTR_LATEX: :options label=don't tangle
+#+begin_src sage :exports code  :tangle no
+load("show_expression.sage")
+#+end_src
+
+** The Poisson Bracket
+
+I make two implementatons: one is more or less standard Python code, the second maximizes the amount of functional programming.
+
+This is the first.
+#+begin_src sage :eval never
+def Poisson_bracket(F, G):
+    def f(state):
+        left = partial(F, 1)(state) * partial(G, 2)(state).T
+        right = partial(F, 2)(state) * partial(G, 1)(state).T
+        return (left - right).simplify_full()
+
+    return f
+#+end_src
+
+For the second I need two helper functions that are self explanatory.
+#+begin_src sage
+def transpose(M):
+    return M.T
+
+
+def simplify(expr):
+    return expr.simplify_full()
+#+end_src
+
+This is the second implementation
+
+#+begin_src sage
+def Poisson_bracket(F, G):
+    def f(state):
+        return Compose(
+            simplify,
+            Sum(
+                Product(partial(F, 1), Compose(transpose, partial(G, 2))),
+                Min(Product(partial(F, 2), Compose(transpose, partial(G, 1)))),
+            ),
+        )(state)
+
+    return f
+#+end_src
+
+
+** Properties of the Poisson bracket
+
+We know that $\{F, F\} = 0$ for any functions.
+Let's test this for our implementation.
+
+#+begin_src sage :exports both :results replace latex
+space = make_space("q", dim=2)
+
+def F(local):
+    return function("f")(time(local), *coordinate(local), *velocity(local))
+
+show(Poisson_bracket(F, F)(space))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+#+end_export
+
+Note: It is important to use a different string in the name of the ~function~, here ~f~ than the name of the Python function ~F~.
+The following leads to naming conflicts:
+#+begin_src sage :exports code :tangle no
+def F(local):
+    return function("F")(time(local), *coordinate(local), *velocity(local))
+
+def f(local):
+    return function("f")(time(local), *coordinate(local), *velocity(local))
+#+end_src
+
+
+The property $\{F, F\} = 0$ is actually implied when we can show that the Poisson bracket is anti-symmetric.
+We need an extra function to check the anti-symmetry.
+#+begin_src sage
+def G(local):
+    return function("g")(time(local), *coordinate(local), *velocity(local))
+#+end_src
+
+#+begin_src sage :exports both :results replace latex
+show(Sum(Poisson_bracket(F, G), Poisson_bracket(G, F))(space))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+#+end_export
+
+
+How about $\{F, G+H\} = \{F, G\} + \{F, H\}$?
+#+begin_src sage :exports both :results replace latex
+def H(local):
+    return function("h")(time(local), *coordinate(local), *velocity(local))
+
+show(Poisson_bracket(F, Sum(G,H))(space) == Sum(Poisson_bracket(F, G), Poisson_bracket(F, H))(space))
+#+end_src
+
+To check the rule $\{F, cG\} = c\{F, G\}$ we need a constant function. By making the the next ~function~ independent of any argument, it becomes constant.
+#+begin_src sage
+def constant(local):
+    return function("c")()
+#+end_src
+
+For instance:
+#+begin_src sage :exports both :results replace latex
+show(diff(constant(space), time(space)))
+show(diff(constant(space), *coordinate(space)))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+#+end_export
+
+So, next we can check on $\{F, cG\}$.
+#+begin_src sage :exports both :results replace latex
+show(
+    Poisson_bracket(F, Product(constant, G))(space)
+    == Product(constant, Poisson_bracket(F, G))(space)
+)
+#+end_src
+
+
+
+Finally, here is the check on Jacobi's identity.
+#+begin_src sage :exports both :results replace latex
+jacobi = Compose(
+    simplify,
+    Sum(
+        Poisson_bracket(F, Poisson_bracket(G, H)),
+        Poisson_bracket(G, Poisson_bracket(H, F)),
+        Poisson_bracket(H, Poisson_bracket(F, G)),
+    ),
+)
+show(jacobi(space))
+#+end_src
+
+** Poisson bracket of conserved quantities
+
+To check that the Poisson bracket of a conserved quantity is conserved we need a function that does not depend on time.
+#+begin_src sage :exports both :results replace latex
+def F(local):
+    return function("f")(*coordinate(local), *velocity(local))
+
+
+show(diff(F(space), time(space)))
+#+end_src
+
+Now consider $\{F, H\}$ where $H$ is the rectangular hamiltonian.
+#+begin_src sage
+def V(q):
+    return function("U")(*q)
+
+
+var(m, domain="positive")
+
+H = H_rectangular(m, V)
+#+end_src
+
+I compute the Poisson bracket of $F$ and $H$ for one dimenstion so that the result remains small.
+#+begin_src sage :exports both :results replace latex
+space = make_space("q", dim=1)
+show(Poisson_bracket(F, H)(space).expand()[0, 0])
+#+end_src
+To complete the check, note that, by Hamilton's equation,  $\dot q = \partial H/ \partial p$, $\dot p = - \partial H/ \partial q$.
+If we replace that in the above equation we obtain $\dot p \partial F/\partial \dot q + \dot q \partial F/\partial q$, but this is equal to $\d F/\d t$, and since $F$ is conserved, the total time derivative of $F$ is zero.

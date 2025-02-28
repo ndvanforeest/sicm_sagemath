@@ -1,0 +1,325 @@
+#+TITLE: Section 5.2
+#+AUTHOR: Nicky
+
+#+OPTIONS: toc:nil author:nil date:nil title:t
+
+#+LATEX_CLASS: subfiles
+#+LATEX_CLASS_OPTIONS: [sicm_sagemath]
+
+#+PROPERTY: header-args:sage :session section52 :eval never-export :exports code :results none :tangle sage/section5.2.sage
+
+#+begin_src emacs-lisp :exports results :results none :eval export
+  (make-variable-buffer-local 'org-latex-title-command)
+  ; (setq org-latex-title-command (concat "\\chapter{%t}\n"))
+#+end_src
+
+
+* General Canonical Transformations
+
+In Sagemath we work with matrices and vectors instead of up and down tuples.
+Thus, if we want to convert the code examples of the earlier parts of Section 5.2 of the book, we have to build functions to convert tuples to vectors and then convert back.
+But the later parts of Section 5.2 do the same work, but directly in terms of symplectic matrices.
+I therefore move on to the symplectic matrix version directly.
+
+
+** The standard imports.
+
+#+ATTR_LATEX: :options label=section5.2.sage
+#+begin_src sage
+load(
+    "utils.sage",
+    "utils1.6.sage",
+    "utils3.1.sage",
+    "utils5.1.sage",
+    "utils5.2.sage",
+)
+
+var("t x y", domain="real")
+#+end_src
+
+
+
+#+ATTR_LATEX: :options label=don't tangle
+#+begin_src sage :exports code  :tangle no
+load("show_expression.sage")
+#+end_src
+
+** Symplectic matrices
+
+The main task is how to support the computation of $D C_{H}$ where $C_{H}$ is a phase-space transformation, that is, a map from $up(t, q', p')$ to $up(t, q, p)$.
+For this, we can use the jacobian of Sagemath, but this requires to map tuples like $(t, q', p')$ to a vector, then apply the jacobian, and then convert back to a tuple.
+So, we start with making the functions that carry out these conversions.
+Then we concentrate on jacobian.
+When that is done, we can consider symplectic matrices.
+
+Here are the mappings between vectors and up tuples.
+#+ATTR_LATEX: :options label=utils5.2.sage
+#+begin_src sage :tangle sage/utils5.2.sage
+def vector_to_up(vec):
+    n = len(vec)
+    dim = n // 2
+    return up(vec[0], vec[1 : dim + 1], vec[dim + 1 : n + 1])
+
+
+def up_to_vector(tup):
+    return vector([time(tup), *coordinate(tup), *velocity(tup)])
+#+end_src
+
+Here is a test.
+#+ATTR_LATEX: :options label=section5.2.sage
+#+begin_src sage
+var("r, phi, p_r, p_phi", domain="real")
+assume(r > 0)
+
+r_phi = up(t, vector([r, phi]), vector([p_r, p_phi]))
+#+end_src
+
+The functions should be each others inverse.
+#+ATTR_LATEX: :options label=section5.2.sage
+#+begin_src sage :exports both :results replace latex
+vec = up_to_vector(r_phi)
+show(vec)
+show(up_to_vector(vector_to_up(vec)))
+show(vector_to_up(up_to_vector(r_phi)))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[\left(t,\,r,\,\phi,\,p_{r},\,p_{\phi}\right)\]
+\[\left(t,\,r,\,\phi,\,p_{r},\,p_{\phi}\right)\]
+\begin{align*} & t \\ & \left(r,\,\phi\right) \\ & \left(p_{r},\,p_{\phi}\right) \\ \end{align*}
+#+end_export
+
+
+Point transformations can be used as canonical transformations.
+So this case we should get working anyway.
+#+ATTR_LATEX: :options label=section5.2.sage
+#+begin_src sage :exports both :results replace latex
+show(up_to_vector(F_to_CH(p_to_r)(r_phi)).simplify_full())
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[\left(t,\,r \cos\left(\phi\right),\,r \sin\left(\phi\right),\,\frac{p_{r} r \cos\left(\phi\right) - p_{\phi} \sin\left(\phi\right)}{r},\,\frac{p_{r} r \sin\left(\phi\right) + p_{\phi} \cos\left(\phi\right)}{r}\right)\]
+#+end_export
+
+First I try to differentiate wrt $t$ (to build up some confidence).
+#+ATTR_LATEX: :options label=section5.2.sage
+#+begin_src sage :exports both :results replace latex
+CH = lambda t: up_to_vector(F_to_CH(p_to_r)(r_phi))
+
+res = diff(CH(t), t)
+show(res)
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[\left(1,\,0,\,0,\,0,\,0\right)\]
+#+end_export
+
+This works.
+
+Now, recall that the jacobian needs a vector as input, but our canonical transformations expect up-tuples.
+The next function realizes the necessary lifting.
+#+ATTR_LATEX: :options label=utils5.2.sage
+#+begin_src sage :tangle sage/utils5.2.sage
+def to_vector_map(C):
+    "Lift the structure map C such that it maps a vector to a vector."
+    return Compose(up_to_vector, C, vector_to_up)
+#+end_src
+
+It's time to test all this. The result looks great.
+#+ATTR_LATEX: :options label=section5.2.sage
+#+begin_src sage :exports both :results replace latex
+DC_H = jacobian(to_vector_map(F_to_CH(p_to_r))(vec), vec).simplify_full()
+show(DC_H)
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[\left(\begin{array}{rrrrr}
+1 & 0 & 0 & 0 & 0 \\
+0 & \cos\left(\phi\right) & -r \sin\left(\phi\right) & 0 & 0 \\
+0 & \sin\left(\phi\right) & r \cos\left(\phi\right) & 0 & 0 \\
+0 & \frac{p_{\phi} \sin\left(\phi\right)}{r^{2}} & -\frac{p_{r} r \sin\left(\phi\right) + p_{\phi} \cos\left(\phi\right)}{r} & \cos\left(\phi\right) & -\frac{\sin\left(\phi\right)}{r} \\
+0 & -\frac{p_{\phi} \cos\left(\phi\right)}{r^{2}} & \frac{p_{r} r \cos\left(\phi\right) - p_{\phi} \sin\left(\phi\right)}{r} & \sin\left(\phi\right) & \frac{\cos\left(\phi\right)}{r}
+\end{array}\right)\]
+#+end_export
+
+And now we can build the function ~D_as_matrix~ from the book.
+#+ATTR_LATEX: :options label=utils5.2.sage
+#+begin_src sage :tangle sage/utils5.2.sage
+def D_as_matrix(C):
+    def f(state):
+        vec = up_to_vector(state)
+        vmap = to_vector_map(C)
+        return jacobian(vmap(vec), vec).simplify_full()
+
+    return f
+#+end_src
+
+We continue with the tests on the symplectic matrices.
+As our examples are low dimensional, we don't need sparse matrices.
+#+ATTR_LATEX: :options label=utils5.2.sage
+#+begin_src sage :tangle sage/utils5.2.sage
+def symplectic_unit(n):
+    I = identity_matrix(n)
+    return block_matrix([[zero_matrix(n), I], [-I, zero_matrix(n)]])
+#+end_src
+
+#+ATTR_LATEX: :options label=section5.2.sage
+#+begin_src sage :exports both :results replace latex
+show(symplectic_unit(2))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[\left(\begin{array}{rr|rr}
+0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 1 \\
+\hline
+ -1 & 0 & 0 & 0 \\
+0 & -1 & 0 & 0
+\end{array}\right)\]
+#+end_export
+
+The test on whether a matrix is symplectic or not.
+Sometimes Sagemath seems to miss that $\sqrt{x}/\sqrt{x} = 1$, even after adding the assumption that $x$ is positive.
+It turned out that expanding the matrix $M$ resolved this type of problem.
+I like to see the output in case the transformation is not symplectic.
+#+ATTR_LATEX: :options label=utils5.2.sage
+#+begin_src sage :tangle sage/utils5.2.sage
+def is_symplectic_matrix(M):
+    n = M.nrows()
+    J = symplectic_unit(n // 2)
+    M = M.expand()
+    res = (M * J * M.transpose()).simplify_full()
+    if res == J:
+        return True
+    print(res - J)
+    return False
+#+end_src
+
+
+Since $J^{-1} = J^{T}$, we can fill in $J=A$ in the relation $J = A J A^{T}= J J J^{T} = J J J^{-1} = J$, to conclude that $J$ is a symplectic matrix itself.
+This is our first test of ~is_symplectic~.
+
+#+ATTR_LATEX: :options label=section5.2.sage
+#+begin_src sage :exports both :results replace latex
+J = symplectic_unit(2)
+show(is_symplectic_matrix(J))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+#+end_export
+
+Here are the rest of the functions of the section.
+#+ATTR_LATEX: :options label=utils5.2.sage
+#+begin_src sage :tangle sage/utils5.2.sage
+def qp_submatrix(M):
+    return M[1:, 1:]
+
+def is_symplectic_transform(C):
+    return lambda state: Compose(
+        is_symplectic_matrix, qp_submatrix, D_as_matrix(C)
+    )(state)
+#+end_src
+
+We can test whether the transformation to polar coordinates is canonical.
+#+ATTR_LATEX: :options label=section5.2.sage
+#+begin_src sage :exports both :results replace latex
+show(is_symplectic_transform(F_to_CH(p_to_r))(r_phi))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[\mathrm{True}\]
+#+end_export
+
+This is a test for a general 2D point transformation.
+It took me a bit of time to see how to translate the next Scheme code. (BTW, I suspect that the third closing bracket at the end of line 3 is incorrect.)
+#+BEGIN_SRC text :tangle no
+(define (F s)
+  ((literal-function 'F
+    (-> (X Real (UP Real Real)) (UP Real Real))
+    (time s)
+    (coordinates s)))
+#+END_SRC
+In Sagemath this becomes
+#+begin_src sage :eval never :tangle no
+def F(local):
+    t, q = time(local), coordinate(local)
+    return vector([function("f")(t, *q), function("g")(t, *q)])
+#+end_src
+
+The next check takes some time to complete.
+#+ATTR_LATEX: :options label=section5.2.sage
+#+begin_src sage :exports both :results replace latex :eval never
+_ = var("q_x q_y v_x v_y p_x p_y", domain="real")
+xy = up(t, vector([x, y]), vector([p_x, p_y]))
+
+
+def F(local):
+    t = time(local)
+    q = coordinate(local)
+    return vector([function("f")(t, *q), function("g")(t, *q)])
+
+
+show(is_symplectic_transform(F_to_CH(F))(xy))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[\mathrm{True}\]
+#+end_export
+
+We can do some tests on earlier examples.
+Formally we know already the answer, but why use them to test our code (and our understanding)?
+
+This one tests the polar-canonical transformation. BTW, this example reported false when the matrix ~M~ in ~is_symplectic_matrix~ was not expanded.
+#+begin_src sage :exports both :results replace latex
+def polar_canonical(alpha):
+    def f(state):
+        t = time(state)
+        theta = coordinate(state)[0]
+        I = momentum(state)[0]
+        x = sqrt(2 * I / alpha) * sin(theta)
+        p = sqrt(2 * I * alpha) * cos(theta)
+        return up(t, vector([x]), vector([p]))
+
+    return f
+
+
+_ = var("theta", domain="real")
+_ = var("I alpha", domain="positive")
+theta_I = up(t, vector([theta]), vector([I]))
+show(is_symplectic_transform(polar_canonical(alpha))(theta_I))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[\mathrm{True}\]
+#+end_export
+
+This is a non canonical transformation.
+
+#+begin_src sage :exports both :results replace latex
+def a_non_canonical_transform(state):
+    t = time(state)
+    theta = coordinate(state)[0]
+    I = momentum(state)[0]
+    x = I * sin(theta)
+    p = I * cos(theta)
+    return up(t, vector([x]), vector([p]))
+
+
+show(is_symplectic_transform(a_non_canonical_transform)(theta_I))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+[     0  I - 1]
+[-I + 1      0]
+\[\mathrm{False}\]
+#+end_export

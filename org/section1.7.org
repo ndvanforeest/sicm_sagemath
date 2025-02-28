@@ -1,0 +1,385 @@
+#+TITLE: Section 1.7
+#+AUTHOR: Nicky
+
+#+OPTIONS: toc:nil author:nil date:nil title:t
+
+#+LATEX_CLASS: subfiles
+#+LATEX_CLASS_OPTIONS: [sicm_sagemath]
+
+#+PROPERTY: header-args:sage :session section0 :eval never-export :exports code :results none :tangle sage/section1.7.sage
+
+#+begin_src emacs-lisp :exports results :results none :eval export
+  (make-variable-buffer-local 'org-latex-title-command)
+  ; (setq org-latex-title-command (concat "\\section{%t}\n"))
+#+end_src
+
+
+* Evolution of Dynamical State
+
+
+** Standard imports
+
+#+ATTR_LATEX: :options label=utils1.7.sage
+#+begin_src sage :tangle sage/utils1.7.sage
+load(
+    "utils.sage",
+    "utils1.6.sage",
+)
+#+end_src
+
+#+ATTR_LATEX: :options label=section1.7.sage
+#+begin_src sage
+import numpy as np
+
+load(
+    "utils.sage",
+    "utils1.4.sage",
+    "utils1.5.sage",
+    "utils1.7.sage",
+)
+
+var("t x y", domain="real")
+#+end_src
+
+
+#+ATTR_LATEX: :options label=don't tangle
+#+begin_src sage :exports code  :tangle no
+load("show_expression.sage")
+#+end_src
+
+** The harmonic oscillator
+
+#+ATTR_LATEX: :options label=utils1.7.sage
+#+begin_src sage :tangle sage/utils1.7.sage
+def Lagrangian_to_accelaration(L):
+    def f(local):
+        P = partial(L, 2)  # (local)
+        F = partial(L, 1)  # (local)
+        res = partial(P, 2)(local).solve_left(
+            vector(F(local))
+            - vector(partial(P, 0)(local))
+            - partial(P, 1)(local) * velocity(local)
+        )
+        return res
+
+    return f
+#+end_src
+
+We apply this to the harmonic oscillator.
+
+#+ATTR_LATEX: :options label=section1.7.sage
+#+begin_src sage
+var("m k")
+space = make_space("x", 2)
+
+L = L_harmonic(m, k)
+#+end_src
+
+
+#+ATTR_LATEX: :options label=section1.7.sage
+#+begin_src sage :exports both :results replace latex
+show(Lagrangian_to_accelaration(L)(space))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[ \left(-\frac{k {x_1}}{m},\,-\frac{k {x_2}}{m}\right) \]
+#+end_export
+
+** Intermezzo, numerically integrating ODEs with Sagemath
+
+At a later stage, we want to numerically integrate the system of ODEs that result from the Lagrangian. This works a bit different from what I expected; here are two examples to see the problem.
+
+This code plots a circle.
+#+ATTR_LATEX: :options label=don't tangle
+#+begin_src sage :tangle no
+def de(x, y):
+    return [y, -x]
+
+
+sol = desolve_odeint(de(x, y), [1, 0], srange(0, 100, 0.05), [x, y])
+pp = list(zip(sol[:, 0], sol[:, 1]))
+p = points(pp, color='blue', size=3)
+p.save(f'circle.png')
+#+end_src
+
+However, if replace the differentials by ~x~ and ~y~ by constants, I get an error that the integration variables are unknown.
+#+ATTR_LATEX: :options label=don't tangle
+#+begin_src sage :tangle no
+def de(x, y):
+    return [1, -1]
+#+end_src
+
+The solution is to replace the numbers by expressions.
+#+ATTR_LATEX: :options label=utils1.7.sage
+#+begin_src sage :tangle sage/utils1.7.sage
+def convert_to_expr(n):
+    return SR(n)
+#+end_src
+
+And then define the function of differentials like this.
+#+ATTR_LATEX: :options label=don't tangle
+#+begin_src sage :tangle no
+def de(x, y):
+    return [convert_to_expr(1), convert_to_expr(-1)]
+#+end_src
+
+Now things work as they should.
+
+** Continuing with the oscillator
+
+The next function computes the state derivative of the Lagrangian.
+For the purpose of numerical integration, we cast the result of the  derivative of $\d t/\d t = 1$ to an expression.
+
+#+ATTR_LATEX: :options label=utils1.7.sage
+#+begin_src sage :tangle sage/utils1.7.sage
+def Lagrangian_to_state_derivative(L):
+    accelaration = Lagrangian_to_acceleration(L)
+    return lambda state: up(
+        convert_to_expr(1), velocity(state), acceleration(state)
+    )
+#+end_src
+
+#+ATTR_LATEX: :options label=section1.7.sage
+#+begin_src sage :exports both :results replace latex
+show_tuple(Lagrangian_to_state_derivative(L)(space))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{align*} & 1 \\ & \left({\dot x_1},\,{\dot x_2}\right) \\ & \left(-\frac{k {x_1}}{m},\,-\frac{k {x_2}}{m}\right) \\ \end{align*}
+#+end_export
+
+#+ATTR_LATEX: :options label=section1.7.sage
+#+begin_src sage
+def harmonic_state_derivative(m, k):
+    return Lagrangian_to_state_derivative(L_harmonic(m, k))
+#+end_src
+
+#+ATTR_LATEX: :options label=section1.7.sage
+#+begin_src sage :exports both :results replace latex
+show(harmonic_state_derivative(m, k)(space))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[ \text{\texttt{up(1,{ }(x{\char`\_}1dot,{ }x{\char`\_}2dot),{ }({-}k*x{\char`\_}1/m,{ }{-}k*x{\char`\_}2/m))}} \]
+#+end_export
+
+#+ATTR_LATEX: :options label=utils1.7.sage
+#+begin_src sage :tangle sage/utils1.7.sage
+def Lagrange_equations_first_order(L):
+    def f(q, v):
+        state_path = qv_to_state_path(q, v)(t)
+        res = D(state_path)
+        res -= Lagrangian_to_state_derivative(L)(state_path)
+        return res
+
+    return f
+#+end_src
+
+#+ATTR_LATEX: :options label=section1.7.sage
+#+begin_src sage :exports both :results replace latex
+res = Lagrange_equations_first_order(L)(
+    vector([literal_function("x"), literal_function("y")]),
+    vector([literal_function("v_x"), literal_function("v_y")]),
+)
+show_tuple(res)
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{align*} & 0 \\ & \left(-v_x + \frac{\partial}{\partial t}x,\,-v_y + \frac{\partial}{\partial t}y\right) \\ & \left(\frac{k x}{m} + \frac{\partial}{\partial t}v_x,\,\frac{k y}{m} + \frac{\partial}{\partial t}v_y\right) \\ \end{align*}
+#+end_export
+
+** Numerical integration
+
+For the ode solver, we need to map the state to a plain list.
+
+#+ATTR_LATEX: :options label=utils1.7.sage
+#+begin_src sage :tangle sage/utils1.7.sage
+def state_to_list(state):
+    return [time(state), *coordinate(state), *velocity(state)]
+#+end_src
+
+For the ~state_advacer~ we can use ~evolve~, which we will use later too.
+
+#+ATTR_LATEX: :options label=utils1.7.sage
+#+begin_src sage :tangle sage/utils1.7.sage
+def evolve(state_derivative, ics, times):
+    space = make_space("qq", dim=len(coordinate(ics)))
+    soln = desolve_odeint(
+        des=state_to_list(state_derivative(space)),
+        ics=state_to_list(ics),
+        times=times,
+        dvars=state_to_list(space),
+        rtol=1e-13,
+    )
+    return soln
+#+end_src
+
+#+ATTR_LATEX: :options label=utils1.7.sage
+#+begin_src sage :tangle sage/utils1.7.sage
+def state_advancer(state_derivative, ics, T):
+    init_time = time(ics)
+    times = [init_time, init_time + T]
+    soln = evolve(state_derivative, ics, times)
+    return soln[-1]
+#+end_src
+
+#+ATTR_LATEX: :options label=section1.7.sage
+#+begin_src sage :exports both :results replace latex
+state_advancer(
+    harmonic_state_derivative(m=2, k=1),
+    ics=up(1, vector([1, 2]), vector([3, 4])),
+    T=10,
+)
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+array([11.        ,  3.71279173,  5.42062092,  1.61480313,  1.81891042])
+#+end_export
+
+** The driven pendulum
+
+Here is the driver for the pendulum.
+
+#+ATTR_LATEX: :options label=utils1.7.sage
+#+begin_src sage :tangle sage/utils1.7.sage
+def periodic_drive(amplitude, frequency, phase):
+    def f(t):
+        return amplitude * cos(frequency * t + phase)
+
+    return f
+#+end_src
+
+#+ATTR_LATEX: :options label=utils1.7.sage
+#+begin_src sage :tangle sage/utils1.7.sage
+var("m l g A omega")
+
+
+def L_periodically_driven_pendulum(m, l, g, A, omega):
+    ys = periodic_drive(A, omega, 0)
+
+    def Lagrangian(local):
+        return L_pend(m, l, g, ys)(local)
+
+    return Lagrangian
+#+end_src
+
+#+ATTR_LATEX: :options label=section1.7.sage
+#+begin_src sage :exports both :results replace latex
+space = make_named_space(["\\theta"])
+show(L_periodically_driven_pendulum(m, l, g, A, omega)(space).simplify_full())
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[ \frac{1}{2} \, A^{2} m \omega^{2} \sin\left(\omega t\right)^{2} - A l m \omega {\dot \theta} \sin\left(\omega t\right) \sin\left({\theta}\right) + \frac{1}{2} \, l^{2} m {\dot \theta}^{2} - A g m \cos\left(\omega t\right) + g l m \cos\left({\theta}\right) \]
+#+end_export
+
+#+ATTR_LATEX: :options label=section1.7.sage
+#+begin_src sage :exports both :results replace latex
+expr = Lagrange_equations(L_periodically_driven_pendulum(m, l, g, A, omega))(
+    [literal_function("\\theta")]
+).simplify_full()
+show(expr)
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[ \left(\begin{array}{r}
+l^{2} m \frac{\partial^{2}}{(\partial t)^{2}}\theta\left(t\right) - {\left(A l m \omega^{2} \cos\left(\omega t\right) - g l m\right)} \sin\left(\theta\left(t\right)\right)
+\end{array}\right) \]
+#+end_export
+
+#+ATTR_LATEX: :options label=section1.7.sage
+#+begin_src sage :exports both :results replace latex
+show(
+    Lagrangian_to_accelaration(
+        L_periodically_driven_pendulum(m, l, g, A, omega)
+    )(space).simplify_full()
+)
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[ \left(\frac{{\left(A \omega^{2} \cos\left(\omega t\right) - g\right)} \sin\left({\theta}\right)}{l}\right) \]
+#+end_export
+
+#+ATTR_LATEX: :options label=section1.7.sage
+#+begin_src sage
+def pend_state_derivative(m, l, g, A, omega):
+    return Lagrangian_to_state_derivative(
+        L_periodically_driven_pendulum(m, l, g, A, omega)
+    )
+#+end_src
+
+#+ATTR_LATEX: :options label=section1.7.sage
+#+begin_src sage :exports both :results replace latex
+expr = pend_state_derivative(m, l, g, A, omega)(space)
+show(velocity(expr).simplify_full())
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[ \left(\frac{{\left(A \omega^{2} \cos\left(\omega t\right) - g\right)} \sin\left({\theta}\right)}{l}\right) \]
+#+end_export
+
+#+ATTR_LATEX: :options label=utils1.7.sage
+#+begin_src sage :tangle sage/utils1.7.sage
+def principal_value(cut_point):
+    def f(x):
+        return (x + cut_point) % (2 * np.pi) - cut_point
+
+    return f
+#+end_src
+
+#+ATTR_LATEX: :options label=section1.7.sage
+#+begin_src sage
+def plot_driven_pendulum(A, T, step_size=0.01):
+    times = srange(0, T, step_size, include_endpoint=True)
+    soln = evolve(
+        pend_state_derivative(m=1, l=1, g=9.8, A=A, omega=2 * sqrt(9.8)),
+        ics=up(0, vector([1]), vector([0])),
+        times=times,
+    )
+    thetas = soln[:, 1]
+    pp = list(zip(times, thetas))
+    p = points(pp, color='blue', size=3)
+    p.save(f'../figures/driven_pendulum_{A:.2f}.png')
+
+    thetas = principal_value(np.pi)(thetas)
+    pp = list(zip(times, thetas))
+    p = points(pp, color='blue', size=3)
+    p.save(f'../figures/driven_pendulum_{A:.2f}_principal_value.png')
+
+    thetadots = soln[:, 2]
+    pp = list(zip(thetas, thetadots))
+    p = points(pp, color='blue', size=3)
+    p.save(f'../figures/driven_pendulum_{A:.2f}_trajectory.png')
+
+#+end_src
+
+So now we make the plot.
+#+ATTR_LATEX: :options label=section1.7.sage
+#+begin_src sage
+plot_driven_pendulum(A=0.1, T=100, step_size=0.01)
+#+end_src
+
+#+CAPTION: The angle of the vertically driven pendulum as a function of time. Obviously, around $t=80$, the pendulum makes a few revolutions, and then starts to wobble again.
+#+NAME: fig:driven-pendulum
+#+ATTR_LATEX: :height 5cm :width 15cm :placement [h]
+[[./../figures/driven_pendulum_0.10.png]]
+
+#+CAPTION: The angle on $(-\pi, \pi]$.
+#+NAME: fig:driven-pendulum-principal_value
+#+ATTR_LATEX: :height 5cm :width 15cm :placement [h]
+[[./../figures/driven_pendulum_0.10_principal_value.png]]
+
+
+#+CAPTION: The trajectory of $\theta$ and $\dot \theta$.
+#+NAME: fig:driven-pendulum-trajectory
+#+ATTR_LATEX: :height 5cm :width 15cm :placement [h]
+[[./../figures/driven_pendulum_0.10_trajectory.png]]

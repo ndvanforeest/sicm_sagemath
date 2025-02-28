@@ -1,0 +1,345 @@
+#+TITLE: Section 1.4
+#+AUTHOR: Nicky
+
+#+OPTIONS: toc:nil author:nil date:nil title:t
+
+#+LATEX_CLASS: subfiles
+#+LATEX_CLASS_OPTIONS: [sicm_sagemath]
+
+#+PROPERTY: header-args:sage :session section14 :eval never-export :exports code :results none :tangle sage/section1.4.sage
+
+#+begin_src emacs-lisp :exports results :results none :eval export
+  (make-variable-buffer-local 'org-latex-title-command)
+  ; (setq org-latex-title-command (concat "\\section{%t}\n"))
+#+end_src
+
+* Computing Actions
+
+
+** Standard import
+
+I make an org file for each separate section of the book.
+The code gets tangled to ~utils1.4.sage~ when the code serves a goal for later sections, and otherwise to ~section1.4.sage~.
+This allows me to run the sage scripts on the prompt, however this implies that I have to load the relevant utility files.
+
+#+ATTR_LATEX: :options label=section1.4.sage
+#+begin_src sage
+import numpy as np
+
+load(
+    "utils.sage",
+    "utils1.4.sage",
+)
+#+end_src
+
+
+#+ATTR_LATEX: :options label=don't tangle
+#+begin_src sage  :tangle no
+load("show_expression.sage")
+#+end_src
+
+
+** The Lagrangian for a free particle.
+
+The function ~L_free_particle~ takes ~mass~ as an argument and returns the function ~Lagrangian~ that takes a ~local~ tuple as an argument and projects it to a velocity.
+
+
+#+ATTR_LATEX: :options label=utils1.4.sage
+#+begin_src sage :tangle sage/utils1.4.sage
+def L_free_particle(mass):
+    def Lagrangian(local):
+        v = velocity(local)
+        return 1 / 2 * mass * square(v)
+
+    return Lagrangian
+#+end_src
+
+
+For the next step, we need the variable $m$ for the mass of the particle and a coordinate path.
+#+ATTR_LATEX: :options label=section1.4.sage
+#+begin_src sage
+var('m', domain='positive')
+
+q = vector(
+    [
+        literal_function("q_x"),
+        literal_function("q_y"),
+        literal_function("q_z"),
+    ]
+)
+#+end_src
+
+
+
+The Lagrangian of a free particle with mass $m$ applied to the path ~Gamma~ gives
+#+ATTR_LATEX: :options label=section1.4.sage
+#+begin_src sage :exports both :results replace latex
+show(L_free_particle(m)(Gamma(q)(t)))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[\frac{1}{2} \, m \sin^{2}\]
+#+end_export
+
+We now compute the integral of Lagrangian ~L~ along the path ~q~, but for this we need a function to carry out 1D integration (along time in our case).
+#+ATTR_LATEX: :options label=don't tangle
+#+begin_src sage :tangle no
+def definite_integral(func, start, end, symbolic=False):
+    if symbolic:
+        return integrate(func(t), t, start, end)
+    res, error = numerical_integral(func(t), start, end)
+    return res
+
+
+def Lagrangian_action(L, q, t1, t2, symbolic=False):
+    return definite_integral(Compose(L, Gamma(q)), t1, t2, symbolic)
+#+end_src
+However, it turns out that Sagemath already support the definite integral in a library. I don't like to read $d t$ at the end of the integral because it reads like the product of the variables $d$ and $t$. Instead, I prefer to read $\d t$; for this reason I overwrite the LaTeX formatting of ~definite_integral~.
+#+ATTR_LATEX: :options label=utils1.4.sage
+#+begin_src sage :tangle sage/utils1.4.sage
+from sage.symbolic.integration.integral import definite_integral
+
+def integral_latex_format(*args):
+    expr, var, a, b = args
+    return (
+        fr"\int_{{{a}}}^{{{b}}} "
+        + latex(expr)
+        + r"\, \textrm{d}\,"
+        + latex(var)
+    )
+
+
+definite_integral._print_latex_ = integral_latex_format
+#+end_src
+
+#+ATTR_LATEX: :options label=utils1.4.sage
+#+begin_src sage :tangle sage/utils1.4.sage
+def Lagrangian_action(L, q, t1, t2):
+    return definite_integral(Compose(L, Gamma(q))(t), t, t1, t2)
+#+end_src
+
+Here is the action along a generic path ~q~.
+#+ATTR_LATEX: :options label=section1.4.sage
+#+begin_src sage
+
+var("T", domain="positive")
+#+end_src
+
+#+ATTR_LATEX: :options label=section1.4.sage
+#+begin_src sage :exports both :results replace latex
+show(latex(Lagrangian_action(L_free_particle(m), q, 0, T)))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[\frac{1}{2} \, m {\left(\int_{0}^{T} \dot q_x^{2} \, \textrm{d}\, t + \int_{0}^{T} \dot q_y^{2} \, \textrm{d}\, t + \int_{0}^{T} \dot q_z^{2} \, \textrm{d}\, t\right)}\]
+#+end_export
+
+To get a numerical answer, we take the test path of the book.
+#+ATTR_LATEX: :options label=section1.4.sage
+#+begin_src sage :exports both :results replace latex
+test_path = vector([4 * t + 7, 3 * t + 5, 2 * t + 1])
+Lagrangian_action(L_free_particle(mass=3), test_path, 0, 10)
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+435
+#+end_export
+
+Let's try a harder path.
+#+ATTR_LATEX: :options label=section1.4.sage
+#+begin_src sage :exports both :results replace latex
+hard_path = vector([4 * t + 7, 3 * t + 5, 2 * exp(-t) + 1])
+
+result = Lagrangian_action(L_free_particle(mass=3), hard_path, 0, 10)
+show(result)
+show(float(result))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[3 \, {\left(125 \, e^{20} - 1\right)} e^{\left(-20\right)} + 3\]
+\[377.9999999938165\]
+#+end_export
+
+The value of the integral is different from $435$ because the end points on this harder path are not the same as the end points of the test path.
+
+** Path of minimum action
+
+First some experiments to see whether the code works as intended.
+#+ATTR_LATEX: :options label=section1.4.sage
+#+begin_src sage :exports both :results replace latex
+def make_eta(nu, t1, t2):
+    return (t - t1) * (t - t2) * nu(t=t)
+
+nu = vector([sin(t), cos(t), t ^ 2])
+show(1 / 3 * make_eta(nu, 3, 4)  + test_path)
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[\left(\frac{1}{3} \, {\left(t - 3\right)} {\left(t - 4\right)} \sin + 4 \, t + 7,\,\frac{1}{3} \, {\left(t - 3\right)} {\left(t - 4\right)} \cos + 3 \, t + 5,\,\frac{1}{3} \, {\left(t - 3\right)} {\left(t - 4\right)} t^{2} + 2 \, t + 1\right)\]
+#+end_export
+
+By adding the ~n()~ we force the result into one floating point number. (If we don't, the result is long expression with lots of cosines and sines.)
+
+#+ATTR_LATEX: :options label=section1.4.sage
+#+begin_src sage :exports both :results replace latex
+def varied_free_particle_action(mass, q, nu, t1, t2):
+    eta = make_eta(nu, t1, t2)
+
+    def f(eps):
+        return Lagrangian_action(L_free_particle(mass), q + eps * eta, t1, t2).n()
+
+    return f
+
+show(varied_free_particle_action(3.0, test_path, nu, 0.0, 10.0)(0.001))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[436.291214285714\]
+#+end_export
+
+By comparing our result with that of the book, we see we are still on track.
+
+Now use Sagemath's ~find_local_minimum~ to minimize over $\epsilon$.
+#+ATTR_LATEX: :options label=section1.4.sage
+#+begin_src sage :exports both :results replace latex
+res = find_local_minimum(
+    varied_free_particle_action(3.0, test_path, nu, 0, 10), -2, 1
+)
+show(res)
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[\left(435.000000000000, 0.0\right)\]
+#+end_export
+
+We see that the optimal $\epsilon=0$, and we retrieve our earlier value of the Lagrangian action.
+
+** Finding minimal trajectories
+
+The ~make_path~ function uses a Lagrangian polynomial to interpolate a given set of data.
+#+ATTR_LATEX: :options label=utils1.4.sage
+#+begin_src sage :tangle sage/utils1.4.sage
+def Lagrangian_polynomial(ts, qs):
+    return RR['x'].lagrange_polynomial(list(zip(ts, qs)))
+#+end_src
+
+While a Lagrangian polynomial gives an excellent fit on the fitted points, its behavior in between these points can be quite wild.
+Let us test the quality of the fit before using this interpolation method.
+From the book we know we need to fit $\cos(t)$ on $t \in [0, \pi/2]$, so let us try this first before trying to find the optimal path for the harmonic Lagrangian.
+Since $\cos^{2} x + \sin^{2} x = 1$, we can use  this relation to check the quality of derivative of the fitted polynomial at the same time.
+The result is better than I expected.
+
+#+ATTR_LATEX: :options label=section1.4.sage
+#+begin_src sage :exports both :results replace latex
+ts = np.linspace(0, pi / 2, 5)
+qs = [cos(t).n() for t in ts]
+lp = Lagrangian_polynomial(ts, qs)
+ts = np.linspace(0, pi / 2, 20)
+Cos = [lp(x=t).n() for t in ts]
+Sin = [-lp.derivative(x)(x=t).n() for t in ts]
+Zero = [abs(Cos[i] ^ 2 + Sin[i] ^ 2 - 1) for i in range(len(ts))]
+show(max(Zero))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[0.00735247812614714\]
+#+end_export
+
+For ~math_path~ we use numpy's ~linspace~ instead of the linear interpolants of the book.
+Note that  the coordinate paths above are ~vector~ functions, so ~make_path~ should return this also.
+#+ATTR_LATEX: :options label=section1.4.sage
+#+begin_src sage :exports code :results none
+def make_path(t0, q0, t1, q1, qs):
+    ts = np.linspace(t0, t1, len(qs) + 2)
+    qs = np.r_[q0, qs, q1]
+    return vector([Lagrangian_polynomial(ts, qs)(t)])
+#+end_src
+
+Here is the harmonic Lagrangian.
+#+ATTR_LATEX: :options label=utils1.4.sage
+#+begin_src sage :exports code :results none :tangle sage/utils1.4.sage
+def L_harmonic(m, k):
+    def Lagrangian(local):
+        q = coordinate(local)
+        v = velocity(local)
+        return (1 / 2) * m * square(v) - (1 / 2) * k * square(q)
+
+    return Lagrangian
+#+end_src
+
+#+ATTR_LATEX: :options label=section1.4.sage
+#+begin_src sage :exports code :results none
+def parametric_path_action(Lagrangian, t0, q0, t1, q1):
+    def f(qs):
+        path = make_path(t0, q0, t1, q1, qs=qs)
+        return Lagrangian_action(Lagrangian, path, t0, t1)
+
+    return f
+#+end_src
+
+Let's try this on the path $\cos(t)$.
+The intermediate values ~qs~ will be optimized below, whereas ~q0~ and ~q1~ remain fixed.
+Thus, we strip the first and last element of ~linspace~ to make ~qs~.
+The result tells us what we can expect for the minimal value for the integral over the Lagrangian along the optimal path.
+
+#+ATTR_LATEX: :options label=section1.4.sage
+#+begin_src sage :exports both :results value
+t0, t1 = 0, pi / 2
+q0, q1 = cos(t0), cos(t1)
+ts = np.linspace(0, pi / 2, 5)
+initial_qs = [cos(t).n() for t in ts][1:-1]
+parametric_path_action(L_harmonic(m=1, k=1), t0, q0, t1, q1)(initial_qs)
+#+end_src
+
+What is the quality of the path obtained by the Lagrangian interpolation?
+#+ATTR_LATEX: :options label=section1.4.sage
+#+begin_src sage :exports both :results replace latex
+def find_path(Lagrangian, t0, q0, t1, q1, n):
+    ts = np.linspace(t0, t1, n)
+    initial_qs = np.linspace(q0, q1, n)[1:-1]
+    minimizing_qs = minimize(
+        parametric_path_action(Lagrangian, t0, q0, t1, q1),
+        initial_qs,
+    )
+    return make_path(t0, q0, t1, q1, minimizing_qs)
+
+best_path = find_path(L_harmonic(m=1, k=1), t0=0, q0=1, t1=pi / 2, q1=0, n=5)
+result = [
+    abs(best_path(t=t).n()[0] - cos(t).n()) for t in np.linspace(0, pi / 2, 10)
+]
+show(max(result))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[0.000172462354236957\]
+#+end_export
+
+Great. All works!
+
+Instead of Exercise 1.5 I plot the Lagrangian as a function of $q(t)$.
+
+
+#+ATTR_LATEX: :options label=section1.4.sage
+#+begin_src sage :exports code :results none
+ts = np.linspace(0, pi / 2, 20)
+q = vector([cos(t)])
+lvalues = [L_harmonic(m=1, k=1)(Gamma(q)(t)).n() for t in ts]
+points = list(zip(ts, lvalues))
+plot = list_plot(points, color="black", size=30)
+plot.axes_labels(["$t$", "$L$"])
+plot.save("../figures/Lagrangian.png", figsize=(4, 2))
+#+end_src
+
+#+CAPTION: The harmonic Lagrangian as a function of the optimal path $q(t)=\cos t$, $t \in [0, \pi/2]$.
+#+NAME: fig:Lagrangian
+#+ATTR_LATEX: :height 5cm :placement [h]
+[[./../figures/Lagrangian.png]]

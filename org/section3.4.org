@@ -1,0 +1,117 @@
+#+TITLE: Section 3.4
+#+AUTHOR: Nicky
+
+#+OPTIONS: toc:nil author:nil date:nil title:t
+
+#+LATEX_CLASS: subfiles
+#+LATEX_CLASS_OPTIONS: [sicm_sagemath]
+
+#+PROPERTY: header-args:sage :session section34 :eval never-export :exports code :results none :tangle sage/section3.4.sage
+
+#+begin_src emacs-lisp :exports results :results none :eval export
+  (make-variable-buffer-local 'org-latex-title-command)
+  ; (setq org-latex-title-command (concat "\\chapter{%t}\n"))
+#+end_src
+
+* Phase Space Reduction
+
+** The standard imports.
+
+#+ATTR_LATEX: :options label=section3.4.sage
+#+begin_src sage
+import numpy as np
+
+load(
+    "utils.sage",
+    "utils3.1.sage",
+)
+
+var("t x y", domain="real")
+#+end_src
+
+
+#+ATTR_LATEX: :options label=don't tangle
+#+begin_src sage :exports code  :tangle no
+load("show_expression.sage")
+#+end_src
+
+** Motion in a central potental
+
+#+ATTR_LATEX: :options label=section3.4.sage
+#+begin_src sage
+var("m")
+
+V = function("V")
+
+def L_polar(m, V):
+    def Lagrangian(local):
+        r, phi = coordinate(local)
+        rdot, phidot = velocity(local)
+        T = 1 / 2 * m * (square(rdot) + square(r * phidot))
+        return T - V(r)
+
+    return Lagrangian
+#+end_src
+
+
+#+ATTR_LATEX: :options label=section3.4.sage
+#+begin_src sage :exports both :results replace latex
+space = make_named_space(["r", "\\phi"])
+show(space)
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{align*} & t \\ & \left({r},\,{\phi}\right) \\ & \left({\dot r},\,{\dot \phi}\right) \\ \end{align*}
+#+end_export
+
+#+ATTR_LATEX: :options label=section3.4.sage
+#+begin_src sage :exports both :results replace latex
+q = vector([literal_function("r"), literal_function("\\phi")])
+p = vector([literal_function(r"p_r"), literal_function(r"p_{\phi}")])
+H_state = qp_to_H_state_path(q, p)(t)
+show(H_state)
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{align*} & t \\ & \left(r,\,\phi\right) \\ & \left(p_r,\,p_{\phi}\right) \\ \end{align*}
+#+end_export
+
+#+ATTR_LATEX: :options label=section3.4.sage
+#+begin_src sage :exports both :results replace latex
+H = Lagrangian_to_Hamiltonian(L_polar(m, V))  # (H_state)
+show(H(H_state))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[ -\frac{1}{2} \, m {\left(\frac{p_r^{2}}{m^{2}} + \frac{p_{\phi}^{2}}{m^{2} r^{2}}\right)} + \frac{p_r^{2}}{m} + \frac{p_{\phi}^{2}}{m r^{2}} + V\left(r\right) \]
+#+end_export
+
+For some reason I run into a bug of Sage when calling ~simplify_full()~ on the  above expression.
+However, by using ~expand()~ the expression is simplified.
+#+ATTR_LATEX: :options label=section3.4.sage
+#+begin_src sage :exports both :results replace latex
+show(H(H_state).expand())
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[ \frac{p_r^{2}}{2 \, m} + \frac{p_{\phi}^{2}}{2 \, m r^{2}} + V\left(r\right) \]
+#+end_export
+
+
+Here are the Hamilton equations.
+#+ATTR_LATEX: :options label=section3.4.sage
+#+begin_src sage :exports both :results replace latex
+HE = Hamilton_equations(Lagrangian_to_Hamiltonian(L_polar(m, V)))(q, p)
+show(HE)
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{align*} & 0 \\ & \left(-\frac{p_r}{m} + \frac{\partial}{\partial t}r,\,-\frac{p_{\phi}}{m r^{2}} + \frac{\partial}{\partial t}\phi\right) \\ & \left(-\frac{p_{\phi}^{2}}{m r^{3}} + \mathrm{D}_{0}\left(V\right)\left(r\right) + \frac{\partial}{\partial t}p_r,\,\frac{\partial}{\partial t}p_{\phi}\right) \\ \end{align*}
+#+end_export
+
+Realize, we have obtained the LHS of the system of differential equations $D z(t) - F(t, z(t)) = 0$.

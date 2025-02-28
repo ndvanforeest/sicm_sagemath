@@ -1,0 +1,73 @@
+#+title:  Structure and Interpretation of Classical Mechanics with Python and Sagemath
+#+AUTHOR: Nicky van Foreest
+
+#+LATEX_CLASS: report
+#+latex_class_options: [12pt]
+#+latex_header: \usepackage{preamble}
+#+options: toc:1
+
+#+begin_src emacs-lisp :exports results :results none :eval export
+(defun export-to-latex(f)
+  (find-file f)
+  ;; (ispell-buffer)
+  ;; (save-buffer)
+  ;; (org-babel-tangle)
+  (org-latex-export-to-latex t)
+  (kill-buffer (current-buffer))
+  )
+
+(defun export-all ()
+  (mapc 'export-to-latex '("Readme.org"
+                           "utils.org"
+                           "section1.4.org"
+                           "section1.5.org"
+                           "section1.6.org"
+                           "section1.7.org"
+                           "section1.8.org"
+                           "section3.1.org"
+                           "section3.2.org"
+                           "section3.4.org"
+                           "section3.5.org"
+                           "section3.9.org"
+                           "section5.1.org"
+                           "section5.2.org"
+                           )))
+
+(export-all)
+#+end_src
+
+\setcounter{chapter}{-1}
+
+* Preliminaries
+\subfile{Readme}
+\subfile{utils}
+
+
+
+* Chapter 1
+
+\setcounter{section}{3}
+\subfile{section1.4}
+\subfile{section1.5}
+\subfile{section1.6}
+\subfile{section1.7}
+\subfile{section1.8}
+
+\setcounter{chapter}{2}
+
+* Chapter 3
+
+\subfile{section3.1}
+\setcounter{section}{3}
+\subfile{section3.4}
+\subfile{section3.5}
+\setcounter{section}{8}
+\subfile{section3.9}
+
+
+\setcounter{chapter}{4}
+
+* Chapter 5
+
+\subfile{section5.1}
+\subfile{section5.2}
