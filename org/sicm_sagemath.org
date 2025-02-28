@@ -9,7 +9,7 @@
 #+begin_src emacs-lisp :exports results :results none :eval export
 (defun export-to-latex(f)
   (find-file f)
-  ;; (ispell-buffer)
+  ; (ispell-buffer)
   ;; (save-buffer)
   ;; (org-babel-tangle)
   (org-latex-export-to-latex t)
@@ -58,6 +58,7 @@
 * Chapter 3
 
 \subfile{section3.1}
+\subfile{section3.2}
 \setcounter{section}{3}
 \subfile{section3.4}
 \subfile{section3.5}

@@ -2,6 +2,7 @@ load(
     "utils.sage",
     "utils1.6.sage",
     "utils3.1.sage",
+    "utils3.2.sage",
 )
 
 var("t x y", domain="real")
@@ -11,25 +12,6 @@ def Poisson_bracket(F, G):
         left = partial(F, 1)(state) * partial(G, 2)(state).T
         right = partial(F, 2)(state) * partial(G, 1)(state).T
         return (left - right).simplify_full()
-
-    return f
-
-def transpose(M):
-    return M.T
-
-
-def simplify(expr):
-    return expr.simplify_full()
-
-def Poisson_bracket(F, G):
-    def f(state):
-        return Compose(
-            simplify,
-            Sum(
-                Product(partial(F, 1), Compose(transpose, partial(G, 2))),
-                Min(Product(partial(F, 2), Compose(transpose, partial(G, 1)))),
-            ),
-        )(state)
 
     return f
 

@@ -8,7 +8,7 @@
 
 This is a translation to Python and Sagemath of (most of) the Scheme code of the book `Structure and interpretation of classical mechanics' by Sussman and Wisdom.
 When referring to /the book/, I mean their book.
-I expect the reader to read the related parts of the book, and use the Scheme code of the book to understand the Python code below.
+I expect the reader to read the related parts of the book, and use the Scheme code of the book to understand the Python code.
 In other words, I don't explain much of the logic of the code in this document.
 I'll try to stick to the naming of functions and variables as used in the book.
 I also try to keep the functional programming approach of the book; consequently, I don't strive to the most pythonic code possible.
@@ -23,7 +23,7 @@ In the pdf file I tend to place explanations, comments, and observations about t
 I wrote this document in emacs and org mode.
 When developing, I first made a sage file with all code for a specific section of the book.
 Once all worked, I copied the code to an org file and make code blocks.
-The I tangled, for instance, generally useful code of ~secton1.4.org~ as ~utils1.4.sage~ and to ~section1.4.sage~ for code specific for  Section 1.4 of the book..
+Then I tangled, for instance, generally useful code of ~secton1.4.org~ to ~utils1.4.sage~ and to ~section1.4.sage~ for code specific for  Section 1.4 of the book. This way I can load the utils files at later stages.
 
 I found it convenient to test things in a ~tests.sage~ file.
 Then, by opening a sage session in the command prompt and attaching the session to the file (~attach("tests.sage")~), I could edit within emacs and see the consequences directly in the sage session.
@@ -31,7 +31,7 @@ Then, by opening a sage session in the command prompt and attaching the session 
 Some further resources:
 - An online version of the book: [[https://tgvaughan.github.io/sicm/]]
 - An org file of the book  with Scheme: https://github.com/mentat-collective/sicm-book/blob/main/org/chapter001.org
-- [[https://doc.sagemath.org/html/en/reference/]]
-- Handy tuples: https://github.com/jtauber/functional-differential-geometry
 - A port to Clojure: https://github.com/sicmutils/sicmutils
+- The Sagemath reference guide: [[https://doc.sagemath.org/html/en/reference/]]
+- Handy tuples: https://github.com/jtauber/functional-differential-geometry
 - ChatGPT proved to be a great help in the process of becoming familiar with Scheme and Sagemath.

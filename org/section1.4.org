@@ -128,7 +128,7 @@ var("T", domain="positive")
 
 #+ATTR_LATEX: :options label=section1.4.sage
 #+begin_src sage :exports both :results replace latex
-show(latex(Lagrangian_action(L_free_particle(m), q, 0, T)))
+show(Lagrangian_action(L_free_particle(m), q, 0, T))
 #+end_src
 
 #+RESULTS:

@@ -182,7 +182,7 @@ show_tuple(Hamilton_equations(H(m, V))(q, p))
 \begin{align*} & 0 \\ & \left(-\frac{p_x}{m} + \frac{\partial}{\partial t}q_x,\,-\frac{p_y}{m} + \frac{\partial}{\partial t}q_y\right) \\ & \left(\mathrm{D}_{0}\left(U\right)\left(q_x, q_y\right) + \frac{\partial}{\partial t}p_x,\,\mathrm{D}_{1}\left(U\right)\left(q_x, q_y\right) + \frac{\partial}{\partial t}p_y\right) \\ \end{align*}
 #+end_export
 
-* The Legendre Transformation
+** The Legendre Transformation
 
 To understand the code of the book, observe the following.
 When $F(v) = 1/2 v^{T} M v + b^{T} v + c$, then $\partial_{v} F = M v + b$, and so $\partial_{v}F(v=0) = b$, because $M 0=0$.

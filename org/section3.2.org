@@ -6,7 +6,7 @@
 #+LATEX_CLASS: subfiles
 #+LATEX_CLASS_OPTIONS: [sicm_sagemath]
 
-#+PROPERTY: header-args:sage :session section32 :eval never-export :exports code :results none :tangle sage/section3.2.sage
+#+PROPERTY: header-args:sage :session section32 :eval never-export :exports code :results none :tangle ../sage/section3.2.sage
 
 #+begin_src emacs-lisp :exports results :results none :eval export
   (make-variable-buffer-local 'org-latex-title-command)
@@ -25,6 +25,7 @@ load(
     "utils.sage",
     "utils1.6.sage",
     "utils3.1.sage",
+    "utils3.2.sage",
 )
 
 var("t x y", domain="real")
@@ -39,7 +40,7 @@ load("show_expression.sage")
 
 ** The Poisson Bracket
 
-I make two implementatons: one is more or less standard Python code, the second maximizes the amount of functional programming.
+I make two implementations: one is more or less standard Python code, the second maximizes the amount of functional programming.
 
 This is the first.
 #+begin_src sage :eval never
@@ -53,7 +54,7 @@ def Poisson_bracket(F, G):
 #+end_src
 
 For the second I need two helper functions that are self explanatory.
-#+begin_src sage
+#+begin_src sage :tangle ../sage/utils3.2.sage
 def transpose(M):
     return M.T
 
@@ -64,7 +65,7 @@ def simplify(expr):
 
 This is the second implementation
 
-#+begin_src sage
+#+begin_src sage :tangle ../sage/utils3.2.sage
 def Poisson_bracket(F, G):
     def f(state):
         return Compose(
@@ -95,6 +96,9 @@ show(Poisson_bracket(F, F)(space))
 
 #+RESULTS:
 #+begin_export latex
+\[\left(\begin{array}{r}
+0
+\end{array}\right)\]
 #+end_export
 
 Note: It is important to use a different string in the name of the ~function~, here ~f~ than the name of the Python function ~F~.
@@ -121,6 +125,9 @@ show(Sum(Poisson_bracket(F, G), Poisson_bracket(G, F))(space))
 
 #+RESULTS:
 #+begin_export latex
+\[\left(\begin{array}{r}
+0
+\end{array}\right)\]
 #+end_export
 
 
@@ -129,16 +136,26 @@ How about $\{F, G+H\} = \{F, G\} + \{F, H\}$?
 def H(local):
     return function("h")(time(local), *coordinate(local), *velocity(local))
 
-show(Poisson_bracket(F, Sum(G,H))(space) == Sum(Poisson_bracket(F, G), Poisson_bracket(F, H))(space))
+
+show(
+    Poisson_bracket(F, Sum(G, H))(space)
+    == Sum(Poisson_bracket(F, G), Poisson_bracket(F, H))(space)
+)
 #+end_src
 
-To check the rule $\{F, cG\} = c\{F, G\}$ we need a constant function. By making the the next ~function~ independent of any argument, it becomes constant.
+#+RESULTS:
+#+begin_export latex
+\[\mathrm{True}\]
+#+end_export
+
+To check the rule $\{F, c G\} = c\{F, G\}$ we need a constant function.
+By making the next ~function~ independent of any argument, it becomes constant.
 #+begin_src sage
 def constant(local):
     return function("c")()
 #+end_src
 
-For instance:
+Is it indeed constant?
 #+begin_src sage :exports both :results replace latex
 show(diff(constant(space), time(space)))
 show(diff(constant(space), *coordinate(space)))
@@ -146,15 +163,22 @@ show(diff(constant(space), *coordinate(space)))
 
 #+RESULTS:
 #+begin_export latex
+\[0\]
+\[0\]
 #+end_export
 
-So, next we can check on $\{F, cG\}$.
+So, next we can check $\{F, cG\}$.
 #+begin_src sage :exports both :results replace latex
 show(
     Poisson_bracket(F, Product(constant, G))(space)
     == Product(constant, Poisson_bracket(F, G))(space)
 )
 #+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[\mathrm{True}\]
+#+end_export
 
 
 
@@ -171,6 +195,13 @@ jacobi = Compose(
 show(jacobi(space))
 #+end_src
 
+#+RESULTS:
+#+begin_export latex
+\[\left(\begin{array}{r}
+0
+\end{array}\right)\]
+#+end_export
+
 ** Poisson bracket of conserved quantities
 
 To check that the Poisson bracket of a conserved quantity is conserved we need a function that does not depend on time.
@@ -182,7 +213,12 @@ def F(local):
 show(diff(F(space), time(space)))
 #+end_src
 
-Now consider $\{F, H\}$ where $H$ is the rectangular hamiltonian.
+#+RESULTS:
+#+begin_export latex
+\[0\]
+#+end_export
+
+Now consider $\{F, H\}$ where $H$ is the rectangular Hamiltonian.
 #+begin_src sage
 def V(q):
     return function("U")(*q)
@@ -193,10 +229,16 @@ var(m, domain="positive")
 H = H_rectangular(m, V)
 #+end_src
 
-I compute the Poisson bracket of $F$ and $H$ for one dimenstion so that the result remains small.
+I compute the Poisson bracket of $F$ and $H$ for one dimension so that the result remains small.
 #+begin_src sage :exports both :results replace latex
 space = make_space("q", dim=1)
 show(Poisson_bracket(F, H)(space).expand()[0, 0])
 #+end_src
+
+#+RESULTS:
+#+begin_export latex
+\[-\frac{\partial}{\partial {q_1}}U\left({q_1}\right) \frac{\partial}{\partial {\dot q_1}}f\left({q_1}, {\dot q_1}\right) + \frac{{\dot q_1} \frac{\partial}{\partial {q_1}}f\left({q_1}, {\dot q_1}\right)}{m}\]
+#+end_export
+
 To complete the check, note that, by Hamilton's equation,  $\dot q = \partial H/ \partial p$, $\dot p = - \partial H/ \partial q$.
 If we replace that in the above equation we obtain $\dot p \partial F/\partial \dot q + \dot q \partial F/\partial q$, but this is equal to $\d F/\d t$, and since $F$ is conserved, the total time derivative of $F$ is zero.
