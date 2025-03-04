@@ -6,7 +6,7 @@
 #+LATEX_CLASS: subfiles
 #+LATEX_CLASS_OPTIONS: [sicm_sagemath]
 
-#+PROPERTY: header-args:sage :session section34 :eval never-export :exports code :results none :tangle sage/section3.4.sage
+#+PROPERTY: header-args:sage :session section34 :eval never-export :exports code :results none :tangle ../sage/section3.4.sage
 
 #+begin_src emacs-lisp :exports results :results none :eval export
   (make-variable-buffer-local 'org-latex-title-command)
@@ -42,7 +42,10 @@ load("show_expression.sage")
 var("m")
 
 V = function("V")
+#+end_src
 
+
+#+begin_src sage :tangle ../sage/utils3.4.sage
 def L_polar(m, V):
     def Lagrangian(local):
         r, phi = coordinate(local)

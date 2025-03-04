@@ -6,7 +6,7 @@
 #+latex_header: \usepackage{preamble}
 #+options: toc:1
 
-#+begin_src emacs-lisp :exports results :results none :eval export
+#+begin_src emacs-lisp :exports results :results none :eval export :dir ../sage/
 (defun export-to-latex(f)
   (find-file f)
   ; (ispell-buffer)
@@ -31,6 +31,7 @@
                            "section3.9.org"
                            "section5.1.org"
                            "section5.2.org"
+                           "section6.4.org"
                            )))
 
 (export-all)
@@ -72,3 +73,8 @@
 
 \subfile{section5.1}
 \subfile{section5.2}
+
+* Chapter 6
+
+\setcounter{section}{3}
+\subfile{section6.4}

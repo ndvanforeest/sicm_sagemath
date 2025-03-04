@@ -1,5 +1,5 @@
 import numpy as np
-from tuples import up, Tuple # See below why this import.
+from tuples import up, Tuple  # See below why this import.
 
 var('t', domain="real")
 
@@ -11,14 +11,17 @@ def literal_function(name):
 def print_lit_f_to_latex(name, *args):
     return name
 
+
 def qv_to_state(q, v):
     return up(t, q, v)
+
 
 def qv_to_state_path(q, v):
     def f(t):
         return up(t, q(t=t), v(t=t))
 
     return f
+
 
 def make_named_coordinates(coordinate_names, latex_names=None):
     vars = []
@@ -29,6 +32,7 @@ def make_named_coordinates(coordinate_names, latex_names=None):
     for name, latex in zip(stripped, latex_names):
         q = var(name, latex_name=f"{latex}", domain='real')
         vars.append(q)
+    # return column_matrix(vars)
     return vector(vars)
 
 
@@ -38,6 +42,7 @@ def make_named_velocities(coordinate_names, latex_names=None):
         latex_names = [fr"\dot {name}" for name in coordinate_names]
     return make_named_coordinates(names, latex_names)
 
+
 def make_coordinates(coordinate_name, dim):
     names = [f"{coordinate_name}_{i}" for i in range(1, dim + 1)]
     return make_named_coordinates(names)
@@ -46,6 +51,7 @@ def make_coordinates(coordinate_name, dim):
 def make_velocities(coordinate_name, dim):
     names = [f"{coordinate_name}_{i}" for i in range(1, dim + 1)]
     return make_named_velocities(names)
+
 
 def make_named_space(coordinate_names):
     coordinates = make_named_coordinates(coordinate_names)
@@ -58,18 +64,22 @@ def make_space(coordinate_name, dim):
     velocities = make_velocities(coordinate_name, dim)
     return qv_to_state(coordinates, velocities)
 
+
 def square(x):
     return x * x
+
 
 def gradient(F, v):
     cds = make_coordinates(f"q_{id(F)}", dim=len(v))
     deriv = jacobian(F(cds), cds)
     return vector(deriv.subs(dict(zip(cds, v))))
 
+
 def hessian(F, v):
     cds = make_coordinates(f"q_{id(F)}", dim=len(v))
     hes = jacobian(jacobian(F(cds), cds), cds)
     return matrix(hes.subs(dict(zip(cds, v))))
+
 
 def partial(f, slot):
     def wrapper(local):
@@ -91,6 +101,7 @@ def partial(f, slot):
 
     return wrapper
 
+
 def D(expr):
     "Derivative wrt time t."
     if isinstance(expr, Tuple):
@@ -100,6 +111,7 @@ def D(expr):
             D(velocity(expr)),
         )
     return derivative(expr, t)
+
 
 def Sum(*funcs):
     if len(funcs) == 1:
@@ -122,19 +134,24 @@ def Compose(*funcs):
 def Min(func):
     return lambda x: -func(x)
 
+
 def Gamma(q):
     q = vector(q)
     v = D(q)
     return qv_to_state_path(q, v)
 
+
 def time(local):
     return local[0]
+
 
 def coordinate(local):
     return local[1]
 
+
 def velocity(local):
     return local[2]
+
 
 def rotation_matrix(axis, theta):
     """

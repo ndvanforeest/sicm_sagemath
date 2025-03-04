@@ -1,0 +1,307 @@
+#+TITLE: Section 6.4
+#+AUTHOR: Nicky
+
+#+OPTIONS: toc:nil author:nil date:nil title:t
+
+#+LATEX_CLASS: subfiles
+#+LATEX_CLASS_OPTIONS: [sicm_sagemath]
+
+#+PROPERTY: header-args:sage :session section64 :eval never-export :exports code :results none :tangle ../sage/section6.4.sage :dir ../sage/
+
+#+begin_src emacs-lisp :exports results :results none :eval export
+  (make-variable-buffer-local 'org-latex-title-command)
+  ; (setq org-latex-title-command (concat "\\chapter{%t}\n"))
+#+end_src
+
+
+* Lie Series
+
+
+** The standard imports.
+#+ATTR_LATEX: :options label=section3.5.sage
+#+begin_src sage :tangle ../sage/utils6.4.sage
+load(
+    "utils.sage",
+    "utils1.6.sage",
+    "utils3.1.sage",
+    "utils3.2.sage",
+    "utils3.4.sage",
+)
+
+var("t x y", domain="real")
+#+end_src
+
+
+
+#+ATTR_LATEX: :options label=don't tangle
+#+begin_src sage :exports code  :tangle no
+load("show_expression.sage")
+#+end_src
+
+** Taylor expansions
+
+We follow the examples of the book on the Taylor series.
+
+#+begin_src sage :exports both :results replace latex
+f = function("f")
+show(taylor(f(x), x, 0, 4))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\frac{1}{24} \, x^{4} \mathrm{D}_{0, 0, 0, 0}\left(f\right)\left(0\right) + \frac{1}{6} \, x^{3} \mathrm{D}_{0, 0, 0}\left(f\right)\left(0\right) + \frac{1}{2} \, x^{2} \mathrm{D}_{0, 0}\left(f\right)\left(0\right) + x \mathrm{D}_{0}\left(f\right)\left(0\right) + f\left(0\right)
+\end{dmath*}
+#+end_export
+
+
+#+begin_src sage :exports both :results replace latex
+f = sin
+show(taylor(f(x), x, 0, 6))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\frac{1}{120} \, x^{5} - \frac{1}{6} \, x^{3} + x
+\end{dmath*}
+#+end_export
+
+Calling ~taylor~ on ~f(x=x)~ is wrong because ~f(x=x)~ tries to evaluate ~f~ at ~x = x~. Instead, ~f~ should be treated as a symbolic function.
+#+begin_src sage :exports code :tangle no
+taylor(f(x=x), x, 0, 6) # does not work
+#+end_src
+
+When using ~lambda~, we should put it in brackets and apply it to a variable, such as ~x~
+Therefore the first line does not work.
+#+begin_src sage :exports both :results replace latex
+# show(taylor(lambda x: sqrt(1 + x), x, 0, 6))  # this does not work
+show(taylor((lambda x: sqrt(1 + x))(x), x, 0, 6))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+-\frac{21}{1024} \, x^{6} + \frac{7}{256} \, x^{5} - \frac{5}{128} \, x^{4} + \frac{1}{16} \, x^{3} - \frac{1}{8} \, x^{2} + \frac{1}{2} \, x + 1
+\end{dmath*}
+#+end_export
+
+Here is Exercise 6.7
+#+begin_src sage :exports both :results replace latex
+n = var("n", domain="integer")
+f = lambda x: (1 + x) ^ n
+show(taylor(f(x), x, 0, 4))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\frac{1}{24} \, {\left(n^{4} - 6 \, n^{3} + 11 \, n^{2} - 6 \, n\right)} x^{4} + \frac{1}{6} \, {\left(n^{3} - 3 \, n^{2} + 2 \, n\right)} x^{3} + \frac{1}{2} \, {\left(n^{2} - n\right)} x^{2} + n x + 1
+\end{dmath*}
+#+end_export
+
+
+
+** Computing Lie Series
+
+The Lie derivative is straightforward to build.
+
+#+begin_src sage :tangle ../sage/utils6.4.sage
+def Lie_derivative(H):
+    def f(F):
+        return Poisson_bracket(F, H)
+
+    return f
+#+end_src
+
+Before tring our hands on the Lie transform, we consider a few examples of the Lie derivative.
+#+begin_src sage
+var("m k", domain="positive")
+
+
+def H_harmonic(m, k):
+    def f(state):
+        return (
+            square(momentum(state)) / (2 * m)
+            + k * square(coordinate(state)) / 2
+        )
+
+    return f
+#+end_src
+
+#+begin_src sage :exports both :results replace latex
+x0, p0 = var("x0 p0", domain="real")
+space = up(t, vector([x0]), vector([p0]))
+H = H_harmonic(m, k)
+lie = Lie_derivative(H)
+show(lie(coordinate)(space))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left(\begin{array}{r}
+\frac{p_{0}}{m}
+\end{array}\right)
+\end{dmath*}
+#+end_export
+
+We move on to the Lie transform.
+For this we need to be able to compute expressions like $\d t^{2} L_{H}^{2} F / 2!$, where $L_{H}^{2} F = L_{H}(L_{H}(F))$, that is, iteratively as an operator.
+So, we need to be able to
+1. apply ~Lie_derivative~ iteratively, and
+2. multiply the results with numbers and variables.
+The iteration works.
+#+begin_src sage :exports both :results replace latex
+show(lie(lie(coordinate))(space))
+show(lie(lie(lie(coordinate)))(space))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left(\begin{array}{r}
+-\frac{k x_{0}}{m}
+\end{array}\right)
+\end{dmath*}
+\begin{dmath*}
+\left(\begin{array}{r}
+-\frac{k p_{0}}{m^{2}}
+\end{array}\right)
+\end{dmath*}
+#+end_export
+
+However, with the product we run into a small problem.
+In the first line we first try to multiply ~t~ with the /function/ ~Lie_derivative~ and then apply the result of that to the argument ~space~. However, an expression cannot be multiplied with a function, but only with the /result/ of a function.
+The second line is OK, because then ~t~ is multiplied with the function ~Lie_derivative~ after is has been applied to ~space.
+#+begin_src sage :exports both :results replace latex
+# show((t * lie(coordinate))(space)) # gives an error
+show(t * lie(coordinate)(space))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left(\begin{array}{r}
+\frac{p_{0} t}{m}
+\end{array}\right)
+\end{dmath*}
+#+end_export
+
+For this reason we build the Lie transform as a stack of two higher-order functions.
+The transform function consumes as arguments a Hamiltonian (for the Lie derivative), a time $t$ and $n$ which is the order of the series we need.
+Note that the book only uses the series up to some order, so we don't have to compute $e^{\epsilon L_{H}} F$ first and then take the series approximation for that exponetial.
+The second function, ~outer~, asks for the function $F$ to which to apply the Lie transform.
+Finally, the third nested function, ~inner~, requires a local tuple to evaluate first the Lie derivative which, when evaluated, allows us to multiply with some power of $t$ and divide by some factorial.
+The ~inner~ function uses that,  up to and including order $n$:
+\begin{equation*}
+(I + t L_{H} + t^{2} L_{H}^{2}/2! + \cdots)F =
+F + t L_{H} F + t^{2} L_{H}^{2}/2! F + \cdots
+\end{equation*}
+
+#+begin_src sage :tangle ../sage/utils6.4.sage
+def Lie_transform(H, t, n):
+    lie = Lie_derivative(H)
+
+    def outer(func):
+        def inner(local):
+            term = func
+            res = term(local)
+            for i in range(1, n + 1):
+                term = lie(term)
+                res += t ^ i * term(local) / factorial(i)
+            return res
+
+        return inner
+
+    return outer
+#+end_src
+
+We can now move on to the examples of the book. Mind again that ~coordinate~ returns a tuple, but our Lie transform only accepts real-valued functions.
+
+#+begin_src sage :exports both :results replace latex
+_ = var('dt', domain="real")
+
+F = Compose(lambda x: x[0], coordinate)
+show(Lie_transform(H, dt, 4)(F)(space))
+G = Compose(lambda x: x[0], momentum)
+show(Lie_transform(H, dt, 4)(G)(space))
+show(Lie_transform(H, dt, 4)(H)(space))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+#+end_export
+
+The final example is the Hamiltonian for a central potential field, formulated in polar coordinates.
+We can build this Hamiltonian from our earlies work, like so.
+#+begin_src sage
+def V(q):
+    return function("U")(q)
+
+m = var("m", domain="positive")
+
+H = Lagrangian_to_Hamiltonian(L_polar(m, V))
+#+end_src
+
+We can also define it directly.
+#+begin_src sage
+def H_central_polar(m, V):
+    def f(state):
+        r, phi = coordinate(state)
+        p_r, p_phi = momentum(state)
+        T = 1 / 2 * square(p_r) / m + 1 / 2 * square(p_phi) / (m * square(r))
+        return T + V(r)
+
+    return f
+
+
+H = H_central_polar(m, V)
+
+#+end_src
+
+First two elementary checks on our code.
+
+#+begin_src sage :exports both :results replace latex
+_ = var("r phi p_r p_phi", domain="real")
+assume(r > 0)
+q = vector([r, phi])
+p = vector([p_r, p_phi])
+H_state = up(t, q, p)
+
+show(H(H_state).expand())
+show(partial(H, 1)(H_state))
+#+end_src
+
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\frac{p_{r}^{2}}{2 \, m} + \frac{p_{\phi}^{2}}{2 \, m r^{2}} + U\left(r\right)
+\end{dmath*}
+\begin{dmath*}
+\left(\begin{array}{rr}
+-\frac{p_{\phi}^{2}}{m r^{3}} + \frac{\partial}{\partial r}U\left(r\right) & 0
+\end{array}\right)
+\end{dmath*}
+#+end_export
+
+Here is the result; it's the same as in the book.
+#+begin_src sage :exports both :results replace latex
+show(Lie_transform(H, dt, 3)(Compose(lambda x: x[0], coordinate))(H_state)[0][0])
+show(Lie_transform(H, dt, 3)(Compose(lambda x: x[1], coordinate))(H_state)[0][0])
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\frac{\mathit{dt} p_{r}}{m} + r - \frac{{\left(m r^{3} \frac{\partial}{\partial r}U\left(r\right) - p_{\phi}^{2}\right)} \mathit{dt}^{2}}{2 \, m^{2} r^{3}} - \frac{{\left(m p_{r} r^{4} \frac{\partial^{2}}{(\partial r)^{2}}U\left(r\right) + 3 \, p_{\phi}^{2} p_{r}\right)} \mathit{dt}^{3}}{6 \, m^{3} r^{4}}
+\end{dmath*}
+\begin{dmath*}
+\phi - \frac{\mathit{dt}^{2} p_{\phi} p_{r}}{m^{2} r^{3}} + \frac{\mathit{dt} p_{\phi}}{m r^{2}} + \frac{{\left(m p_{\phi} r^{3} \frac{\partial}{\partial r}U\left(r\right) + 3 \, p_{\phi} p_{r}^{2} r^{2} - p_{\phi}^{3}\right)} \mathit{dt}^{3}}{3 \, m^{3} r^{6}}
+\end{dmath*}
+#+end_export
+
+** TODO
+- sort out why giving the argument ~[0][0]~ in the last example is necessary to remove the brackets
+- Why does the Lie derivative work on the coordinate function, but for the transform we should consider coordinate[0]?

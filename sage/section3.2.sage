@@ -7,7 +7,9 @@ load(
 
 var("t x y", domain="real")
 
+
 def Poisson_bracket(F, G):
+
     def f(state):
         left = partial(F, 1)(state) * partial(G, 2)(state).T
         right = partial(F, 2)(state) * partial(G, 1)(state).T
@@ -15,25 +17,49 @@ def Poisson_bracket(F, G):
 
     return f
 
+
 space = make_space("q", dim=2)
+
+
+def Hamiltonian(local):
+    return function("H")(time(local), *coordinate(local), *velocity(local))
+
+
+show(Poisson_bracket(lambda local: coordinate(local)[0], Hamiltonian)(space))
+show(Poisson_bracket(lambda local: momentum(local)[0], Hamiltonian)(space))
+
+show(Poisson_bracket(coordinate, Hamiltonian)(space))
+
+quit()
+
 
 def F(local):
     return function("f")(time(local), *coordinate(local), *velocity(local))
 
+
 show(Poisson_bracket(F, F)(space))
+
 
 def G(local):
     return function("g")(time(local), *coordinate(local), *velocity(local))
 
+
 show(Sum(Poisson_bracket(F, G), Poisson_bracket(G, F))(space))
+
 
 def H(local):
     return function("h")(time(local), *coordinate(local), *velocity(local))
 
-show(Poisson_bracket(F, Sum(G,H))(space) == Sum(Poisson_bracket(F, G), Poisson_bracket(F, H))(space))
+
+show(
+    Poisson_bracket(F, Sum(G, H))(space)
+    == Sum(Poisson_bracket(F, G), Poisson_bracket(F, H))(space)
+)
+
 
 def constant(local):
     return function("c")()
+
 
 show(diff(constant(space), time(space)))
 show(diff(constant(space), *coordinate(space)))
@@ -53,11 +79,13 @@ jacobi = Compose(
 )
 show(jacobi(space))
 
+
 def F(local):
     return function("f")(*coordinate(local), *velocity(local))
 
 
 show(diff(F(space), time(space)))
+
 
 def V(q):
     return function("U")(*q)

@@ -35,3 +35,4 @@ Some further resources:
 - The Sagemath reference guide: [[https://doc.sagemath.org/html/en/reference/]]
 - Handy tuples: https://github.com/jtauber/functional-differential-geometry
 - ChatGPT proved to be a great help in the process of becoming familiar with Scheme and Sagemath.
+- Some solutions to problems: https://github.com/hnarayanan/sicm

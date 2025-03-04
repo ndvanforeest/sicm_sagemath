@@ -6,7 +6,7 @@
 #+LATEX_CLASS: subfiles
 #+LATEX_CLASS_OPTIONS: [sicm_sagemath]
 
-#+PROPERTY: header-args:sage :session section32 :eval never-export :exports code :results none :tangle ../sage/section3.2.sage
+#+PROPERTY: header-args:sage :session section32 :eval never-export :exports code :results none :tangle ../sage/section3.2.sage :dir ../sage
 
 #+begin_src emacs-lisp :exports results :results none :eval export
   (make-variable-buffer-local 'org-latex-title-command)
@@ -79,6 +79,42 @@ def Poisson_bracket(F, G):
     return f
 #+end_src
 
+The first test is to see whether $\{Q, H\} = \partial_{2} H$ and $\{P, H\} = -\partial_{1} H$, where $Q$ and $P$ are the coordinate and momentum selectors.
+For the Hamiltonian I take a general function and  check $\{Q_{0}, H\}$, $\{P_{0}, H\}$, and $\{Q, H\}$.
+
+#+begin_src sage :exports both :results replace latex
+space = make_space("q", dim=2)
+
+def Hamiltonian(local):
+    return function("H")(time(local), *coordinate(local), *velocity(local))
+
+
+show(Poisson_bracket(lambda local: coordinate(local)[0], Hamiltonian)(space))
+show(Poisson_bracket(lambda local: momentum(local)[0], Hamiltonian)(space))
+show(Poisson_bracket(coordinate, Hamiltonian)(space))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left(\begin{array}{r}
+\frac{\partial}{\partial {\dot q_1}}H\left(t, {q_1}, {q_2}, {\dot q_1}, {\dot q_2}\right)
+\end{array}\right)
+\end{dmath*}
+\begin{dmath*}
+\left(\begin{array}{r}
+-\frac{\partial}{\partial {q_1}}H\left(t, {q_1}, {q_2}, {\dot q_1}, {\dot q_2}\right)
+\end{array}\right)
+\end{dmath*}
+\begin{dmath*}
+\left(\begin{array}{r}
+\frac{\partial}{\partial {\dot q_1}}H\left(t, {q_1}, {q_2}, {\dot q_1}, {\dot q_2}\right) \\
+\frac{\partial}{\partial {\dot q_2}}H\left(t, {q_1}, {q_2}, {\dot q_1}, {\dot q_2}\right)
+\end{array}\right)
+\end{dmath*}
+#+end_export
+
+All is correct.
 
 ** Properties of the Poisson bracket
 
@@ -86,8 +122,6 @@ We know that $\{F, F\} = 0$ for any functions.
 Let's test this for our implementation.
 
 #+begin_src sage :exports both :results replace latex
-space = make_space("q", dim=2)
-
 def F(local):
     return function("f")(time(local), *coordinate(local), *velocity(local))
 
@@ -96,20 +130,12 @@ show(Poisson_bracket(F, F)(space))
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{r}
+\begin{dmath*}
+\left(\begin{array}{r}
 0
-\end{array}\right)\]
+\end{array}\right)
+\end{dmath*}
 #+end_export
-
-Note: It is important to use a different string in the name of the ~function~, here ~f~ than the name of the Python function ~F~.
-The following leads to naming conflicts:
-#+begin_src sage :exports code :tangle no
-def F(local):
-    return function("F")(time(local), *coordinate(local), *velocity(local))
-
-def f(local):
-    return function("f")(time(local), *coordinate(local), *velocity(local))
-#+end_src
 
 
 The property $\{F, F\} = 0$ is actually implied when we can show that the Poisson bracket is anti-symmetric.
@@ -125,9 +151,11 @@ show(Sum(Poisson_bracket(F, G), Poisson_bracket(G, F))(space))
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{r}
+\begin{dmath*}
+\left(\begin{array}{r}
 0
-\end{array}\right)\]
+\end{array}\right)
+\end{dmath*}
 #+end_export
 
 
@@ -145,7 +173,9 @@ show(
 
 #+RESULTS:
 #+begin_export latex
-\[\mathrm{True}\]
+\begin{dmath*}
+\mathrm{True}
+\end{dmath*}
 #+end_export
 
 To check the rule $\{F, c G\} = c\{F, G\}$ we need a constant function.
@@ -163,8 +193,12 @@ show(diff(constant(space), *coordinate(space)))
 
 #+RESULTS:
 #+begin_export latex
-\[0\]
-\[0\]
+\begin{dmath*}
+0
+\end{dmath*}
+\begin{dmath*}
+0
+\end{dmath*}
 #+end_export
 
 So, next we can check $\{F, cG\}$.
@@ -177,7 +211,9 @@ show(
 
 #+RESULTS:
 #+begin_export latex
-\[\mathrm{True}\]
+\begin{dmath*}
+\mathrm{True}
+\end{dmath*}
 #+end_export
 
 
@@ -197,25 +233,32 @@ show(jacobi(space))
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{r}
+\begin{dmath*}
+\left(\begin{array}{r}
 0
-\end{array}\right)\]
+\end{array}\right)
+\end{dmath*}
 #+end_export
 
 ** Poisson bracket of conserved quantities
 
 To check that the Poisson bracket of a conserved quantity is conserved we need a function that does not depend on time.
-#+begin_src sage :exports both :results replace latex
+#+begin_src sage
 def F(local):
     return function("f")(*coordinate(local), *velocity(local))
+#+end_src
 
+Clearly, the derivative with respect to time of this function is zero, so it does what we need.
 
+#+begin_src sage :exports both :results replace latex
 show(diff(F(space), time(space)))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[0\]
+\begin{dmath*}
+0
+\end{dmath*}
 #+end_export
 
 Now consider $\{F, H\}$ where $H$ is the rectangular Hamiltonian.
@@ -237,7 +280,9 @@ show(Poisson_bracket(F, H)(space).expand()[0, 0])
 
 #+RESULTS:
 #+begin_export latex
-\[-\frac{\partial}{\partial {q_1}}U\left({q_1}\right) \frac{\partial}{\partial {\dot q_1}}f\left({q_1}, {\dot q_1}\right) + \frac{{\dot q_1} \frac{\partial}{\partial {q_1}}f\left({q_1}, {\dot q_1}\right)}{m}\]
+\begin{dmath*}
+-\frac{\partial}{\partial {q_1}}U\left({q_1}\right) \frac{\partial}{\partial {\dot q_1}}f\left({q_1}, {\dot q_1}\right) + \frac{{\dot q_1} \frac{\partial}{\partial {q_1}}f\left({q_1}, {\dot q_1}\right)}{m}
+\end{dmath*}
 #+end_export
 
 To complete the check, note that, by Hamilton's equation,  $\dot q = \partial H/ \partial p$, $\dot p = - \partial H/ \partial q$.

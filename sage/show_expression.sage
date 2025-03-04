@@ -8,7 +8,11 @@ def show_expression(s):
     s = re.sub(
         r"\\frac\{\\partial\^\{2\}\}\{\(\\partial t\)\^\{2\}\}", r"\\ddot ", s
     )
-    print(r"\[" + s + r"\]")
+    #print(s)
+    res = r"\begin{dmath*}"
+    res += "\n" + s + "\n"
+    res += r"\end{dmath*}"
+    print(res)
 
 
 # def show_expression(s):
