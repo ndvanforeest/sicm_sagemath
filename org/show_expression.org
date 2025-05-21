@@ -67,7 +67,7 @@ def show_expression(s, simplify=True):
 #+end_src
 
 
-* Printing with org mode
+** Printing with org mode
 
 There is a subtlety with respect to printing in org mode and in tangled files.
 When working in sage files, and running them from the prompt, I call ~show(expr)~ to have some expression printed to the screen.

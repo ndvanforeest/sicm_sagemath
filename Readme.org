@@ -6,6 +6,8 @@
 #+LATEX_CLASS: subfiles
 #+LATEX_CLASS_OPTIONS: [sicm_sagemath]
 
+* Readme
+
 This is a translation to Python and Sagemath of (most of) the Scheme code of the book `Structure and interpretation of classical mechanics' by Sussman and Wisdom.
 When referring to /the book/, I mean their book.
 I expect the reader to read the related parts of the book, and use the Scheme code of the book to understand the Python code.

@@ -41,13 +41,14 @@
 (export-all)
 #+end_src
 
-\subfile{Readme}
 
 \setcounter{chapter}{-1}
 
 * Preliminaries
 
-Here we provide Python and Sagemath code for background functions that are used, but not defined, in the book.
+\subfile{Readme}
+
+In the next sections we provide Python and Sagemath code for background functions that are used, but not defined, in the book.
 
 \subfile{show_expression}
 \subfile{tuples}
