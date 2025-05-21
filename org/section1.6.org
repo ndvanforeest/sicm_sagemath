@@ -1,87 +1,75 @@
 #+TITLE: Section 1.6
 #+AUTHOR: Nicky
+#+date: <2025-05-09 Fri>
 
 #+OPTIONS: toc:nil author:nil date:nil title:t
 
 #+LATEX_CLASS: subfiles
 #+LATEX_CLASS_OPTIONS: [sicm_sagemath]
 
-#+PROPERTY: header-args:sage :session section16 :eval never-export :exports code :results none :tangle sage/section1.6.sage
-
-
-#+begin_src emacs-lisp :exports results :results none :eval export
-  (make-variable-buffer-local 'org-latex-title-command)
-  ; (setq org-latex-title-command (concat "\\chapter{%t}\n"))
-#+end_src
+#+PROPERTY: header-args:sage :session section16 :eval never-export :exports code :results none :tangle ../sage/section1.6.sage :dir ../sage/
 
 *  How to find Lagrangians
 
 ** Standard imports
-#+ATTR_LATEX: :options label=section1.6.sage
-#+begin_src sage :exports code :results none
-import numpy as np
 
-load(
-    "utils.sage",
-    "utils1.4.sage",
-    "utils1.5.sage",
-    "utils1.6.sage",
-)
+#+attr_latex: :options label=../sage/utils1.6.sage
+#+begin_src sage :tangle ../sage/utils1.6.sage
+load("utils1.5.sage")
+#+end_src
 
-var("t x y", domain="real")
+#+attr_latex: :options label=../sage/section1.6.sage
+#+begin_src sage :tangle ../sage/section1.6.sage
+load("utils1.6.sage")
 #+end_src
 
 
-#+ATTR_LATEX: :options label=don't tangle
-#+begin_src sage :exports code  :tangle no
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :exports both  :tangle no
 load("show_expression.sage")
 #+end_src
 
 
 ** Constant acceleration
 
-We start with making the coordinates and velocities.
+We start with a point in a uniform gravitational field.
+#+attr_latex: :options label=../sage/utils1.6.sage
+#+begin_src sage :tangle ../sage/utils1.6.sage
+var("t", domain="real")
+var("g m", domain="positive")
 
-#+ATTR_LATEX: :options label=section1.6.sage
-#+begin_src sage
-space = make_named_space(["x", "y"])
-#+end_src
-
-#+ATTR_LATEX: :options label=utils1.6.sage
-#+begin_src sage :tangle sage/utils1.6.sage
-var("g m")
 
 def L_uniform_acceleration(m, g):
     def Lagrangian(local):
-        q = coordinate(local)
+        x, y  = coordinate(local).list()
         v = velocity(local)
-        y = q[1]
-        T = 1 / 2 * m * v * v
+        T = 1 / 2 * m * square(v)
         V = m * g * y
         return T - V
 
     return Lagrangian
 #+end_src
 
-#+ATTR_LATEX: :options label=section1.6.sage
+#+attr_latex: :options label=../sage/section1.6.sage
 #+begin_src sage :exports both :results replace latex
-l_eq = Lagrange_equations(L_uniform_acceleration(m, g))(
-    [literal_function("x"), literal_function("y")]
-)
-show(l_eq)
+q = path_function([literal_function("x"), literal_function("y")])
+l_eq = Lagrange_equations(L_uniform_acceleration(m, g))(q)
+show(l_eq(t))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{rr}
+\begin{dmath*}
+\left[\begin{array}{cc}
 m \ddot x & g m + m \ddot y
-\end{array}\right)\]
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
 **  Central force field
 
-#+ATTR_LATEX: :options label=utils1.6.sage
-#+begin_src sage :exports code :results none :tangle sage/utils1.6.sage
+#+attr_latex: :options label=../sage/utils1.6.sage
+#+begin_src sage :tangle ../sage/utils1.6.sage
 def L_central_rectangular(m, U):
     def Lagrangian(local):
         q = coordinate(local)
@@ -93,65 +81,60 @@ def L_central_rectangular(m, U):
 #+end_src
 
 Let us first try this on a concrete potential function.
-#+ATTR_LATEX: :options label=section1.6.sage
+#+attr_latex: :options label=../sage/section1.6.sage
 #+begin_src sage
 def U(r):
     return 1 / r
 #+end_src
 
-#+ATTR_LATEX: :options label=section1.6.sage
+#+attr_latex: :options label=../sage/section1.6.sage
 #+begin_src sage :exports both :results replace latex
-show(
-    Lagrange_equations(L_central_rectangular(m, U))(
-        [literal_function("x"), literal_function("y")]
-    )
-)
+show(Lagrange_equations(L_central_rectangular(m, U))(q)(t))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{rr}
+\begin{dmath*}
+\left[\begin{array}{cc}
 m \ddot x - \frac{x}{{\left(x^{2} + y^{2}\right)}^{\frac{3}{2}}} & m \ddot y - \frac{y}{{\left(x^{2} + y^{2}\right)}^{\frac{3}{2}}}
-\end{array}\right)\]
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
-Now we  try it on a general central potential. We should a different name for the Python function than the one we use in the ~function~. Thus, we take ~V~, not ~U~. Recall that to differentiate symbolic function that receives multiple arguments, the list of arguments needs to be unpacked.
-#+ATTR_LATEX: :options label=section1.6.sage
+Now we  try it on a general central potential.
+#+attr_latex: :options label=../sage/section1.6.sage
 #+begin_src sage :exports both :results replace latex
-def U(r):
-    return function("V")(r)
-
-show(
-    Lagrange_equations(L_central_rectangular(m, U))(
-        [literal_function("x"), literal_function("y")]
-    )
-)
+U = Function(lambda x: function("U")(x))
+show(Lagrange_equations(L_central_rectangular(m, U))(q)(t))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{rr}
-m \ddot x + \frac{x \mathrm{D}_{0}\left(V\right)\left(\sqrt{x^{2} + y^{2}}\right)}{\sqrt{x^{2} + y^{2}}} & m \ddot y + \frac{y \mathrm{D}_{0}\left(V\right)\left(\sqrt{x^{2} + y^{2}}\right)}{\sqrt{x^{2} + y^{2}}}
-\end{array}\right)\]
+\begin{dmath*}
+\left[\begin{array}{cc}
+m \ddot x + \frac{x \mathrm{D}_{0}\left(U\right)\left(\sqrt{x^{2} + y^{2}}\right)}{\sqrt{x^{2} + y^{2}}} & m \ddot y + \frac{y \mathrm{D}_{0}\left(U\right)\left(\sqrt{x^{2} + y^{2}}\right)}{\sqrt{x^{2} + y^{2}}}
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
 
 
 ** Coordinate transformations
 
-To get things straight, the function $F$ is the transformation of the coordinates $x'$ to $x$, i.e., $x = F(t, x')$.
+To get things straight: the function $F$ is the transformation of the coordinates $x'$ to $x$, i.e., $x = F(t, x')$.
 The function $C$ lifts the transformation $F$ to the phase space, so it transforms $\Gamma(q')$ to $\Gamma(q)$.
-Note that ~partial(F, 0)~ is a matrix while while ~partial(F, 1)(local) * velocity(local)~ is a vector.
-To add these two, we need to cast ~partial(F, 0)~ to a vector.
-#+ATTR_LATEX: :options label=utils1.6.sage
-#+begin_src sage :exports code :results none :tangle sage/utils1.6.sage
+
+The result of $\partial_1 F v$ is a vector, because $v$ is a vector.
+We have to cast $\partial_0 F$ into a vector to enable the summation of these two terms.
+
+#+attr_latex: :options label=../sage/utils1.6.sage
+#+begin_src sage :tangle ../sage/utils1.6.sage
 def F_to_C(F):
     def f(local):
         return up(
             time(local),
             F(local),
-            vector(partial(F, 0)(local))
-            + partial(F, 1)(local) * velocity(local),
+            partial(F, 0)(local) + partial(F, 1)(local) * velocity(local),
         )
 
     return f
@@ -160,110 +143,133 @@ def F_to_C(F):
 
 ** polar coordinates
 
-#+ATTR_LATEX: :options label=utils1.6.sage
-#+begin_src sage :exports code :results none :tangle sage/utils1.6.sage
+#+attr_latex: :options label=../sage/utils1.6.sage
+#+begin_src sage :tangle ../sage/utils1.6.sage
 def p_to_r(local):
-    r, phi = coordinate(local)
-    return vector([r * cos(phi), r * sin(phi)])
+    r, phi = coordinate(local).list()
+    return column_matrix([r * cos(phi), r * sin(phi)])
 #+end_src
 
 We apply ~F_to_C~ and ~p_to_r~ to several examples, to test and to understand how they collaborate.
 We need to make the appropriate variables for the space in terms of $r$ and $\phi$.
-
-#+ATTR_LATEX: :options label=section1.6.sage
+#+attr_latex: :options label=../sage/section1.6.sage
 #+begin_src sage :exports both :results replace latex
-space = make_named_space(["r", "\\phi"])
-show(p_to_r(space))
+r = literal_function("r")
+phi = literal_function("phi")
+q = path_function([r, phi])
+show(p_to_r(Gamma(q)(t)))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left({r} \cos\left({\phi}\right),\,{r} \sin\left({\phi}\right)\right)\]
+\begin{dmath*}
+\left[\begin{array}{c}
+\cos\left(\phi\right) r \\
+r \sin\left(\phi\right)
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
+This is the derivative wrt $t$.
+As the transformation ~p_to_r~ does not depend explicitly on $t$, the result should be a column matrix of zeros.
 
-#+ATTR_LATEX: :options label=section1.6.sage
+#+attr_latex: :options label=../sage/section1.6.sage
 #+begin_src sage :exports both :results replace latex
-show((partial(p_to_r, 0)(space)))
+show((partial(p_to_r, 0)(Gamma(q)(t))))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{r}
+\begin{dmath*}
+\left[\begin{array}{c}
 0 \\
 0
-\end{array}\right)\]
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
-#+ATTR_LATEX: :options label=section1.6.sage
+Next is the derivative wrt $r$ and $\phi$.
+#+attr_latex: :options label=../sage/section1.6.sage
 #+begin_src sage :exports both :results replace latex
-show((partial(p_to_r, 1)(space)))
+show((partial(p_to_r, 1)(Gamma(q)(t))))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{rr}
-\cos\left({\phi}\right) & -{r} \sin\left({\phi}\right) \\
-\sin\left({\phi}\right) & {r} \cos\left({\phi}\right)
-\end{array}\right)\]
+\begin{dmath*}
+\left[\begin{array}{cc}
+\cos\left(\phi\right) & -r \sin\left(\phi\right) \\
+\sin\left(\phi\right) & \cos\left(\phi\right) r
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
-#+ATTR_LATEX: :options label=section1.6.sage
+#+attr_latex: :options label=../sage/section1.6.sage
 #+begin_src sage :exports both :results replace latex
-show(F_to_C(p_to_r)(space))
+show(F_to_C(p_to_r)(Gamma(q)(t)))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\begin{align*} & t \\ & \left({r} \cos\left({\phi}\right),\,{r} \sin\left({\phi}\right)\right) \\ & \left(-{\dot \phi} {r} \sin\left({\phi}\right) + {\dot r} \cos\left({\phi}\right),\,{\dot \phi} {r} \cos\left({\phi}\right) + {\dot r} \sin\left({\phi}\right)\right) \\ \end{align*}
+\begin{dmath*}
+\begin{array}{c}\begin{array}{c} t \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+\cos\left(\phi\right) r \\
+r \sin\left(\phi\right)
+\end{array}\right] \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+-r \sin\left(\phi\right) \dot \phi + \cos\left(\phi\right) \dot r \\
+\cos\left(\phi\right) r \dot \phi + \sin\left(\phi\right) \dot r
+\end{array}\right] \end{array} \\ \end{array}
+\end{dmath*}
 #+end_export
+
 
 We can see what happens for the Lagrangian for the central force in polar coordinates.
-
-#+ATTR_LATEX: :options label=utils1.6.sage
-#+begin_src sage :exports code :results none :tangle sage/utils1.6.sage
+#+attr_latex: :options label=../sage/utils1.6.sage
+#+begin_src sage :tangle ../sage/utils1.6.sage
 def L_central_polar(m, U):
     def Lagrangian(local):
-        return Compose(L_central_rectangular(m, U), F_to_C(p_to_r))(local)
-        # return L_central_rectangular(m, U)(F_to_C(p_to_r)(local))
+        return compose(L_central_rectangular(m, U), F_to_C(p_to_r))(local)
 
     return Lagrangian
 #+end_src
 
-#+ATTR_LATEX: :options label=section1.6.sage
+#+attr_latex: :options label=../sage/section1.6.sage
 #+begin_src sage :exports both :results replace latex
-show(L_central_polar(m, U)(space).simplify_full())
+# show(L_central_polar(m, U)(Gamma(q)(t)))
+show(L_central_polar(m, U)(Gamma(q)(t)).simplify_full())
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\frac{1}{2} \, m {\dot \phi}^{2} {r}^{2} + \frac{1}{2} \, m {\dot r}^{2} - V\left({r}\right)\]
+\begin{dmath*}
+\frac{1}{2} \, m r^{2} \dot \phi^{2} + \frac{1}{2} \, m \dot r^{2} - U\left(\sqrt{r^{2}}\right)
+\end{dmath*}
 #+end_export
 
-#+ATTR_LATEX: :options label=section1.6.sage
+#+attr_latex: :options label=../sage/section1.6.sage
 #+begin_src sage :exports both :results replace latex
-expr = Lagrange_equations(L_central_polar(m, U))(
-    [literal_function("r"), literal_function("\\phi")]
-).simplify_full().expand()
-
-show(expr[0][0])
-show(expr[0][1])
+expr = Lagrange_equations(L_central_polar(m, U))(q)(t)
+show(expr.simplify_full().expand())
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[-m r \dot \phi^{2} + m \ddot r + \frac{r \mathrm{D}_{0}\left(V\right)\left(\sqrt{r^{2}}\right)}{\sqrt{r^{2}}}\]
-\[m r^{2} \ddot \phi + 2 \, m r \dot \phi \dot r\]
+\begin{dmath*}
+\left[\begin{array}{cc}
+-m r \dot \phi^{2} + m \ddot r + \frac{r \mathrm{D}_{0}\left(U\right)\left(\sqrt{r^{2}}\right)}{\sqrt{r^{2}}} & m r^{2} \ddot \phi + 2 \, m r \dot \phi \dot r
+\end{array}\right]
+\end{dmath*}
 #+end_export
+
 
 ** Coriolis and centrifugal forces
 
-#+ATTR_LATEX: :options label=utils1.6.sage
-#+begin_src sage :exports code :results none :tangle sage/utils1.6.sage
+#+attr_latex: :options label=../sage/utils1.6.sage
+#+begin_src sage :tangle ../sage/utils1.6.sage
 def L_free_rectangular(m):
     def Lagrangian(local):
         v = velocity(local)
-        return 1 / 2 * m * v * v
+        return 1 / 2 * m * square(v)
 
     return Lagrangian
 
@@ -278,7 +284,7 @@ def L_free_polar(m):
 def F(Omega):
     def f(local):
         t = time(local)
-        r, theta = coordinate(local)
+        r, theta = coordinate(local).list()
         return vector([r, theta + Omega * t])
 
     return f
@@ -292,10 +298,9 @@ def L_rotating_polar(m, Omega):
 
 
 
-# atan2(y/x) is not accepted when computing the L-ea
 def r_to_p(local):
-    x, y = coordinate(local)
-    return vector([sqrt(x * x + y * y), atan(y / x)])
+    x, y = coordinate(local).list()
+    return column_matrix([sqrt(x * x + y * y), atan(y / x)])
 
 
 def L_rotating_rectangular(m, Omega):
@@ -306,39 +311,37 @@ def L_rotating_rectangular(m, Omega):
 #+end_src
 
 
-#+ATTR_LATEX: :options label=section1.6.sage
+#+attr_latex: :options label=../sage/section1.6.sage
 #+begin_src sage
-space = make_named_space(["x", "y"])
-var("m Omega r")
-expr = L_rotating_rectangular(m, Omega)(space).simplify_full()
+_ = var("Omega", domain="positive")
+q_xy = path_function([literal_function("x"), literal_function("y")])
+expr = L_rotating_rectangular(m, Omega)(Gamma(q_xy)(t)).simplify_full()
 #+end_src
 
-#+ATTR_LATEX: :options label=section1.6.sage
+#+attr_latex: :options label=../sage/section1.6.sage
 #+begin_src sage :exports both :results replace latex
 show(expr)
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\frac{1}{2} \, \Omega^{2} m {x}^{2} + \frac{1}{2} \, \Omega^{2} m {y}^{2} - \Omega m {\dot x} {y} + \Omega m {x} {\dot y} + \frac{1}{2} \, m {\dot x}^{2} + \frac{1}{2} \, m {\dot y}^{2}\]
+\begin{dmath*}
+\frac{1}{2} \, \Omega^{2} m x^{2} + \frac{1}{2} \, \Omega^{2} m y^{2} - \Omega m y \dot x + \Omega m x \dot y + \frac{1}{2} \, m \dot x^{2} + \frac{1}{2} \, m \dot y^{2}
+\end{dmath*}
 #+end_export
 
 
-
 The simplification of the Lagrange equations takes some time.
-#+ATTR_LATEX: :options label=don't tangle
+#+attr_latex: :options label=don't tangle
 #+begin_src sage :exports both :results replace latex :eval never :tangle no
-expr = Lagrange_equations(L_rotating_rectangular(m, Omega))(
-    [literal_function("x"), literal_function("y")]
-).simplify_full()
-show(expr)
+expr = Lagrange_equations(L_rotating_rectangular(m, Omega))(q)(t)
+show(expr.simplify_full())
 #+end_src
 
 I edited the result a bit by hand.
 
 \begin{align*}
-0 &= - m \Omega^2  x - 2 m \Omega \dot y  + m \ddot x, \\
-0 &=  - m \Omega^2  y + 2 m \Omega  \dot x + m \ddot y.
+- m \Omega^2  x - 2 m \Omega \dot y  + m \ddot x, & - m \Omega^2  y + 2 m \Omega  \dot x + m \ddot y.
 \end{align*}
 
 
@@ -346,29 +349,28 @@ I edited the result a bit by hand.
 
 ** Constraints, a driven pendulum
 
-Rather than implementation the formulas of the book at this place, we follow the idea they explain: formulate a Lagrangian in practical coordinates, then formulate the problem in practical coordinates /for that problem/, and then use a coordinate transformation from the problem's coordinates to the Lagrangian coordinates.
+Rather than implementation the formulas of the book at this place, we follow the idea they explain at bit later in the book: formulate a Lagrangian in practical coordinates, then formulate the problem in practical coordinates /for that problem/, and then use a coordinate transformation from the problem's coordinates to the Lagrangian coordinates.
 
-
-Here, the Lagrangian is easiest to express in terms of $x$ and $y$ coordinates, while the pendulum needs an angle $\theta$.
+For the driven pendulum, the Lagrangian is easiest to express in terms of $x$ and $y$ coordinates, while the pendulum needs an angle $\theta$.
 So, we need a transformation from $\theta$ to $x$ and $y$.
-Note that the function ~coordinate~ returns a vector, and the vector here just contains $\theta$.
-So, we have to pick the $0$ element. Another point is that here ~ys~ needs to be evaluated at ~t~; in the other functions ~ys~ is just passed on as a function.
+Note that the function ~coordinate~ returns a $(1\times 1)$ column matrix which just contains $\theta$.
+So, we have to pick element $(0,0)$.
+Another point is that here ~ys~ needs to be evaluated at ~t~; in the other functions ~ys~ is just passed on as a function.
 
-#+ATTR_LATEX: :options label=utils1.6.sage
-#+begin_src sage :exports code :results none :tangle sage/utils1.6.sage
+#+attr_latex: :options label=../sage/utils1.6.sage
+#+begin_src sage :tangle ../sage/utils1.6.sage
 def dp_coordinates(l, ys):
     "From theta to x, y coordinates."
     def f(local):
         t = time(local)
-        theta = coordinate(local)[0]
-        return vector([l * sin(theta), ys(t=t) - l * cos(theta)])
+        theta = coordinate(local)[0, 0]
+        return column_matrix([l * sin(theta), ys(t) - l * cos(theta)])
 
     return f
 #+end_src
 
-#+ATTR_LATEX: :options label=utils1.6.sage
-#+begin_src sage :exports code :results none :tangle sage/utils1.6.sage
-var('g l m')
+#+attr_latex: :options label=../sage/utils1.6.sage
+#+begin_src sage :tangle ../sage/utils1.6.sage
 def L_pend(m, l, g, ys):
     def Lagrangian(local):
         return L_uniform_acceleration(m, g)(
@@ -379,16 +381,20 @@ def L_pend(m, l, g, ys):
 #+end_src
 
 
-#+ATTR_LATEX: :options label=section1.6.sage
+#+attr_latex: :options label=../sage/section1.6.sage
 #+begin_src sage :exports both :results replace latex
-space = make_named_space(["\\theta"])
+_ = var("l", domain="positive")
+
+theta = path_function([literal_function("theta")])
 ys = literal_function("y")
 
-expr = L_pend(m, l, g, ys)(space).simplify_full()
+expr = L_pend(m, l, g, ys)(Gamma(theta)(t)).simplify_full()
 show(expr)
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\frac{1}{2} \, l^{2} m {\dot \theta}^{2} + l m {\dot \theta} \sin\left({\theta}\right) \dot y + g l m \cos\left({\theta}\right) - g m y + \frac{1}{2} \, m \dot y^{2}\]
+\begin{dmath*}
+\frac{1}{2} \, l^{2} m \dot \theta^{2} + l m \sin\left(\theta\right) \dot \theta \dot y + g l m \cos\left(\theta\right) - g m y + \frac{1}{2} \, m \dot y^{2}
+\end{dmath*}
 #+end_export

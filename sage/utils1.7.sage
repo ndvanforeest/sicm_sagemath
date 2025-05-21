@@ -1,18 +1,11 @@
-load(
-    "utils.sage",
-    "utils1.6.sage",
-)
+load("utils1.6.sage")
 
-def Lagrangian_to_accelaration(L):
+def Lagrangian_to_acceleration(L):
     def f(local):
-        P = partial(L, 2)  # (local)
-        F = partial(L, 1)  # (local)
-        res = partial(P, 2)(local).solve_left(
-            vector(F(local))
-            - vector(partial(P, 0)(local))
-            - partial(P, 1)(local) * velocity(local)
-        )
-        return res
+        P = partial(L, 2)
+        F = compose(transpose, partial(L, 1))
+        M = (F - partial(P, 0)) - partial(P, 1) * velocity
+        return partial(P, 2)(local).solve_right(M(local))
 
     return f
 
@@ -20,31 +13,37 @@ def convert_to_expr(n):
     return SR(n)
 
 def Lagrangian_to_state_derivative(L):
-    accelaration = Lagrangian_to_acceleration(L)
+    acceleration = Lagrangian_to_acceleration(L)
     return lambda state: up(
         convert_to_expr(1), velocity(state), acceleration(state)
     )
 
+def qv_to_state_path(q, v):
+    return lambda t: up(t, q(t), v(t))
+
 def Lagrange_equations_first_order(L):
     def f(q, v):
-        state_path = qv_to_state_path(q, v)(t)
+        state_path = qv_to_state_path(q, v)
         res = D(state_path)
-        res -= Lagrangian_to_state_derivative(L)(state_path)
+        res -= compose(Lagrangian_to_state_derivative(L), state_path)
         return res
 
     return f
 
-def state_to_list(state):
-    return [time(state), *coordinate(state), *velocity(state)]
+def make_dummy_vector(name, dim):
+    return column_matrix([var(f"{name}{i}", domain=RR) for i in range(dim)])
 
 def evolve(state_derivative, ics, times):
-    space = make_space("qq", dim=len(coordinate(ics)))
+    dim = coordinate(ics).nrows()
+    coordinates = make_dummy_vector("q", dim)
+    velocities = make_dummy_vector("v", dim)
+    space = up(t, coordinates, velocities)
     soln = desolve_odeint(
-        des=state_to_list(state_derivative(space)),
-        ics=state_to_list(ics),
+        des=state_derivative(space).list(),
+        ics=ics.list(),
         times=times,
-        dvars=state_to_list(space),
-        rtol=1e-13,
+        dvars=space.list(),
+        atol=1e-13,
     )
     return soln
 
@@ -60,7 +59,7 @@ def periodic_drive(amplitude, frequency, phase):
 
     return f
 
-var("m l g A omega")
+_ = var("m l g A omega")
 
 
 def L_periodically_driven_pendulum(m, l, g, A, omega):

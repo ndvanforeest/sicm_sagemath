@@ -1,11 +1,14 @@
-var("g m")
+load("utils1.5.sage")
+
+var("t", domain="real")
+var("g m", domain="positive")
+
 
 def L_uniform_acceleration(m, g):
     def Lagrangian(local):
-        q = coordinate(local)
+        x, y  = coordinate(local).list()
         v = velocity(local)
-        y = q[1]
-        T = 1 / 2 * m * v * v
+        T = 1 / 2 * m * square(v)
         V = m * g * y
         return T - V
 
@@ -25,27 +28,25 @@ def F_to_C(F):
         return up(
             time(local),
             F(local),
-            vector(partial(F, 0)(local))
-            + partial(F, 1)(local) * velocity(local),
+            partial(F, 0)(local) + partial(F, 1)(local) * velocity(local),
         )
 
     return f
 
 def p_to_r(local):
-    r, phi = coordinate(local)
-    return vector([r * cos(phi), r * sin(phi)])
+    r, phi = coordinate(local).list()
+    return column_matrix([r * cos(phi), r * sin(phi)])
 
 def L_central_polar(m, U):
     def Lagrangian(local):
-        return Compose(L_central_rectangular(m, U), F_to_C(p_to_r))(local)
-        # return L_central_rectangular(m, U)(F_to_C(p_to_r)(local))
+        return compose(L_central_rectangular(m, U), F_to_C(p_to_r))(local)
 
     return Lagrangian
 
 def L_free_rectangular(m):
     def Lagrangian(local):
         v = velocity(local)
-        return 1 / 2 * m * v * v
+        return 1 / 2 * m * square(v)
 
     return Lagrangian
 
@@ -60,7 +61,7 @@ def L_free_polar(m):
 def F(Omega):
     def f(local):
         t = time(local)
-        r, theta = coordinate(local)
+        r, theta = coordinate(local).list()
         return vector([r, theta + Omega * t])
 
     return f
@@ -74,10 +75,9 @@ def L_rotating_polar(m, Omega):
 
 
 
-# atan2(y/x) is not accepted when computing the L-ea
 def r_to_p(local):
-    x, y = coordinate(local)
-    return vector([sqrt(x * x + y * y), atan(y / x)])
+    x, y = coordinate(local).list()
+    return column_matrix([sqrt(x * x + y * y), atan(y / x)])
 
 
 def L_rotating_rectangular(m, Omega):
@@ -90,12 +90,11 @@ def dp_coordinates(l, ys):
     "From theta to x, y coordinates."
     def f(local):
         t = time(local)
-        theta = coordinate(local)[0]
-        return vector([l * sin(theta), ys(t=t) - l * cos(theta)])
+        theta = coordinate(local)[0, 0]
+        return column_matrix([l * sin(theta), ys(t) - l * cos(theta)])
 
     return f
 
-var('g l m')
 def L_pend(m, l, g, ys):
     def Lagrangian(local):
         return L_uniform_acceleration(m, g)(

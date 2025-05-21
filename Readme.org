@@ -26,9 +26,12 @@ Once all worked, I copied the code to an org file and make code blocks.
 Then I tangled, for instance, generally useful code of ~secton1.4.org~ to ~utils1.4.sage~ and to ~section1.4.sage~ for code specific for  Section 1.4 of the book. This way I can load the utils files at later stages.
 
 I found it convenient to test things in a ~tests.sage~ file.
-Then, by opening a sage session in the command prompt and attaching the session to the file (~attach("tests.sage")~), I could edit within emacs and see the consequences directly in the sage session.
+Then, I could edit within emacs and see the consequences directly in the sage session by opening a sage session on the command prompt and attaching the session to the file like so:
+#+begin_example
+sage: attach("tests.sage")
+#+end_example
 
-Some further resources:
+Finally, here are some resources that were helpful to me:
 - An online version of the book: [[https://tgvaughan.github.io/sicm/]]
 - An org file of the book  with Scheme: https://github.com/mentat-collective/sicm-book/blob/main/org/chapter001.org
 - A port to Clojure: https://github.com/sicmutils/sicmutils

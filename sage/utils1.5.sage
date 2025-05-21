@@ -1,5 +1,6 @@
-var("m g l")
-assume(m > 0, g > 0, l > 0)
+load("utils1.4.sage")
+
+var("m g l", domain="positive")
 
 
 def L_planar_pendulum(m, g, l):
@@ -14,8 +15,7 @@ def L_planar_pendulum(m, g, l):
 
 def L_Henon_Heiles(m):
     def Lagrangian(local):
-        q = coordinate(local)
-        x, y = q[:]
+        x, y = coordinate(local).list()
         v = velocity(local)
         T = (1 / 2) * square(v)
         V = 1 / 2 * (square(x) + square(y)) + square(x) * y - y**3 / 3
@@ -23,11 +23,10 @@ def L_Henon_Heiles(m):
 
     return Lagrangian
 
-def Lagrange_equations(Lagrangian):
+def Lagrange_equations(L):
     def f(q):
-        return Sum(
-            Compose(D, partial(Lagrangian, 2), Gamma(q)),
-            Min(Compose(partial(Lagrangian, 1), Gamma(q))),
+        return D(compose(partial(L, 2), Gamma(q))) - compose(
+            partial(L, 1), Gamma(q)
         )
 
     return f

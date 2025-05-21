@@ -6,34 +6,39 @@
 #+LATEX_CLASS: subfiles
 #+LATEX_CLASS_OPTIONS: [sicm_sagemath]
 
-#+PROPERTY: header-args:sage :session section14 :eval never-export :exports code :results none :tangle sage/section1.4.sage
-
-#+begin_src emacs-lisp :exports results :results none :eval export
-  (make-variable-buffer-local 'org-latex-title-command)
-  ; (setq org-latex-title-command (concat "\\section{%t}\n"))
-#+end_src
+#+PROPERTY: header-args:sage :session section14 :eval never-export :exports code :results none :tangle ../sage/section1.4.sage :dir ../sage/
 
 * Computing Actions
 
 
-** Standard import
+** Standard setup
 
-I make an org file for each separate section of the book.
-The code gets tangled to ~utils1.4.sage~ when the code serves a goal for later sections, and otherwise to ~section1.4.sage~.
-This allows me to run the sage scripts on the prompt, however this implies that I have to load the relevant utility files.
+I make an org file for each separate section of the book; for this section it's ~section1.4.org~.
+Code that is useful for later sections gets tangled to ~utils1.4.sage~, otherwise to ~section1.4.sage~.
+This allows me to run the sage scripts on the prompt.
+Note that the titles of the  code blocks correspond to the file to which the code is written when tangled.
 
-#+ATTR_LATEX: :options label=section1.4.sage
-#+begin_src sage
+
+
+#+attr_latex: :options label=../sage/utils1.4.sage
+#+begin_src sage :tangle ../sage/utils1.4.sage
 import numpy as np
 
-load(
-    "utils.sage",
-    "utils1.4.sage",
-)
+load("functions.sage", "differentiation.sage", "tuples.sage")
 #+end_src
 
+BTW, don't load ~from sage.all import *~ after loading ~utils.sage~, because that will lead to name space conflict with the ~Gamma~ function, which we define below.
 
-#+ATTR_LATEX: :options label=don't tangle
+
+#+attr_latex: :options label=../sage/section1.4.sage
+#+begin_src sage
+load("utils1.4.sage")
+
+t = var("t", domain="real")
+#+end_src
+
+The next module is used for nice printing in org mode files; it should only be loaded in org mode files.
+#+attr_latex: :options label=don't tangle
 #+begin_src sage  :tangle no
 load("show_expression.sage")
 #+end_src
@@ -41,11 +46,9 @@ load("show_expression.sage")
 
 ** The Lagrangian for a free particle.
 
-The function ~L_free_particle~ takes ~mass~ as an argument and returns the function ~Lagrangian~ that takes a ~local~ tuple as an argument and projects it to a velocity.
-
-
-#+ATTR_LATEX: :options label=utils1.4.sage
-#+begin_src sage :tangle sage/utils1.4.sage
+The function ~L_free_particle~ takes ~mass~ as an argument and returns the (curried) function ~Lagrangian~ that takes a ~local~ tuple as an argument.
+#+attr_latex: :options label=../sage/utils1.4.sage
+#+begin_src sage :tangle ../sage/utils1.4.sage
 def L_free_particle(mass):
     def Lagrangian(local):
         v = velocity(local)
@@ -54,52 +57,341 @@ def L_free_particle(mass):
     return Lagrangian
 #+end_src
 
+For the next step, we need a /literal functions/ and /coordinate paths/.
 
-For the next step, we need the variable $m$ for the mass of the particle and a coordinate path.
-#+ATTR_LATEX: :options label=section1.4.sage
-#+begin_src sage
-var('m', domain='positive')
+** Literal functions
 
-q = vector(
+A ~literal_function~ maps the time $t$ to a coordinate or velocity component of the path, for instance, $t \to x(t)$.
+Since we need to perform arithmetic with literal functions, see below for some examples, we encapsulate it in a ~Function~.
+#+attr_latex: :options label=../sage/utils1.4.sage
+#+begin_src sage :tangle ../sage/utils1.4.sage
+@Func
+def literal_function(name):
+    return lambda t: function(name)(t)
+#+end_src
+
+It's a function.
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :exports both :results replace :tangle no
+x = literal_function("x")
+print(x)
+#+end_src
+
+#+RESULTS:
+: <__main__.Function object at 0x71122066e470>
+
+Here are some operations on ~x~.
+
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :exports both :results replace latex :tangle no
+show(x(t))
+show((x+x)(t))
+show(square(x)(t))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+#+end_export
+
+Note that, to keep the notation brief, the $t$ is suppressed in the LaTeX output.
+
+
+** Paths
+
+We will represent coordinate path functions $q$ and velocity path functions $v$ as functions that map time to vectors.
+Thus, ~path_function~ returns a function of time, not yet a path.
+We also need to perform arithmetic on paths, like $3 q$, therefore we encapsulate the path in a ~Function~.
+#+attr_latex: :options label=../sage/utils1.4.sage
+#+begin_src sage :tangle ../sage/utils1.4.sage
+@Func
+def path_function(lst):
+    #return lambda t: vector([l(t) for l in lst])
+    return lambda t: column_matrix([l(t) for l in lst])
+#+end_src
+
+
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :tangle no
+q = path_function(
     [
-        literal_function("q_x"),
-        literal_function("q_y"),
-        literal_function("q_z"),
+        literal_function("x"),
+        literal_function("y"),
     ]
 )
 #+end_src
 
 
+Here is an example to see how to use ~q~.
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :exports both :results replace latex :tangle no
+show(q(t))
+#+end_src
 
-The Lagrangian of a free particle with mass $m$ applied to the path ~Gamma~ gives
-#+ATTR_LATEX: :options label=section1.4.sage
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{c}
+x \\
+y
+\end{array}\right]
+\end{dmath*}
+#+end_export
+
+
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :exports both :results replace latex :tangle no
+show((q + q)(t))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{c}
+2 \, x \\
+2 \, y
+\end{array}\right]
+\end{dmath*}
+#+end_export
+
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :exports both :results replace latex :tangle no
+show((2 * q)(t))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{c}
+2 \, x \\
+2 \, y
+\end{array}\right]
+\end{dmath*}
+#+end_export
+
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :exports both :results replace latex :tangle no
+show((q * q)(t))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+#+end_export
+
+** Gamma function
+
+The Gamma function lifts a coordinate path to a function that maps time to a local tuple of the form $(t, q(t), v(t), \ldots)$.
+That is,
+\begin{align*}
+\Gamma[q](\cdot) &= (\cdot, q(\cdot), v(\cdot), \ldots), \\
+\Gamma[q](t) &= (t, q(t), v(t), \ldots).
+\end{align*}
+To follow the conventions of the book, we use an ~up~ tuple for ~Gamma~.
+However, I don't build the coordinate path nor the velocity as up tuples because I find Sagemath vectors more convenient.
+
+$\Gamma$ just receives $q$ as an argument. Then it computes the velocity $v=Dq$, from which the acceleration follows recursively as $a=Dv$, \ldots.
+Recall that ~D~ computes the derivative (wrt time) of a function that depends on time.
+
+When $n=3$, it returns a function of time that produces the first three elements of the local tuple $(t, q(t), v(t)$.
+This is the default.
+Once all derivatives are computed, we convert the result to a function that maps time to an up tuple.
+
+# It turns out that in numerical work, a Sagemath ~vector~ or a ~matrix~ can be implicitly converted to a numpy array whose elements (interestingly) still may contain symbols.
+# As a numpy array cannot be differentiated by Sagemath's tools, I cast a numpy array to a vector, so that it can be differentiated again if required.
+#+attr_latex: :options label=../sage/utils1.4.sage
+#+begin_src sage :tangle ../sage/utils1.4.sage
+def Gamma(q, n=3):
+    # if isinstance(q, np.ndarray):
+    #     q = vector(q.tolist()) # todo, is this still needed?
+
+    if n < 2:
+        raise ValueError("n must be > 1")
+    Dq = [q]
+    for k in range(2, n):
+        Dq.append(D(Dq[-1]))
+    return lambda t: up(t, *[v(t) for v in Dq])
+#+end_src
+
+
+When applying ~Gamma~ to a path, we get this.
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :exports both :results replace latex :tangle no
+local = Gamma(q)(t)
+show(local)
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\begin{array}{c}\begin{array}{c} t \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+x \\
+y
+\end{array}\right] \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+\dot x \\
+\dot y
+\end{array}\right] \end{array} \\ \end{array}
+\end{dmath*}
+#+end_export
+
+We can include the acceleration too.
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :exports both :results replace latex :tangle no
+show(Gamma(q, 4)(t))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\begin{array}{c}\begin{array}{c} t \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+x \\
+y
+\end{array}\right] \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+\dot x \\
+\dot y
+\end{array}\right] \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+\ddot x \\
+\ddot y
+\end{array}\right] \end{array} \\ \end{array}
+\end{dmath*}
+#+end_export
+
+todo: revise the definitions of time, coordiante, velocity, below.
+
+Finally, here are some projections operators from the local tuple to supspaces.
+#+attr_latex: :options label=../sage/utils1.4.sage
+#+begin_src sage :tangle ../sage/utils1.4.sage
+time = Function(lambda local: local[0])
+coordinate = Function(lambda local: local[1])
+velocity = Function(lambda local: local[2])
+#+end_src
+
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :exports both :results replace latex :tangle no
+show(compose(velocity, Gamma(q))(t))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{c}
+\dot x \\
+\dot y
+\end{array}\right]
+\end{dmath*}
+#+end_export
+
+
+** Continuation with the free particle.
+
+Now we know how to build literal functions and $\Gamma$, we can continue with the Lagrangian of the free particle.
+
+
+#+attr_latex: :options label=../sage/section1.4.sage
+#+begin_src sage
+q = path_function(
+    [
+        literal_function("x"),
+        literal_function("y"),
+        literal_function("z"),
+    ]
+)
+#+end_src
+
+#+attr_latex: :options label=../sage/section1.4.sage
 #+begin_src sage :exports both :results replace latex
+show(q(t))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{c}
+x \\
+y \\
+z
+\end{array}\right]
+\end{dmath*}
+#+end_export
+
+#+attr_latex: :options label=../sage/section1.4.sage
+#+begin_src sage :exports both :results replace latex
+show(D(q)(t))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{c}
+\dot x \\
+\dot y \\
+\dot z
+\end{array}\right]
+\end{dmath*}
+#+end_export
+
+#+attr_latex: :options label=../sage/section1.4.sage
+#+begin_src sage :exports both :results replace latex
+show(Gamma(q)(t))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\begin{array}{c}\begin{array}{c} t \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+x \\
+y \\
+z
+\end{array}\right] \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+\dot x \\
+\dot y \\
+\dot z
+\end{array}\right] \end{array} \\ \end{array}
+\end{dmath*}
+#+end_export
+
+
+
+The Lagrangian of a free particle with mass $m$ applied to the path ~Gamma~ gives this.
+Our first implementation is like this: $L(\Gamma[q](t))$, that is, $\Gamma[q](t)$ makes a local tuple, and this is given as argument to $L$.
+#+attr_latex: :options label=../sage/section1.4.sage
+#+begin_src sage :exports both :results replace latex
+load("functions.sage")
+m = var('m', domain='positive')
 show(L_free_particle(m)(Gamma(q)(t)))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\frac{1}{2} \, m \sin^{2}\]
+\begin{dmath*}
+\frac{1}{2} \, {\left(\dot x^{2} + \dot y^{2} + \dot z^{2}\right)} m
+\end{dmath*}
+#+end_export
+
+Here is the implementation of the book: $(L\circ \Gamma[q])(t)$, that is, $L\circ \Gamma[q]$ is a function that depends on $t$.
+Note how the brackets are placed after ~Gamma(q)~.
+
+#+attr_latex: :options label=../sage/section1.4.sage
+#+begin_src sage :exports both :results replace latex
+show(compose(L_free_particle(m), Gamma(q))(t))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\frac{1}{2} \, {\left(\dot x^{2} + \dot y^{2} + \dot z^{2}\right)} m
+\end{dmath*}
 #+end_export
 
 We now compute the integral of Lagrangian ~L~ along the path ~q~, but for this we need a function to carry out 1D integration (along time in our case).
-#+ATTR_LATEX: :options label=don't tangle
-#+begin_src sage :tangle no
-def definite_integral(func, start, end, symbolic=False):
-    if symbolic:
-        return integrate(func(t), t, start, end)
-    res, error = numerical_integral(func(t), start, end)
-    return res
-
-
-def Lagrangian_action(L, q, t1, t2, symbolic=False):
-    return definite_integral(Compose(L, Gamma(q)), t1, t2, symbolic)
-#+end_src
-However, it turns out that Sagemath already support the definite integral in a library. I don't like to read $d t$ at the end of the integral because it reads like the product of the variables $d$ and $t$. Instead, I prefer to read $\d t$; for this reason I overwrite the LaTeX formatting of ~definite_integral~.
-#+ATTR_LATEX: :options label=utils1.4.sage
-#+begin_src sage :tangle sage/utils1.4.sage
+Of course, Sagemath already supports a definite integral in a library.
+#+attr_latex: :options label=../sage/utils1.4.sage
+#+begin_src sage :tangle ../sage/utils1.4.sage
 from sage.symbolic.integration.integral import definite_integral
+#+end_src
 
+I don't like to read $dt$ at the end of the integral because $dt$ reads like the product of the variables $d$ and $t$.
+Instead, I prefer to read $\d t$; for this reason I overwrite the LaTeX formatting of ~definite_integral~.
+#+attr_latex: :options label=../sage/utils1.4.sage
+#+begin_src sage :tangle ../sage/utils1.4.sage
 def integral_latex_format(*args):
     expr, var, a, b = args
     return (
@@ -113,45 +405,44 @@ def integral_latex_format(*args):
 definite_integral._print_latex_ = integral_latex_format
 #+end_src
 
-#+ATTR_LATEX: :options label=utils1.4.sage
-#+begin_src sage :tangle sage/utils1.4.sage
-def Lagrangian_action(L, q, t1, t2):
-    return definite_integral(Compose(L, Gamma(q))(t), t, t1, t2)
-#+end_src
 
 Here is the action along a generic path ~q~.
-#+ATTR_LATEX: :options label=section1.4.sage
-#+begin_src sage
-
-var("T", domain="positive")
-#+end_src
-
-#+ATTR_LATEX: :options label=section1.4.sage
+#+attr_latex: :options label=../sage/section1.4.sage
 #+begin_src sage :exports both :results replace latex
+T = var("T", domain="positive")
+
+def Lagrangian_action(L, q, t1, t2):
+    return definite_integral(compose(L, Gamma(q))(t), t, t1, t2)
+
 show(Lagrangian_action(L_free_particle(m), q, 0, T))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\frac{1}{2} \, m {\left(\int_{0}^{T} \dot q_x^{2} \, \textrm{d}\, t + \int_{0}^{T} \dot q_y^{2} \, \textrm{d}\, t + \int_{0}^{T} \dot q_z^{2} \, \textrm{d}\, t\right)}\]
+\begin{dmath*}
+\frac{1}{2} \, m {\left(\int_{0}^{T} \dot x^{2} \, \textrm{d}\, t + \int_{0}^{T} \dot y^{2} \, \textrm{d}\, t + \int_{0}^{T} \dot z^{2} \, \textrm{d}\, t\right)}
+\end{dmath*}
 #+end_export
 
 To get a numerical answer, we take the test path of the book.
-#+ATTR_LATEX: :options label=section1.4.sage
+Below we'll do some arithmetic with ~test_path~; therefore we encapsulate it in a ~Function~.
+#+attr_latex: :options label=../sage/section1.4.sage
 #+begin_src sage :exports both :results replace latex
-test_path = vector([4 * t + 7, 3 * t + 5, 2 * t + 1])
-Lagrangian_action(L_free_particle(mass=3), test_path, 0, 10)
+test_path = Function(lambda t: vector([4 * t + 7, 3 * t + 5, 2 * t + 1]))
+show(Lagrangian_action(L_free_particle(mass=3), test_path, 0, 10))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
+\begin{dmath*}
 435
+\end{dmath*}
 #+end_export
 
-Let's try a harder path.
-#+ATTR_LATEX: :options label=section1.4.sage
+Let's try a harder path. We don't need this later, so the encapsulation in ~Function~ is not necessary.
+#+attr_latex: :options label=../sage/section1.4.sage
 #+begin_src sage :exports both :results replace latex
-hard_path = vector([4 * t + 7, 3 * t + 5, 2 * exp(-t) + 1])
+hard_path = lambda t: vector([4 * t + 7, 3 * t + 5, 2 * exp(-t) + 1])
 
 result = Lagrangian_action(L_free_particle(mass=3), hard_path, 0, 10)
 show(result)
@@ -160,32 +451,42 @@ show(float(result))
 
 #+RESULTS:
 #+begin_export latex
-\[3 \, {\left(125 \, e^{20} - 1\right)} e^{\left(-20\right)} + 3\]
-\[377.9999999938165\]
+\begin{dmath*}
+3 \, {\left(125 \, e^{20} - 1\right)} e^{\left(-20\right)} + 3
+\end{dmath*}
+\begin{dmath*}
+377.9999999938165
+\end{dmath*}
 #+end_export
 
-The value of the integral is different from $435$ because the end points on this harder path are not the same as the end points of the test path.
+The value of the integral is different from $435$ because the end points of this harder path are not the same as the end points of the test path.
 
 ** Path of minimum action
 
-First some experiments to see whether the code works as intended.
-#+ATTR_LATEX: :options label=section1.4.sage
+First some experiments to see whether my code works as intended.
+#+attr_latex: :options label=../sage/section1.4.sage
 #+begin_src sage :exports both :results replace latex
+@Func
 def make_eta(nu, t1, t2):
-    return (t - t1) * (t - t2) * nu(t=t)
+    return lambda t: (t - t1) * (t - t2) * nu(t)
 
-nu = vector([sin(t), cos(t), t ^ 2])
-show(1 / 3 * make_eta(nu, 3, 4)  + test_path)
+
+nu = Function(lambda t: vector([sin(t), cos(t), t ^ 2]))
+
+show((1 / 3 * make_eta(nu, 3, 4)  + test_path)(t))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\frac{1}{3} \, {\left(t - 3\right)} {\left(t - 4\right)} \sin + 4 \, t + 7,\,\frac{1}{3} \, {\left(t - 3\right)} {\left(t - 4\right)} \cos + 3 \, t + 5,\,\frac{1}{3} \, {\left(t - 3\right)} {\left(t - 4\right)} t^{2} + 2 \, t + 1\right)\]
+\begin{dmath*}
+\left(\frac{1}{3} \, {\left(t - 3\right)} {\left(t - 4\right)} \sin + 4 \, t + 7,\,\frac{1}{3} \, {\left(t - 3\right)} {\left(t - 4\right)} \cos + 3 \, t + 5,\,\frac{1}{3} \, {\left(t - 3\right)} {\left(t - 4\right)} t^{2} + 2 \, t + 1\right)
+\end{dmath*}
 #+end_export
 
-By adding the ~n()~ we force the result into one floating point number. (If we don't, the result is long expression with lots of cosines and sines.)
+In the next code, I add the ~n()~ to force the result to a floating point number.
+(Without this, the result is a long expression with lots of cosines and sines.)
 
-#+ATTR_LATEX: :options label=section1.4.sage
+#+attr_latex: :options label=../sage/section1.4.sage
 #+begin_src sage :exports both :results replace latex
 def varied_free_particle_action(mass, q, nu, t1, t2):
     eta = make_eta(nu, t1, t2)
@@ -200,32 +501,36 @@ show(varied_free_particle_action(3.0, test_path, nu, 0.0, 10.0)(0.001))
 
 #+RESULTS:
 #+begin_export latex
-\[436.291214285714\]
+\begin{dmath*}
+436.291214285714
+\end{dmath*}
 #+end_export
 
 By comparing our result with that of the book, we see we are still on track.
 
 Now use Sagemath's ~find_local_minimum~ to minimize over $\epsilon$.
-#+ATTR_LATEX: :options label=section1.4.sage
+#+attr_latex: :options label=../sage/section1.4.sage
 #+begin_src sage :exports both :results replace latex
 res = find_local_minimum(
-    varied_free_particle_action(3.0, test_path, nu, 0, 10), -2, 1
+    varied_free_particle_action(3.0, test_path, nu, 0.0, 10.0), -2.0, 1.0
 )
 show(res)
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left(435.000000000000, 0.0\right)\]
+\begin{dmath*}
+\left(435.000000000000, 0.0\right)
+\end{dmath*}
 #+end_export
 
-We see that the optimal $\epsilon=0$, and we retrieve our earlier value of the Lagrangian action.
+We see that the optimal value for $\epsilon$ is $0$, and we retrieve our earlier value of the Lagrangian action.
 
 ** Finding minimal trajectories
 
 The ~make_path~ function uses a Lagrangian polynomial to interpolate a given set of data.
-#+ATTR_LATEX: :options label=utils1.4.sage
-#+begin_src sage :tangle sage/utils1.4.sage
+#+attr_latex: :options label=../sage/utils1.4.sage
+#+begin_src sage :tangle ../sage/utils1.4.sage
 def Lagrangian_polynomial(ts, qs):
     return RR['x'].lagrange_polynomial(list(zip(ts, qs)))
 #+end_src
@@ -236,36 +541,35 @@ From the book we know we need to fit $\cos(t)$ on $t \in [0, \pi/2]$, so let us 
 Since $\cos^{2} x + \sin^{2} x = 1$, we can use  this relation to check the quality of derivative of the fitted polynomial at the same time.
 The result is better than I expected.
 
-#+ATTR_LATEX: :options label=section1.4.sage
+#+attr_latex: :options label=../sage/section1.4.sage
 #+begin_src sage :exports both :results replace latex
 ts = np.linspace(0, pi / 2, 5)
 qs = [cos(t).n() for t in ts]
 lp = Lagrangian_polynomial(ts, qs)
 ts = np.linspace(0, pi / 2, 20)
 Cos = [lp(x=t).n() for t in ts]
-Sin = [-lp.derivative(x)(x=t).n() for t in ts]
+Sin = [lp.derivative(x)(x=t).n() for t in ts]
 Zero = [abs(Cos[i] ^ 2 + Sin[i] ^ 2 - 1) for i in range(len(ts))]
 show(max(Zero))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[0.00735247812614714\]
 #+end_export
 
-For ~math_path~ we use numpy's ~linspace~ instead of the linear interpolants of the book.
-Note that  the coordinate paths above are ~vector~ functions, so ~make_path~ should return this also.
-#+ATTR_LATEX: :options label=section1.4.sage
+In the function ~make_path~ we use numpy's ~linspace~ instead of the linear interpolants of the book.
+Note that  the coordinate paths above are column-vector functions, so ~make_path~ should return the same type.
+#+attr_latex: :options label=../sage/section1.4.sage
 #+begin_src sage :exports code :results none
 def make_path(t0, q0, t1, q1, qs):
     ts = np.linspace(t0, t1, len(qs) + 2)
     qs = np.r_[q0, qs, q1]
-    return vector([Lagrangian_polynomial(ts, qs)(t)])
+    return lambda t: vector([Lagrangian_polynomial(ts, qs)(t)])
 #+end_src
 
 Here is the harmonic Lagrangian.
-#+ATTR_LATEX: :options label=utils1.4.sage
-#+begin_src sage :exports code :results none :tangle sage/utils1.4.sage
+#+attr_latex: :options label=../sage/utils1.4.sage
+#+begin_src sage :tangle ../sage/utils1.4.sage
 def L_harmonic(m, k):
     def Lagrangian(local):
         q = coordinate(local)
@@ -275,7 +579,7 @@ def L_harmonic(m, k):
     return Lagrangian
 #+end_src
 
-#+ATTR_LATEX: :options label=section1.4.sage
+#+attr_latex: :options label=../sage/section1.4.sage
 #+begin_src sage :exports code :results none
 def parametric_path_action(Lagrangian, t0, q0, t1, q1):
     def f(qs):
@@ -290,17 +594,18 @@ The intermediate values ~qs~ will be optimized below, whereas ~q0~ and ~q1~ rema
 Thus, we strip the first and last element of ~linspace~ to make ~qs~.
 The result tells us what we can expect for the minimal value for the integral over the Lagrangian along the optimal path.
 
-#+ATTR_LATEX: :options label=section1.4.sage
+#+attr_latex: :options label=../sage/section1.4.sage
 #+begin_src sage :exports both :results value
 t0, t1 = 0, pi / 2
 q0, q1 = cos(t0), cos(t1)
-ts = np.linspace(0, pi / 2, 5)
-initial_qs = [cos(t).n() for t in ts][1:-1]
+T = np.linspace(0, pi / 2, 5)
+initial_qs = [cos(t).n() for t in T][1:-1]
 parametric_path_action(L_harmonic(m=1, k=1), t0, q0, t1, q1)(initial_qs)
 #+end_src
 
 What is the quality of the path obtained by the Lagrangian interpolation?
-#+ATTR_LATEX: :options label=section1.4.sage
+(Recall that a path is a vector; to extract the value of the element that corresponds to the path, we need to write ~best_path(t=t)[0]~.)
+#+attr_latex: :options label=../sage/section1.4.sage
 #+begin_src sage :exports both :results replace latex
 def find_path(Lagrangian, t0, q0, t1, q1, n):
     ts = np.linspace(t0, t1, n)
@@ -313,26 +618,28 @@ def find_path(Lagrangian, t0, q0, t1, q1, n):
 
 best_path = find_path(L_harmonic(m=1, k=1), t0=0, q0=1, t1=pi / 2, q1=0, n=5)
 result = [
-    abs(best_path(t=t).n()[0] - cos(t).n()) for t in np.linspace(0, pi / 2, 10)
+    abs(best_path(t)[0].n() - cos(t).n()) for t in np.linspace(0, pi / 2, 10)
 ]
 show(max(result))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[0.000172462354236957\]
+\begin{dmath*}
+0.000172462354236957
+\end{dmath*}
 #+end_export
 
 Great. All works!
 
-Instead of Exercise 1.5 I plot the Lagrangian as a function of $q(t)$.
+Finally, here is a plot of the Lagrangian as a function of $q(t)$.
 
 
-#+ATTR_LATEX: :options label=section1.4.sage
-#+begin_src sage :exports code :results none
-ts = np.linspace(0, pi / 2, 20)
-q = vector([cos(t)])
-lvalues = [L_harmonic(m=1, k=1)(Gamma(q)(t)).n() for t in ts]
+#+attr_latex: :options label=../sage/section1.4.sage
+#+begin_src sage :exports code :results none :eval never
+T = np.linspace(0, pi / 2, 20)
+q = lambda t: vector([cos(t)])
+lvalues = [L_harmonic(m=1, k=1)(Gamma(q)(t))(t=ti).n() for ti in T]
 points = list(zip(ts, lvalues))
 plot = list_plot(points, color="black", size=30)
 plot.axes_labels(["$t$", "$L$"])

@@ -1,33 +1,24 @@
-import numpy as np
+load("utils1.5.sage")
 
-load(
-    "utils.sage",
-    "utils1.4.sage",
-    "utils1.5.sage",
-)
+t = var("t", domain="real")
 
-var("t x y", domain="real")
+load("utils1.4.sage")
+k, m = var('k m', domain="positive")
+q = path_function([literal_function("x")])
 
-var('k m')
-assume(k > 0, m > 0)
-space = make_named_space(["q_x"])
+L = L_harmonic(m, k)
+show(L(Gamma(q)(t)))
 
-show(L_harmonic(m, k)(space))
+show(partial(L, 1)(Gamma(q)(t)))
 
-show(partial(L_harmonic(m, k), 1)(space))
+show(partial(L, 2)(Gamma(q)(t)))
 
-show(partial(L_harmonic(m, k), 2)(space))
+show(compose(partial(L, 1), Gamma(q))(t))
+show(compose(partial(L, 2), Gamma(q))(t))
 
-q = vector([literal_function("q_x"), literal_function("q_y")])
+show(D(compose(partial(L, 2), Gamma(q)))(t))
 
-show(partial(L_harmonic(m, k), 1)(Gamma(q)(t)))
-
-show(Compose(partial(L_harmonic(m, k), 1), Gamma(q))(t))
-
-show(D(partial(L_harmonic(m, k), 2)(Gamma(q)(t))))
-
-space = make_named_space(["\\xi", "\\eta"])
-q = vector([literal_function("\\xi"), literal_function("\\eta")])
+q = path_function([literal_function("xi"), literal_function("eta")])
 
 var("mu", domain="positive")
 
@@ -40,88 +31,94 @@ def L_orbital(m, mu):
     return Lagrangian
 
 L = L_orbital(m, mu)
-show(L(space))
+show(L(Gamma(q)(t)))
 
 show(partial(L, 1)(Gamma(q)(t)))
 
 show(partial(L, 2)(Gamma(q)(t)))
 
-space = make_named_space(["\\theta"])
-q = vector([literal_function("\\theta")])
+q = path_function([literal_function("theta")])
 
 L = L_planar_pendulum(m, g, l)
-show(L(space))
+show(L(Gamma(q)(t)))
 
 show(partial(L, 1)(Gamma(q)(t)))
 
 show(partial(L, 2)(Gamma(q)(t)))
 
 L = L_Henon_Heiles(m)
-space = make_space("x", dim=2)
-show(L(space))
+q = path_function([literal_function("x"), literal_function("y")])
+show(L(Gamma(q)(t)))
 
-show(partial(L, 1)(space))
+show(partial(L, 1)(Gamma(q)(t)))
 
-show(partial(L, 2)(space))
+show(partial(L, 2)(Gamma(q)(t)))
 
 var('R', domain="positive")
 
 
 def L_sphere(m, R):
     def Lagrangian(local):
-        q = coordinate(local)
-        theta, phi = q[:]
-        v = velocity(local)
-        alpha, beta = v[:]
+        theta, phi = coordinate(local).list()
+        alpha, beta = velocity(local).list()
         L = m * R * (square(alpha) + square(beta * sin(theta))) / 2
         return L
 
     return Lagrangian
 
-space = make_named_space(["\\phi", "\\theta"])
+q = path_function([literal_function("phi"), literal_function("theta")])
 L = L_sphere(m, R)
-show(L(space))
 
-show(partial(L, 1)(space))
+show(L(Gamma(q)(t)))
 
-show(partial(L, 2)(space))
+show(partial(L, 1)(Gamma(q)(t)))
 
-space = make_space("x", dim=3)
+show(partial(L, 2)(Gamma(q)(t)))
+
+q = path_function(
+    [
+        literal_function("x"),
+        literal_function("y"),
+    ]
+)
+
+L = L_free_particle(m)
+show(compose(partial(L, 1), Gamma(q))(t))
+show(compose(partial(L, 2), Gamma(q))(t))
+show(D(compose(partial(L, 2), Gamma(q)))(t))
+show(
+    (D(compose(partial(L, 2), Gamma(q))) - compose(partial(L, 1), Gamma(q)))(t)
+)
+
 var("a b c a0 b0 c0", domain="real")
-test_path = vector([a * t + a0, b * t + b0, c * t + c0])
+test_path = lambda t: vector([a * t + a0, b * t + b0, c * t + c0])
 
 l_eq = Lagrange_equations(L_free_particle(m))(test_path)
-show(l_eq)
 show(l_eq(t))
 
-l_eq = Lagrange_equations(L_free_particle(m))(
-    [literal_function("x"), literal_function("y"), literal_function('z')]
-)
+q = path_function([literal_function("x")])
+l_eq = Lagrange_equations(L_free_particle(m))(q)
 show(l_eq(t))
 
 var("A phi omega", domain="real")
 assume(A > 0)
 
-proposed_path = vector([A * cos(omega * t + phi)])
+proposed_path = lambda t: vector([A * cos(omega * t + phi)])
 
 l_eq = Lagrange_equations(L_harmonic(m, k))(proposed_path)(t)
 show(l_eq)
 
-show(l_eq[0][0])
+show(l_eq[0, 0])
 
-show(l_eq[0][0].factor())
+show(l_eq[0, 0].factor())
 
-space = make_named_space(["r", "\\phi"])
-var("G m m1 m2")
-assume(G > 0, m > 0, m1 > 0, m2 > 0)
+var("G m m1 m2", domain="positive")
 
 
 def L_central_polar(m, V):
     def Lagrangian(local):
-        r, phi = coordinate(local)
-        # r, phi = q[:]
-        qdot = velocity(local)
-        rdot, phidot = velocity(local)  # qdot[:]
+        r, phi = coordinate(local).list()
+        rdot, phidot = velocity(local).list()
         T = 1 / 2 * m * (square(rdot) + square(r * phidot))
         return T - V(r)
 
@@ -134,14 +131,13 @@ def gravitational_energy(G, m1, m2):
 
     return f
 
+q = path_function([literal_function("r"), literal_function("phi")])
 V = gravitational_energy(G, m1, m2)
-L = L_central_polar(m, gravitational_energy(G, m1, m2))
-show(L(space))
+L = L_central_polar(m, V)
+show(L(Gamma(q)(t)))
 
-l_eq = Lagrange_equations(L_central_polar(m, gravitational_energy(G, m1, m2)))(
-    [literal_function("r"), literal_function("\\phi")]
-)(t)
+l_eq = Lagrange_equations(L)(q)(t)
 
-show(l_eq[0][1].factor() == 0)
+show(l_eq[0, 1] == 0)
 
-show(l_eq[0][0] == 0)
+show(l_eq[0, 0] == 0)

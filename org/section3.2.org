@@ -19,7 +19,6 @@
 
 ** The standard imports.
 
-#+ATTR_LATEX: :options label=section3.5.sage
 #+begin_src sage
 load(
     "utils.sage",
@@ -28,12 +27,11 @@ load(
     "utils3.2.sage",
 )
 
-var("t x y", domain="real")
+var("t", domain="real")
 #+end_src
 
 
 
-#+ATTR_LATEX: :options label=don't tangle
 #+begin_src sage :exports code  :tangle no
 load("show_expression.sage")
 #+end_src
@@ -92,6 +90,7 @@ def Hamiltonian(local):
 show(Poisson_bracket(lambda local: coordinate(local)[0], Hamiltonian)(space))
 show(Poisson_bracket(lambda local: momentum(local)[0], Hamiltonian)(space))
 show(Poisson_bracket(coordinate, Hamiltonian)(space))
+show(Poisson_bracket(coordinate, momentum)(space))
 #+end_src
 
 #+RESULTS:
@@ -110,6 +109,12 @@ show(Poisson_bracket(coordinate, Hamiltonian)(space))
 \left(\begin{array}{r}
 \frac{\partial}{\partial {\dot q_1}}H\left(t, {q_1}, {q_2}, {\dot q_1}, {\dot q_2}\right) \\
 \frac{\partial}{\partial {\dot q_2}}H\left(t, {q_1}, {q_2}, {\dot q_1}, {\dot q_2}\right)
+\end{array}\right)
+\end{dmath*}
+\begin{dmath*}
+\left(\begin{array}{rr}
+1 & 0 \\
+0 & 1
 \end{array}\right)
 \end{dmath*}
 #+end_export

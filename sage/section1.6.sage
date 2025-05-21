@@ -1,65 +1,44 @@
-import numpy as np
+load("utils1.6.sage")
 
-load(
-    "utils.sage",
-    "utils1.4.sage",
-    "utils1.5.sage",
-    "utils1.6.sage",
-)
-
-var("t x y", domain="real")
-
-space = make_named_space(["x", "y"])
-
-l_eq = Lagrange_equations(L_uniform_acceleration(m, g))(
-    [literal_function("x"), literal_function("y")]
-)
-show(l_eq)
+q = path_function([literal_function("x"), literal_function("y")])
+l_eq = Lagrange_equations(L_uniform_acceleration(m, g))(q)
+show(l_eq(t))
 
 def U(r):
     return 1 / r
 
-show(
-    Lagrange_equations(L_central_rectangular(m, U))(
-        [literal_function("x"), literal_function("y")]
-    )
-)
+show(Lagrange_equations(L_central_rectangular(m, U))(q)(t))
 
-def U(r):
-    return function("V")(r)
+U = Function(lambda x: function("U")(x))
+show(Lagrange_equations(L_central_rectangular(m, U))(q)(t))
 
-show(
-    Lagrange_equations(L_central_rectangular(m, U))(
-        [literal_function("x"), literal_function("y")]
-    )
-)
+r = literal_function("r")
+phi = literal_function("phi")
+q = path_function([r, phi])
+show(p_to_r(Gamma(q)(t)))
 
-space = make_named_space(["r", "\\phi"])
-show(p_to_r(space))
+show((partial(p_to_r, 0)(Gamma(q)(t))))
 
-show((partial(p_to_r, 0)(space)))
+show((partial(p_to_r, 1)(Gamma(q)(t))))
 
-show((partial(p_to_r, 1)(space)))
+show(F_to_C(p_to_r)(Gamma(q)(t)))
 
-show(F_to_C(p_to_r)(space))
+# show(L_central_polar(m, U)(Gamma(q)(t)))
+show(L_central_polar(m, U)(Gamma(q)(t)).simplify_full())
 
-show(L_central_polar(m, U)(space).simplify_full())
+expr = Lagrange_equations(L_central_polar(m, U))(q)(t)
+show(expr.simplify_full().expand())
 
-expr = Lagrange_equations(L_central_polar(m, U))(
-    [literal_function("r"), literal_function("\\phi")]
-).simplify_full().expand()
-
-show(expr[0][0])
-show(expr[0][1])
-
-space = make_named_space(["x", "y"])
-var("m Omega r")
-expr = L_rotating_rectangular(m, Omega)(space).simplify_full()
+_ = var("Omega", domain="positive")
+q_xy = path_function([literal_function("x"), literal_function("y")])
+expr = L_rotating_rectangular(m, Omega)(Gamma(q_xy)(t)).simplify_full()
 
 show(expr)
 
-space = make_named_space(["\\theta"])
+_ = var("l", domain="positive")
+
+theta = path_function([literal_function("theta")])
 ys = literal_function("y")
 
-expr = L_pend(m, l, g, ys)(space).simplify_full()
+expr = L_pend(m, l, g, ys)(Gamma(theta)(t)).simplify_full()
 show(expr)

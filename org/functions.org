@@ -1,0 +1,396 @@
+#+TITLE: Functional programming
+#+date: <2025-05-10 Sat>
+#+AUTHOR: Nicky
+
+#+OPTIONS: toc:nil author:t date:t title:t
+
+#+LATEX_CLASS: subfiles
+#+LATEX_CLASS_OPTIONS: [sicm_sagemath]
+
+#+PROPERTY: header-args:sage :session functional :eval never-export :exports code :results none :tangle ../sage/functions_tests.sage :dir ../sage/
+
+
+
+* Functional programming with Python functions
+
+In this section we set up some generic functionality to support the summation, products and composition of functions:
+\begin{align*}
+(f+g)(x) &= f(x) + g(x), \\
+(fg)(x) &= f(x)g(x), \\
+(f \circ g)(x) &= f(g(x).
+\end{align*}
+This is easy to code by means of recursion.
+
+
+
+** Standard imports
+
+#+attr_latex: :options label=../sage/functions.sage
+#+begin_src sage :tangle ../sage/functions.sage
+load("tuples.sage")
+#+end_src
+
+
+
+We need to load ~functions.sage~ to run the examples in the test file.
+#+attr_latex: :options label=../sage/functions\_tests.sage
+#+begin_src sage
+load("functions.sage")
+#+end_src
+
+I load ~show_expression~ to control the LaTeX output in this org file.
+#+attr_latex: :options label=don't tangle
+#+begin_src sage  :tangle no
+load("show_expression.sage")
+
+def show(s, simplify=True):
+    return show_expression(s, simplify)
+#+end_src
+
+
+
+** The ~Function~ class
+
+The ~Function~ class offers the functionality we need for functional programming.
+#+attr_latex: :options label=../sage/functions.sage
+#+begin_src sage :tangle ../sage/functions.sage
+class Function:
+    def __init__(self, func):
+        self._func = func
+
+    def __call__(self, *args):
+        return self._func(*args)
+
+    def __add__(self, other):
+        return Function(lambda *args: self(*args) + other(*args))
+
+    def __neg__(self):
+        return Function(lambda *args: -self(*args))
+
+    def __sub__(self, other):
+        return self + (-other)
+
+    def __mul__(self, other):
+        if isinstance(other, Function):
+            return Function(lambda *args: self(*args) * other(*args))
+        return Function(lambda *args: other * self(*args))
+
+    def __rmul__(self, other):
+        return self * other
+
+    def __pow__(self, exponent):
+        if exponent == 0:
+            return Function(lambda x: 1)
+        else:
+            return self * (self ** (exponent - 1))
+#+end_src
+
+The next function will be used as decorator on a function ~f~, say,that returns another function ~inner_f~, say, so that ~inner_f~ becomes a Function.
+
+#+attr_latex: :options label=../sage/functions.sage
+#+begin_src sage :tangle ../sage/functions.sage
+def Func(f):
+    def wrapper(*args, **kwargs):
+        return Function(f(*args, **kwargs))
+
+    return wrapper
+#+end_src
+
+
+Composition is just a recursive call of functions.
+#+attr_latex: :options label=../sage/functions.sage
+#+begin_src sage :tangle ../sage/functions.sage
+@Func
+def compose(*funcs):
+    if len(funcs) == 1:
+        return lambda x: funcs[0](x)
+    return lambda x: funcs[0](compose(*funcs[1:])(x))
+#+end_src
+
+
+
+** Some standard functions
+
+To use python functions as Functions, use ~lambda~ like this.
+#+attr_latex: :options label=../sage/functions\_tests.sage
+#+begin_src sage
+def f(x):
+    return 5 * x
+
+
+F = Function(lambda x: f(x))
+#+end_src
+
+
+We will use quadratic functions often, so let's make a function for this.
+When $x$ is a vector, Sagemath interprets $x^2$  as $x^{t} \cdot x$, which we want.
+The identity is just interesting. Perhaps we'll use it later.
+#+attr_latex: :options label=../sage/functions.sage
+#+begin_src sage :tangle ../sage/functions.sage
+identity = Function(lambda x: x)
+
+def _square(x):
+    if isinstance(
+        x,
+        (
+            int,
+            float,
+            sage.symbolic.expression.Expression,
+            sage.rings.integer.Integer,
+        ),
+    ):
+        return x ^ 2
+    elif isinstance(x, (Vector, list, tuple)):
+        v = vector(x)
+        return v.dot_product(v)
+    elif isinstance(x, Matrix) and x.ncols() == 1:
+        return (x.transpose() * x)[0, 0]
+    else:
+        raise TypeError(f"Unsupported type: {type(x)}")
+
+
+square = Function(lambda x: _square(x))
+#+end_src
+
+To be able to code things like ~(sin + cos)(x)~ we need to postpone the application of ~sin~ and ~cos~ to their arguments.
+Therefore we override their definitions.
+
+#+attr_latex: :options label=../sage/functions.sage
+#+begin_src sage :tangle ../sage/functions.sage
+sin = Function(lambda x: sage.functions.trig.sin(x))
+cos = Function(lambda x: sage.functions.trig.cos(x))
+#+end_src
+
+To use Sagemath functions we make an abbreviation.
+#+attr_latex: :options label=../sage/functions.sage
+#+begin_src sage :tangle ../sage/functions.sage
+function = sage.symbolic.function_factory.function
+#+end_src
+
+Now we can make symbolic functions like so.
+#+attr_latex: :options label=../sage/functions\_tests.sage
+#+begin_src sage
+V = Function(lambda x: function("V")(x))
+#+end_src
+
+
+
+
+** Examples
+
+
+#+attr_latex: :options label=../sage/functions\_tests.sage
+#+begin_src sage :exports both :results replace latex
+x, y = var("x y", domain = RR)
+
+show((square)(x + y).expand())
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+x^{2} + 2 \, x y + y^{2}
+\end{dmath*}
+#+end_export
+
+#+attr_latex: :options label=../sage/functions\_tests.sage
+#+begin_src sage :exports both :results replace latex
+show((square + square)(x + y))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+2 \, {\left(x + y\right)}^{2}
+\end{dmath*}
+#+end_export
+
+#+attr_latex: :options label=../sage/functions\_tests.sage
+#+begin_src sage :exports both :results replace latex
+show((square * square)(x))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+x^{4}
+\end{dmath*}
+#+end_export
+
+#+attr_latex: :options label=../sage/functions\_tests.sage
+#+begin_src sage :exports both :results replace latex
+show((sin + cos)(x))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\cos\left(x\right) + \sin\left(x\right)
+\end{dmath*}
+#+end_export
+
+#+attr_latex: :options label=../sage/functions\_tests.sage
+#+begin_src sage :exports both :results replace latex
+show((square + V)(x))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+x^{2} + V\left(x\right)
+\end{dmath*}
+#+end_export
+
+#+attr_latex: :options label=../sage/functions\_tests.sage
+#+begin_src sage :exports both :results replace latex
+hh = compose(square, sin)
+show((hh + hh)(x))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+2 \, \sin\left(x\right)^{2}
+\end{dmath*}
+#+end_export
+
+We know that $2 \sin x \cos x = \sin(2 x)$.
+
+#+attr_latex: :options label=../sage/functions\_tests.sage
+#+begin_src sage :exports both :results replace latex
+show((2 * (sin * cos)(x) - sin(2 * x)).simplify_full())
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+0
+\end{dmath*}
+#+end_export
+
+Next, we test differentiation and  integration.
+#+attr_latex: :options label=../sage/functions\_tests.sage
+#+begin_src sage :exports both :results replace latex
+show(diff(-compose(square, cos)(x), x))
+show(integrate((2 * sin * cos)(x), x))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+2 \, \cos\left(x\right) \sin\left(x\right)
+\end{dmath*}
+\begin{dmath*}
+-\cos\left(x\right)^{2}
+\end{dmath*}
+#+end_export
+
+Arithmetic with symbolic functions works too.
+
+#+attr_latex: :options label=../sage/functions\_tests.sage
+#+begin_src sage
+U = Function(lambda x: function("U")(x))
+V = Function(lambda x: function("V")(x))
+#+end_src
+
+#+attr_latex: :options label=../sage/functions\_tests.sage
+#+begin_src sage :exports both :results replace latex
+show((U + V)(x))
+show((V + V)(x))
+show((V(U(x))))
+show((compose(V, U)(x)))
+#+end_src
+
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+U\left(x\right) + V\left(x\right)
+\end{dmath*}
+\begin{dmath*}
+2 \, V\left(x\right)
+\end{dmath*}
+\begin{dmath*}
+V\left(U\left(x\right)\right)
+\end{dmath*}
+\begin{dmath*}
+V\left(U\left(x\right)\right)
+\end{dmath*}
+#+end_export
+
+
+#+attr_latex: :options label=../sage/functions\_tests.sage
+#+begin_src sage
+def f(x):
+    def g(y):
+        return x * y ^ 2
+
+    return g
+#+end_src
+
+#+attr_latex: :options label=../sage/functions\_tests.sage
+#+begin_src sage :exports both :results replace latex
+show(f(3)(5))
+#+end_src
+
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+75
+\end{dmath*}
+#+end_export
+
+However, we cannot apply algebraic operations on  ~f~. For instance, this does not work; it gives TypeError: unsupported operand type(s) for +: 'function' and 'function'.
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :tangle no
+show((f(3) + f(2))(4))
+#+end_src
+
+By decoration with ~@Func~ we get what we need.
+#+attr_latex: :options label=../sage/functions\_tests.sage
+#+begin_src sage
+@Func
+def f(x):
+    def g(y):
+        return x * y ^ 2
+
+    return g
+#+end_src
+
+#+attr_latex: :options label=../sage/functions\_tests.sage
+#+begin_src sage :exports both :results replace latex
+show((f(3) + f(2))(4))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+80
+\end{dmath*}
+#+end_export
+
+
+Indeed: $(3+2)*4^2 = 80$.
+
+Decorating with ~@Func~ is the same as this.
+#+attr_latex: :options label=../sage/functions\_tests.sage
+#+begin_src sage
+def f(x):
+    def g(y):
+        return x * y ^ 2
+
+    return Function(lambda y: g(y))
+#+end_src
+
+#+attr_latex: :options label=../sage/functions\_tests.sage
+#+begin_src sage :exports both :results replace latex
+show((f(3) + f(2))(4))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+80
+\end{dmath*}
+#+end_export

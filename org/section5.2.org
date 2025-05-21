@@ -24,7 +24,6 @@ I therefore move on to the symplectic matrix version directly.
 
 ** The standard imports.
 
-#+ATTR_LATEX: :options label=section5.2.sage
 #+begin_src sage
 load(
     "utils.sage",
@@ -34,12 +33,11 @@ load(
     "utils5.2.sage",
 )
 
-var("t x y", domain="real")
+var("t", domain="real")
 #+end_src
 
 
 
-#+ATTR_LATEX: :options label=don't tangle
 #+begin_src sage :exports code  :tangle no
 load("show_expression.sage")
 #+end_src
@@ -53,7 +51,6 @@ Then we concentrate on jacobian.
 When that is done, we can consider symplectic matrices.
 
 Here are the mappings between vectors and up tuples.
-#+ATTR_LATEX: :options label=utils5.2.sage
 #+begin_src sage :tangle sage/utils5.2.sage
 def vector_to_up(vec):
     n = len(vec)
@@ -66,7 +63,6 @@ def up_to_vector(tup):
 #+end_src
 
 Here is a test.
-#+ATTR_LATEX: :options label=section5.2.sage
 #+begin_src sage
 var("r, phi, p_r, p_phi", domain="real")
 assume(r > 0)
@@ -75,7 +71,6 @@ r_phi = up(t, vector([r, phi]), vector([p_r, p_phi]))
 #+end_src
 
 The functions should be each others inverse.
-#+ATTR_LATEX: :options label=section5.2.sage
 #+begin_src sage :exports both :results replace latex
 vec = up_to_vector(r_phi)
 show(vec)
@@ -93,7 +88,6 @@ show(vector_to_up(up_to_vector(r_phi)))
 
 Point transformations can be used as canonical transformations.
 So this case we should get working anyway.
-#+ATTR_LATEX: :options label=section5.2.sage
 #+begin_src sage :exports both :results replace latex
 show(up_to_vector(F_to_CH(p_to_r)(r_phi)).simplify_full())
 #+end_src
@@ -104,7 +98,6 @@ show(up_to_vector(F_to_CH(p_to_r)(r_phi)).simplify_full())
 #+end_export
 
 First I try to differentiate wrt $t$ (to build up some confidence).
-#+ATTR_LATEX: :options label=section5.2.sage
 #+begin_src sage :exports both :results replace latex
 CH = lambda t: up_to_vector(F_to_CH(p_to_r)(r_phi))
 
@@ -121,7 +114,6 @@ This works.
 
 Now, recall that the jacobian needs a vector as input, but our canonical transformations expect up-tuples.
 The next function realizes the necessary lifting.
-#+ATTR_LATEX: :options label=utils5.2.sage
 #+begin_src sage :tangle sage/utils5.2.sage
 def to_vector_map(C):
     "Lift the structure map C such that it maps a vector to a vector."
@@ -129,7 +121,6 @@ def to_vector_map(C):
 #+end_src
 
 It's time to test all this. The result looks great.
-#+ATTR_LATEX: :options label=section5.2.sage
 #+begin_src sage :exports both :results replace latex
 DC_H = jacobian(to_vector_map(F_to_CH(p_to_r))(vec), vec).simplify_full()
 show(DC_H)
@@ -147,7 +138,6 @@ show(DC_H)
 #+end_export
 
 And now we can build the function ~D_as_matrix~ from the book.
-#+ATTR_LATEX: :options label=utils5.2.sage
 #+begin_src sage :tangle sage/utils5.2.sage
 def D_as_matrix(C):
     def f(state):
@@ -160,14 +150,12 @@ def D_as_matrix(C):
 
 We continue with the tests on the symplectic matrices.
 As our examples are low dimensional, we don't need sparse matrices.
-#+ATTR_LATEX: :options label=utils5.2.sage
 #+begin_src sage :tangle sage/utils5.2.sage
 def symplectic_unit(n):
     I = identity_matrix(n)
     return block_matrix([[zero_matrix(n), I], [-I, zero_matrix(n)]])
 #+end_src
 
-#+ATTR_LATEX: :options label=section5.2.sage
 #+begin_src sage :exports both :results replace latex
 show(symplectic_unit(2))
 #+end_src
@@ -187,7 +175,6 @@ The test on whether a matrix is symplectic or not.
 Sometimes Sagemath seems to miss that $\sqrt{x}/\sqrt{x} = 1$, even after adding the assumption that $x$ is positive.
 It turned out that expanding the matrix $M$ resolved this type of problem.
 I like to see the output in case the transformation is not symplectic.
-#+ATTR_LATEX: :options label=utils5.2.sage
 #+begin_src sage :tangle sage/utils5.2.sage
 def is_symplectic_matrix(M):
     n = M.nrows()
@@ -204,7 +191,6 @@ def is_symplectic_matrix(M):
 Since $J^{-1} = J^{T}$, we can fill in $J=A$ in the relation $J = A J A^{T}= J J J^{T} = J J J^{-1} = J$, to conclude that $J$ is a symplectic matrix itself.
 This is our first test of ~is_symplectic~.
 
-#+ATTR_LATEX: :options label=section5.2.sage
 #+begin_src sage :exports both :results replace latex
 J = symplectic_unit(2)
 show(is_symplectic_matrix(J))
@@ -215,7 +201,6 @@ show(is_symplectic_matrix(J))
 #+end_export
 
 Here are the rest of the functions of the section.
-#+ATTR_LATEX: :options label=utils5.2.sage
 #+begin_src sage :tangle sage/utils5.2.sage
 def qp_submatrix(M):
     return M[1:, 1:]
@@ -227,7 +212,6 @@ def is_symplectic_transform(C):
 #+end_src
 
 We can test whether the transformation to polar coordinates is canonical.
-#+ATTR_LATEX: :options label=section5.2.sage
 #+begin_src sage :exports both :results replace latex
 show(is_symplectic_transform(F_to_CH(p_to_r))(r_phi))
 #+end_src
@@ -254,7 +238,6 @@ def F(local):
 #+end_src
 
 The next check takes some time to complete.
-#+ATTR_LATEX: :options label=section5.2.sage
 #+begin_src sage :exports both :results replace latex :eval never
 _ = var("q_x q_y v_x v_y p_x p_y", domain="real")
 xy = up(t, vector([x, y]), vector([p_x, p_y]))

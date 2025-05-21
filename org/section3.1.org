@@ -17,7 +17,6 @@
 ** Standard imports
 
 
-#+ATTR_LATEX: :options label=utils3.1.sage
 #+begin_src sage :tangle sage/utils3.1.sage
 load(
     "utils.sage",
@@ -25,7 +24,6 @@ load(
 )
 #+end_src
 
-#+ATTR_LATEX: :options label=section3.1.sage
 #+begin_src sage
 import numpy as np
 
@@ -37,11 +35,10 @@ load(
     "utils3.1.sage",
 )
 
-var("t x y", domain="real")
+var("t", domain="real")
 #+end_src
 
 
-#+ATTR_LATEX: :options label=don't tangle
 #+begin_src sage :exports code  :tangle no
 load("show_expression.sage")
 #+end_src
@@ -56,7 +53,6 @@ We will use the code below to solve Exercise 3.1.
 
 ** Computing Hamilton's equations
 
-#+ATTR_LATEX: :options label=utils3.1.sage
 #+begin_src sage :tangle sage/utils3.1.sage
 def Hamilton_equations(Hamiltonian):
     def f(q, p):
@@ -68,7 +64,6 @@ def Hamilton_equations(Hamiltonian):
     return f
 #+end_src
 
-#+ATTR_LATEX: :options label=utils3.1.sage
 #+begin_src sage :tangle sage/utils3.1.sage
 def Hamiltonian_to_state_derivative(Hamiltonian):
     def f(H_state):
@@ -81,7 +76,6 @@ def Hamiltonian_to_state_derivative(Hamiltonian):
     return f
 #+end_src
 
-#+ATTR_LATEX: :options label=utils3.1.sage
 #+begin_src sage :tangle sage/utils3.1.sage
 def qp_to_H_state_path(q, p):
     def f(t):
@@ -90,7 +84,6 @@ def qp_to_H_state_path(q, p):
     return f
 #+end_src
 
-#+ATTR_LATEX: :options label=utils3.1.sage
 #+begin_src sage :tangle sage/utils3.1.sage
 def momentum(H_state):
     return H_state[2]
@@ -98,7 +91,6 @@ def momentum(H_state):
 
 In the book, they use just the first and second component of ~q~ to pass on to the potential.
 I don't see why, so I keep it general.
-#+ATTR_LATEX: :options label=section3.1.sage
 #+begin_src sage :tangle sage/utils3.1.sage
 def H_rectangular(m, V):
     def f(state):
@@ -112,14 +104,12 @@ def H_rectangular(m, V):
 I discovered that if I use the same name for a python function (here ~V~) as the symbolic function (here ~U~), I get errors.
 Therefore I use ~U~ instead of ~V~ in ~function("U")~.
 Recall, to use symbolic functions in differentiation, the symbolic function want the argument list unpacked.
-#+ATTR_LATEX: :options label=section3.1.sage
 #+begin_src sage
 def V(q):
     return function("U")(*q)
 #+end_src
 
 Let's try what we built.
-#+ATTR_LATEX: :options label=section3.1.sage
 #+begin_src sage
 var("m")
 q = vector([literal_function("q_x"), literal_function("q_y")])
@@ -127,7 +117,6 @@ p = vector([literal_function("p_x"), literal_function("p_y")])
 #+end_src
 
 
-#+ATTR_LATEX: :options label=section3.1.sage
 #+begin_src sage :exports both :results replace latex
 H_state = qp_to_H_state_path(q, p)(t)
 show(H_state)
@@ -139,7 +128,6 @@ show(H_state)
 #+end_export
 
 
-#+ATTR_LATEX: :options label=section3.1.sage
 #+begin_src sage :exports both :results replace latex
 H = H_rectangular
 show(H(m, V)(H_state))
@@ -150,7 +138,6 @@ show(H(m, V)(H_state))
 \[ \frac{p_x^{2} + p_y^{2}}{2 \, m} + U\left(q_x, q_y\right) \]
 #+end_export
 
-#+ATTR_LATEX: :options label=section3.1.sage
 #+begin_src sage :exports both :results replace latex
 show(partial(H(m, V), 1)(H_state))
 #+end_src
@@ -162,7 +149,6 @@ show(partial(H(m, V), 1)(H_state))
 \end{array}\right) \]
 #+end_export
 
-#+ATTR_LATEX: :options label=section3.1.sage
 #+begin_src sage :exports both :results replace latex
 show_tuple(Hamiltonian_to_state_derivative(H(m, V))(H_state))
 #+end_src
@@ -172,7 +158,6 @@ show_tuple(Hamiltonian_to_state_derivative(H(m, V))(H_state))
 \begin{align*} & 1 \\ & \left(\frac{p_x}{m},\,\frac{p_y}{m}\right) \\ & \left(-\mathrm{D}_{0}\left(U\right)\left(q_x, q_y\right),\,-\mathrm{D}_{1}\left(U\right)\left(q_x, q_y\right)\right) \\ \end{align*}
 #+end_export
 
-#+ATTR_LATEX: :options label=section3.1.sage
 #+begin_src sage :exports both :results replace latex
 show_tuple(Hamilton_equations(H(m, V))(q, p))
 #+end_src
@@ -190,7 +175,6 @@ Likewise, if $F$ has orders of $v$ higher than $2$, then $\partial_v^{2} F(v=0) 
 In code, $\partial_{v} F(v=0)$ is ~gradient(F, zero)~.
 Note further that---at least for the examples we consider---the argument ~w~ corresponds to a moment, and ~zero~ is a velocity vector with the same dimension of ~w~.
 
-#+ATTR_LATEX: :options label=utils3.1.sage
 #+begin_src sage :tangle sage/utils3.1.sage
 def Legendre_transform(F):
     def G(w):
@@ -203,7 +187,6 @@ def Legendre_transform(F):
     return G
 #+end_src
 
-#+ATTR_LATEX: :options label=utils3.1.sage
 #+begin_src sage :tangle sage/utils3.1.sage
 def Lagrangian_to_Hamiltonian(Lagrangian):
     def f(H_state):
@@ -219,7 +202,6 @@ def Lagrangian_to_Hamiltonian(Lagrangian):
     return f
 #+end_src
 
-#+ATTR_LATEX: :options label=section3.1.sage
 #+begin_src sage :exports both :results replace latex
 res = Lagrangian_to_Hamiltonian(L_central_rectangular(m, V))(H_state)
 show(res)
@@ -230,7 +212,6 @@ show(res)
 \[ -\frac{1}{2} \, m {\left(\frac{p_x^{2}}{m^{2}} + \frac{p_y^{2}}{m^{2}}\right)} + \frac{p_x^{2}}{m} + \frac{p_y^{2}}{m} + U\left(q_x, q_y\right) \]
 #+end_export
 
-#+ATTR_LATEX: :options label=section3.1.sage
 #+begin_src sage :exports both :results replace latex
 show(res.simplify_full())
 #+end_src
@@ -241,7 +222,6 @@ show(res.simplify_full())
 #+end_export
 
 
-#+ATTR_LATEX: :options label=section3.1.sage
 #+begin_src sage
 var("m g l")
 q = vector([literal_function("q_x")])
@@ -250,7 +230,6 @@ p = vector([literal_function("p_x")])
 
 Here is exercise 3.1.
 
-#+ATTR_LATEX: :options label=section3.1.sage
 #+begin_src sage :exports both :results replace latex
 # space = make_named_space(["\\theta"])
 H_state = qp_to_H_state_path(q, p)(t)
@@ -262,7 +241,6 @@ show(Lagrangian_to_Hamiltonian(L_planar_pendulum(m, g, l))(H_state))
 \[ -g l m {\left(\cos\left(q_x\right) - 1\right)} + \frac{p_x^{2}}{2 \, l^{2} m} \]
 #+end_export
 
-#+ATTR_LATEX: :options label=section3.1.sage
 #+begin_src sage :exports both :results replace latex
 q = vector([literal_function("q_x"), literal_function("q_y")])
 p = vector([literal_function("p_x"), literal_function("p_y")])
@@ -275,7 +253,6 @@ show(Lagrangian_to_Hamiltonian(L_Henon_Heiles(m))(H_state))
 \[ q_x^{2} q_y - \frac{1}{3} \, q_y^{3} + \frac{1}{2} \, p_x^{2} + \frac{1}{2} \, p_y^{2} + \frac{1}{2} \, q_x^{2} + \frac{1}{2} \, q_y^{2} \]
 #+end_export
 
-#+ATTR_LATEX: :options label=section3.1.sage
 #+begin_src sage
 def L_sphere(m, R):
     def Lagrangian(local):
@@ -291,7 +268,6 @@ def L_sphere(m, R):
 var("R")
 #+end_src
 
-#+ATTR_LATEX: :options label=section3.1.sage
 #+begin_src sage :exports both :results replace latex
 space = make_named_space(["\\theta", "\\phi"])
 show(Lagrangian_to_Hamiltonian(L_sphere(m, R))(H_state).simplify_full())

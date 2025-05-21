@@ -6,32 +6,30 @@
 #+LATEX_CLASS: subfiles
 #+LATEX_CLASS_OPTIONS: [sicm_sagemath]
 
-#+PROPERTY: header-args:sage :session section15 :eval never-export :exports code :results none :tangle sage/section1.5.sage
+#+PROPERTY: header-args:sage :session section15 :eval never-export :exports code :results none :tangle ../sage/section1.5.sage :dir ../sage/
 
-#+begin_src emacs-lisp :exports results :results none :eval export
-  (make-variable-buffer-local 'org-latex-title-command)
-  ; (setq org-latex-title-command (concat "\\chapter{%t}\n"))
-#+end_src
+
+
 
 * The Euler-Lagrange Equations
 
-** The standard imports.
-#+ATTR_LATEX: :options label=section1.5.sage
+** Standard imports
+
+#+attr_latex: :options label=../sage/utils1.5.sage
+#+begin_src sage :tangle ../sage/utils1.5.sage
+load("utils1.4.sage")
+#+end_src
+
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage
-import numpy as np
+load("utils1.5.sage")
 
-load(
-    "utils.sage",
-    "utils1.4.sage",
-    "utils1.5.sage",
-)
-
-var("t x y", domain="real")
+t = var("t", domain="real")
 #+end_src
 
 
-#+ATTR_LATEX: :options label=don't tangle
-#+begin_src sage :exports code  :tangle no
+#+attr_latex: :options label=don't tangle
+#+begin_src sage  :tangle no
 load("show_expression.sage")
 #+end_src
 
@@ -41,105 +39,126 @@ load("show_expression.sage")
 *** Harmonic oscillator
 
 Here is a test on the harmonic oscillator.
-First the path to which we apply ~Gamma~.
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports code :results none
-var('k m')
-assume(k > 0, m > 0)
-space = make_named_space(["q_x"])
+load("utils1.4.sage")
+k, m = var('k m', domain="positive")
+q = path_function([literal_function("x")])
 #+end_src
 
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
-show(L_harmonic(m, k)(space))
+L = L_harmonic(m, k)
+show(L(Gamma(q)(t)))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[-\frac{1}{2} \, k {q_x}^{2} + \frac{1}{2} \, m {\dot q_x}^{2}\]
+\begin{dmath*}
+-\frac{1}{2} \, k x^{2} + \frac{1}{2} \, m \dot x^{2}
+\end{dmath*}
 #+end_export
 
 
-We can apply $\partial_{1}L$  and $\partial_{2}L$ to the formal parameters of the space.
-#+ATTR_LATEX: :options label=section1.5.sage
+We can apply $\partial_{1}L$ and $\partial_{2}L$ to a configuration path $q$ that we lift to a local tuple by means of $\Gamma$.
+Realize therefore that ~partial(L_harmonic(m, k), 1)~ maps a local tuple to a real number, and ~Gamma(q)~ maps a time $t$ to a local tuple.
+The next code implements $\partial_1 L(\Gamma(q)(t))$ and $\partial_2 L(\Gamma(q)(t))$.
+(Check how the brackets are organized.)
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
-show(partial(L_harmonic(m, k), 1)(space))
+show(partial(L, 1)(Gamma(q)(t)))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{r}
--k {q_x}
-\end{array}\right)\]
+\begin{dmath*}
+\left[\begin{array}{c}
+-k x
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
-show(partial(L_harmonic(m, k), 2)(space))
+show(partial(L, 2)(Gamma(q)(t)))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{r}
-m {\dot q_x}
-\end{array}\right)\]
+\begin{dmath*}
+\left[\begin{array}{c}
+m \dot x
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
-It also works on a configuration path $q = (x, y)$ that we lift to a local tuple.
-#+ATTR_LATEX: :options label=section1.5.sage
+
+Here are the same results, but now with functional composition.
+\begin{align*}
+&\left(\partial_{1} L \circ \Gamma(q)\right)(t), &
+&\left(\partial_{2}L \circ \Gamma(q)\right)(t).
+\end{align*}
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
-q = vector([literal_function("q_x"), literal_function("q_y")])
-
-show(partial(L_harmonic(m, k), 1)(Gamma(q)(t)))
-#+end_src
-
-
-#+RESULTS:
-#+begin_export latex
-\[\left(\begin{array}{rr}
--k q_x & -k q_y
-\end{array}\right)\]
-#+end_export
-
-Observe that ~partial(L_harmonic(m, k), 1)~ maps a local tuple to real number, and ~Gamma(q)~ maps a time $t$ to a local tuple. Thus, we can consider the compositions of these two functions.
-#+ATTR_LATEX: :options label=section1.5.sage
-#+begin_src sage :exports both :results replace latex
-show(Compose(partial(L_harmonic(m, k), 1), Gamma(q))(t))
+show(compose(partial(L, 1), Gamma(q))(t))
+show(compose(partial(L, 2), Gamma(q))(t))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{rr}
--k q_x & -k q_y
-\end{array}\right)\]
+\begin{dmath*}
+\left[\begin{array}{c}
+-k x
+\end{array}\right]
+\end{dmath*}
+\begin{dmath*}
+\left[\begin{array}{c}
+m \dot x
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
-Observe that these results are functions of $t$, so we can take the derivative with respect to $t$, which forms the last step to check before building the Euler-Lagrange equations.
-#+ATTR_LATEX: :options label=section1.5.sage
+These results are functions of $t$, so we can take the derivative with respect to $t$, which forms the last step to check before building the Euler-Lagrange equations.
+To understand this, note the following function mappings, where we write $t$ for time, $l$ for a local tuple, $v$ a velocity-like vector, and $a$ an acceleration-like vector:
+\begin{align*}
+\Gamma[q]: t &\to l,\\
+\partial_{2} L: l &\to v \\
+\partial_{2} L \circ \Gamma[q] : t &\to v \\
+D(v): t &\to  a\\
+D(\partial_{2} L \circ \Gamma[q]) : t &\to a.
+\end{align*}
+In more classical notation, we compute this:
+\begin{align*}
+\frac{\d}{\d t}\left(\frac{\partial}{\partial_{\dot q}} L\left(\Gamma(q)\right)\right)(t)
+\end{align*}
+
+
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
-show(D(partial(L_harmonic(m, k), 2)(Gamma(q)(t))))
+show(D(compose(partial(L, 2), Gamma(q)))(t))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{rr}
-m \ddot q_x & m \ddot q_y
-\end{array}\right)\]
+\begin{dmath*}
+\left[\begin{array}{c}
+m \ddot x
+\end{array}\right]
+\end{dmath*}
 #+end_export
+
 
 There we are! We can now try the other examples of the book.
 
-
 *** Orbital motion
 
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage
-space = make_named_space(["\\xi", "\\eta"])
-q = vector([literal_function("\\xi"), literal_function("\\eta")])
+q = path_function([literal_function("xi"), literal_function("eta")])
 #+end_src
 
 
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage
 var("mu", domain="positive")
 
@@ -152,59 +171,64 @@ def L_orbital(m, mu):
     return Lagrangian
 #+end_src
 
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
 L = L_orbital(m, mu)
-show(L(space))
+show(L(Gamma(q)(t)))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\frac{1}{2} \, {\left({\dot \eta}^{2} + {\dot \xi}^{2}\right)} m + \frac{\mu}{\sqrt{{\eta}^{2} + {\xi}^{2}}}\]
+\begin{dmath*}
+\frac{1}{2} \, {\left(\dot \eta^{2} + \dot \xi^{2}\right)} m + \frac{\mu}{\sqrt{\eta^{2} + \xi^{2}}}
+\end{dmath*}
 #+end_export
 
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
 show(partial(L, 1)(Gamma(q)(t)))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{rr}
+\begin{dmath*}
+\left[\begin{array}{cc}
 -\frac{\mu \xi}{{\left(\eta^{2} + \xi^{2}\right)}^{\frac{3}{2}}} & -\frac{\mu \eta}{{\left(\eta^{2} + \xi^{2}\right)}^{\frac{3}{2}}}
-\end{array}\right)\]
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
 show(partial(L, 2)(Gamma(q)(t)))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{rr}
+\begin{dmath*}
+\left[\begin{array}{cc}
 m \dot \xi & m \dot \eta
-\end{array}\right)\]
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
 
 *** An ideal planar pendulum,  Exercise 1.9.a of the book
 
-We need a new space and path in terms of $\theta$ and $\dot \theta$.
-#+ATTR_LATEX: :options label=section1.5.sage
+We need a new path in terms of $\theta$ and $\dot \theta$.
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage
-space = make_named_space(["\\theta"])
-q = vector([literal_function("\\theta")])
+q = path_function([literal_function("theta")])
 #+end_src
 
 Here is the Lagrangian.
-Recall that the coordinates of the space are a vector.
-As the motion is in one dimension, we just need the first component of ~theta~. For ~thetadot~ we don't have to this since we consider $\dot \theta^{2}$.
+Recall that the coordinates of the space form a vector.
+Here, ~theta~ is the only element of the vector, which we can extract by considering element $0$.
+For ~thetadot~ we don't have to do this since we consider $\dot \theta^{2}$, and the ~square~ function accepts vectors as input and returns a real.
 
-#+ATTR_LATEX: :options label=utils1.5.sage
-#+begin_src sage :tangle sage/utils1.5.sage
-var("m g l")
-assume(m > 0, g > 0, l > 0)
+#+attr_latex: :options label=../sage/utils1.5.sage
+#+begin_src sage :tangle ../sage/utils1.5.sage
+var("m g l", domain="positive")
 
 
 def L_planar_pendulum(m, g, l):
@@ -218,51 +242,45 @@ def L_planar_pendulum(m, g, l):
     return Lagrangian
 #+end_src
 
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
 L = L_planar_pendulum(m, g, l)
-show(L(space))
+show(L(Gamma(q)(t)))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\frac{1}{2} \, l^{2} m {\dot \theta}^{2} + g l m {\left(\cos\left({\theta}\right) - 1\right)}\]
 #+end_export
 
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
 show(partial(L, 1)(Gamma(q)(t)))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{r}
--g l m \sin\left(\theta\right)
-\end{array}\right)\]
 #+end_export
 
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
 show(partial(L, 2)(Gamma(q)(t)))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{r}
-l^{2} m \dot \theta
-\end{array}\right)\]
 #+end_export
 
 
 
 *** Henon Heiles potential,  Exercise 1.9.b of the book
 
-#+ATTR_LATEX: :options label=utils1.5.sage
-#+begin_src sage  :tangle sage/utils1.5.sage
+As the potential depends on the $x$ and $y$ coordinate separately, we need to unpack the coordinate vector.
+
+#+attr_latex: :options label=../sage/utils1.5.sage
+#+begin_src sage  :tangle ../sage/utils1.5.sage
 def L_Henon_Heiles(m):
     def Lagrangian(local):
-        q = coordinate(local)
-        x, y = q[:]
+        x, y = coordinate(local).list()
         v = velocity(local)
         T = (1 / 2) * square(v)
         V = 1 / 2 * (square(x) + square(y)) + square(x) * y - y**3 / 3
@@ -271,57 +289,60 @@ def L_Henon_Heiles(m):
     return Lagrangian
 #+end_src
 
-
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
 L = L_Henon_Heiles(m)
-space = make_space("x", dim=2)
-show(L(space))
+q = path_function([literal_function("x"), literal_function("y")])
+show(L(Gamma(q)(t)))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[-{x_1}^{2} {x_2} + \frac{1}{3} \, {x_2}^{3} - \frac{1}{2} \, {x_1}^{2} + \frac{1}{2} \, {\dot x_1}^{2} - \frac{1}{2} \, {x_2}^{2} + \frac{1}{2} \, {\dot x_2}^{2}\]
+\begin{dmath*}
+-x^{2} y + \frac{1}{3} \, y^{3} - \frac{1}{2} \, x^{2} - \frac{1}{2} \, y^{2} + \frac{1}{2} \, \dot x^{2} + \frac{1}{2} \, \dot y^{2}
+\end{dmath*}
 #+end_export
 
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
-show(partial(L, 1)(space))
+show(partial(L, 1)(Gamma(q)(t)))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{rr}
--2 \, {x_1} {x_2} - {x_1} & -{x_1}^{2} + {x_2}^{2} - {x_2}
-\end{array}\right)\]
+\begin{dmath*}
+\left[\begin{array}{cc}
+-2 \, x y - x & -x^{2} + y^{2} - y
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
-show(partial(L, 2)(space))
+show(partial(L, 2)(Gamma(q)(t)))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{rr}
-{\dot x_1} & {\dot x_2}
-\end{array}\right)\]
+\begin{dmath*}
+\left[\begin{array}{cc}
+\dot x & \dot y
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
 *** Motion on the 2d sphere,  Exercise 1.9.c of the book
 
 
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage
 var('R', domain="positive")
 
 
 def L_sphere(m, R):
     def Lagrangian(local):
-        q = coordinate(local)
-        theta, phi = q[:]
-        v = velocity(local)
-        alpha, beta = v[:]
+        theta, phi = coordinate(local).list()
+        alpha, beta = velocity(local).list()
         L = m * R * (square(alpha) + square(beta * sin(theta))) / 2
         return L
 
@@ -329,41 +350,49 @@ def L_sphere(m, R):
 #+end_src
 
 
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
-space = make_named_space(["\\phi", "\\theta"])
+q = path_function([literal_function("phi"), literal_function("theta")])
 L = L_sphere(m, R)
-show(L(space))
+
+show(L(Gamma(q)(t)))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\frac{1}{2} \, {\left({\dot \theta}^{2} \sin\left({\phi}\right)^{2} + {\dot \phi}^{2}\right)} R m\]
+\begin{dmath*}
+\frac{1}{2} \, {\left(\sin\left(\phi\right)^{2} \dot \theta^{2} + \dot \phi^{2}\right)} R m
+\end{dmath*}
 #+end_export
 
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
-show(partial(L, 1)(space))
+show(partial(L, 1)(Gamma(q)(t)))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{rr}
-R m {\dot \theta}^{2} \cos\left({\phi}\right) \sin\left({\phi}\right) & 0
-\end{array}\right)\]
+\begin{dmath*}
+\left[\begin{array}{cc}
+R m \cos\left(\phi\right) \sin\left(\phi\right) \dot \theta^{2} & 0
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
-show(partial(L, 2)(space))
+show(partial(L, 2)(Gamma(q)(t)))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{rr}
-R m {\dot \phi} & R m {\dot \theta} \sin\left({\phi}\right)^{2}
-\end{array}\right)\]
+\begin{dmath*}
+\left[\begin{array}{cc}
+R m \dot \phi & R m \sin\left(\phi\right)^{2} \dot \theta
+\end{array}\right]
+\end{dmath*}
 #+end_export
+
 
 
 *** Higher order Lagrangians
@@ -374,32 +403,60 @@ I recently read the books of Larry Susskind on the theoretical minimum for physi
 ** Computing Lagrange's equation
 
 The Euler-Lagrange equations are simple to implement now that we have a good function for computing partial derivatives.
-Besides this, for the moment, I prefer ~diff(t)~ over the ~D~ operator of the book.
-Hence, I did not (yet) implement ~D~ as a function.
 
 
-*** EL equations
+*** The Euler Langrange  Equations
 
-Here are two EL equations with a slight detail.  The first returns a function that takes ~q~ as an argument and then returns a real number since the argument $t$ is already provided (BTW, not a a number, but as a variable on which the returned function depends.)
-#+ATTR_LATEX: :options label=don't tangle
-#+begin_src sage :tangle no
-def Lagrange_equations(Lagrangian):
-    def f(q):
-        res = D(partial(Lagrangian, 2)(Gamma(q)(t)))
-        res -= partial(Lagrangian, 1)(Gamma(q)(t))
-        return res
+We work in steps to see how all components tie together.
+#+attr_latex: :options label=../sage/section1.5.sage
+#+begin_src sage :exports both :results replace latex
+q = path_function(
+    [
+        literal_function("x"),
+        literal_function("y"),
+    ]
+)
 
-    return f
+L = L_free_particle(m)
+show(compose(partial(L, 1), Gamma(q))(t))
+show(compose(partial(L, 2), Gamma(q))(t))
+show(D(compose(partial(L, 2), Gamma(q)))(t))
+show(
+    (D(compose(partial(L, 2), Gamma(q))) - compose(partial(L, 1), Gamma(q)))(t)
+)
 #+end_src
 
-This second implementation follows the book. It returns a function that takes ~q~ as an argument, and then returns a function that still depends on $t$.
-#+ATTR_LATEX: :options label=utils1.5.sage
-#+begin_src sage :tangle sage/utils1.5.sage
-def Lagrange_equations(Lagrangian):
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{cc}
+0 & 0
+\end{array}\right]
+\end{dmath*}
+\begin{dmath*}
+\left[\begin{array}{cc}
+m \dot x & m \dot y
+\end{array}\right]
+\end{dmath*}
+\begin{dmath*}
+\left[\begin{array}{cc}
+m \ddot x & m \ddot y
+\end{array}\right]
+\end{dmath*}
+\begin{dmath*}
+\left[\begin{array}{cc}
+m \ddot x & m \ddot y
+\end{array}\right]
+\end{dmath*}
+#+end_export
+
+The last step forms the Euler-Lagrange equation, which we can now implement as a function.
+#+attr_latex: :options label=../sage/utils1.5.sage
+#+begin_src sage :tangle ../sage/utils1.5.sage
+def Lagrange_equations(L):
     def f(q):
-        return Sum(
-            Compose(D, partial(Lagrangian, 2), Gamma(q)),
-            Min(Compose(partial(Lagrangian, 1), Gamma(q))),
+        return D(compose(partial(L, 2), Gamma(q))) - compose(
+            partial(L, 1), Gamma(q)
         )
 
     return f
@@ -410,111 +467,118 @@ def Lagrange_equations(Lagrangian):
 
 We compute the Lagrange equation for a path linear in $t$ for the Lagrangian of a free particle..
 
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage
-space = make_space("x", dim=3)
 var("a b c a0 b0 c0", domain="real")
-test_path = vector([a * t + a0, b * t + b0, c * t + c0])
+test_path = lambda t: column_matrix([a * t + a0, b * t + b0, c * t + c0])
 #+end_src
 
 Note that if we do not provide the argument ~t~ to ~l_eq~ we receive a function instead of vector.
 
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
 l_eq = Lagrange_equations(L_free_particle(m))(test_path)
-show(l_eq)
 show(l_eq(t))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\text{\texttt{<function{ }Sum.<locals>.<lambda>{ }at{ }0x788badebc5e0>}}\]
-\[\left(\begin{array}{rrr}
+\begin{dmath*}
+\left[\begin{array}{ccc}
 0 & 0 & 0
-\end{array}\right)\]
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
-#+ATTR_LATEX: :options label=section1.5.sage
+This is correct since a free particle is not moving in a potential field, hence only depends on the velocity but not the coordinates of the path. But since the velocity is linear in $t$, all components along the test path become zero.
+
+
+Here are the EL equations for a generic 1D path.
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
-l_eq = Lagrange_equations(L_free_particle(m))(
-    [literal_function("x"), literal_function("y"), literal_function('z')]
-)
+q = path_function([literal_function("x")])
+l_eq = Lagrange_equations(L_free_particle(m))(q)
 show(l_eq(t))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{rrr}
-m \ddot x & m \ddot y & m \ddot z
-\end{array}\right)\]
+\begin{dmath*}
+\left[\begin{array}{c}
+m \ddot x
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
-Equating this to $(0,0,0)$ shows that the solution of these differential equation are linear in $t$.
+Equating this to $(0)$ shows that the solution of these differential equations is linear in $t$.
 
 
 *** The harmonic oscillator
 
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage
 var("A phi omega", domain="real")
 assume(A > 0)
 
-proposed_path = vector([A * cos(omega * t + phi)])
+proposed_path = lambda t: vector([A * cos(omega * t + phi)])
 #+end_src
 
 
 ~Lagrange_equations~ returns a matrix whose elements correspond to the components of the configuration path $q$.
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
 l_eq = Lagrange_equations(L_harmonic(m, k))(proposed_path)(t)
 show(l_eq)
 #+end_src
 
-
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{r}
--A m \omega^{2} \cos\left(\omega t + {\phi}\right) + A k \cos\left(\omega t + {\phi}\right)
-\end{array}\right)\]
+\begin{dmath*}
+\left[\begin{array}{c}
+-A m \omega^{2} \cos\left(\omega t + \phi\right) + A k \cos\left(\omega t + \phi\right)
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
 To obtain the contents of this $1\times 1$ matrix, we take the element ~[0][0]~.
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
 show(l_eq[0][0])
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[-A m \omega^{2} \cos\left(\omega t + {\phi}\right) + A k \cos\left(\omega t + {\phi}\right)\]
+\begin{dmath*}
+-A m \omega^{2} \cos\left(\omega t + \phi\right) + A k \cos\left(\omega t + \phi\right)
+\end{dmath*}
 #+end_export
 
 Let's  factor out the cosine.
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
-show(l_eq[0][0].factor())
+show(l_eq[0, 0].factor())
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[-{\left(m \omega^{2} - k\right)} A \cos\left(\omega t + {\phi}\right)\]
+\begin{dmath*}
+-{\left(m \omega^{2} - k\right)} A \cos\left(\omega t + \phi\right)
+\end{dmath*}
 #+end_export
 
 *** Kepler's third law
 
-#+ATTR_LATEX: :options label=section1.5.sage
+Recall that to unpack the coordinates, we have to convert the vector to a Python list.
+
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage
-space = make_named_space(["r", "\\phi"])
-var("G m m1 m2")
-assume(G > 0, m > 0, m1 > 0, m2 > 0)
+var("G m m1 m2", domain="positive")
 
 
 def L_central_polar(m, V):
     def Lagrangian(local):
-        r, phi = coordinate(local)
-        # r, phi = q[:]
-        qdot = velocity(local)
-        rdot, phidot = velocity(local)  # qdot[:]
+        r, phi = coordinate(local).list()
+        rdot, phidot = velocity(local).list()
         T = 1 / 2 * m * (square(rdot) + square(r * phidot))
         return T - V(r)
 
@@ -530,33 +594,36 @@ def gravitational_energy(G, m1, m2):
 
 
 
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
+q = path_function([literal_function("r"), literal_function("phi")])
 V = gravitational_energy(G, m1, m2)
-L = L_central_polar(m, gravitational_energy(G, m1, m2))
-show(L(space))
+L = L_central_polar(m, V)
+show(L(Gamma(q)(t)))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\frac{1}{2} \, {\left({\dot \phi}^{2} {r}^{2} + {\dot r}^{2}\right)} m + \frac{G m_{1} m_{2}}{{r}}\]
+\begin{dmath*}
+\frac{1}{2} \, {\left(r^{2} \dot \phi^{2} + \dot r^{2}\right)} m + \frac{G m_{1} m_{2}}{r}
+\end{dmath*}
 #+end_export
 
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage
-l_eq = Lagrange_equations(L_central_polar(m, gravitational_energy(G, m1, m2)))(
-    [literal_function("r"), literal_function("\\phi")]
-)(t)
+l_eq = Lagrange_equations(L)(q)(t)
 #+end_src
 
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
-show(l_eq[0][1].factor() == 0)
+show(l_eq[0, 1] == 0)
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[{\left(r \ddot \phi + 2 \, \dot \phi \dot r\right)} m r = 0\]
+\begin{dmath*}
+m r^{2} \ddot \phi + 2 \, m r \dot \phi \dot r = 0
+\end{dmath*}
 #+end_export
 
 In this equation, let's divide by $m r$ to get $r \ddot \phi + 2 \dot \phi \dot r = 0$, which is equal to $\partial_{t}(\dot \phi r^{2}) = 0$.
@@ -564,21 +631,17 @@ This implies that $\dot \phi r^{2} = C$, i.e., a constant. If $r\neq 0$ and cons
 
 
 What can we say about the other equation?
-#+ATTR_LATEX: :options label=section1.5.sage
+#+attr_latex: :options label=../sage/section1.5.sage
 #+begin_src sage :exports both :results replace latex
-show(l_eq[0][0] == 0)
+show(l_eq[0, 0] == 0)
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[-m r \dot \phi^{2} + m \ddot r + \frac{G m_{1} m_{2}}{r^{2}} = 0\]
+\begin{dmath*}
+-m r \dot \phi^{2} + m \ddot r + \frac{G m_{1} m_{2}}{r^{2}} = 0
+\end{dmath*}
 #+end_export
 
 As $r$ is constant according to the book, $\ddot r = 0$.
 By dividing by $m := m_{1}m_{2}/(m_{1}+m_{2})$, this equation reduces to $r^{3}\dot \phi^{2} = G(m_{1}+m_{2})$, which is the form we were to find according to the exercise.
-
-
-
-*** Exercise 1.12 and 1.13
-
-Exercise 1.12 is just copy paste work; I skip this. Exercise 1.13 seems not relevant for physics, so I skip this one too.

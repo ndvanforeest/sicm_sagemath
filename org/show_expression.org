@@ -1,0 +1,86 @@
+#+TITLE: Output to LaTeX
+#+AUTHOR: Nicky
+#+date: <2025-05-03 Sat>
+
+#+OPTIONS: toc:nil author:nil date:nil title:t
+
+#+LATEX_CLASS: subfiles
+#+LATEX_CLASS_OPTIONS: [sicm_sagemath]
+
+#+PROPERTY: header-args:sage :session output_to_latex :eval never-export :exports code :results none :tangle ../sage/show_expression.sage :dir ../sage/
+
+* Output to LaTeX
+
+
+We use ~re~ to modify LateX strings.
+Note in passing that the title of the code block shows the file to which the code is tangled, and if a code block is not tangled, the title says this too.
+#+attr_latex: :options label=../sage/show\_expression.sage
+#+begin_src sage :exports code :results none :tangle ../sage/show_expression.sage
+import re
+
+latex.matrix_delimiters(left='[', right=']')
+latex.matrix_column_alignment("c")
+#+end_src
+
+To keep the formulas short in LaTeX, I remove all strings like $(t)$, and replace $\partial x/\partial t$ by $\dot x$.
+This is the job of the regular expressions below.
+
+#+attr_latex: :options label=../sage/show\_expression.sage
+#+begin_src sage :exports code :results none :tangle ../sage/show_expression.sage
+def simplify_latex(s):
+    s = re.sub(r"\\frac{\\partial}{\\partial t}", r"\\dot ", s)
+    s = re.sub(r"\\left\(t\\right\)", r"", s)
+    s = re.sub(
+        r"\\frac\{\\partial\^\{2\}\}\{\(\\partial t\)\^\{2\}\}",
+        r"\\ddot ",
+        s,
+    )
+    return s
+#+end_src
+
+# As Sagemath vectors do not support `orientation' (they are similar to lists and tuples), we print a vector as a column.
+# #+begin_src sage :exports code :results none :tangle ../sage/show_expression.sage
+# def Latex(s):
+#     if isinstance(s, sage.structure.element.Vector):
+#         s = latex(s.column())
+#     else:
+#         s = latex(s)
+#     return s
+# #+end_src
+
+The function ~show_expression~ prints expressions to LaTeX.
+There is a caveat, though.
+When ~show_expression~ would return a string, org mode (or perhaps Python) adds many escape symbols for the ~\~ character, which turns out to ruin the LaTeX output in an org file.
+For this reason, I just call ~print~ ; for my purposes (writing these files in emacs and org mode) it works the way I want.
+
+
+#+attr_latex: :options label=../sage/show\_expression.sage
+#+begin_src sage :exports code :results none :tangle ../sage/show_expression.sage
+def show_expression(s, simplify=True):
+    s = latex(s)
+    if simplify:
+        s = simplify_latex(s)
+    res = r"\begin{dmath*}"
+    res += "\n" + s + "\n"
+    res += r"\end{dmath*}"
+    print(res)
+#+end_src
+
+
+* Printing with org mode
+
+There is a subtlety with respect to printing in org mode and in tangled files.
+When working in sage files, and running them from the prompt, I call ~show(expr)~ to have some expression printed to the screen.
+So, when running Sage from the prompt, I do /not/ want to see LaTeX output.
+However, when executing a code block in org mode, I /do/ want to get LaTeX output.
+For this, I could use the book's ~show_expression~ in the code blocks in the org file.
+So far so good, but now comes the subtlety.
+When I /tangle/ the code from the org file to a sage file, I don't want to see ~show_expression~, but just ~show~.
+Thus, I should use ~show~ throughout, but in the org mode file, ~show~ should call ~show_expression~.
+To achieve this, I include the following ~show~ function in org mode, but I don't tangle it to the related ~sage~ files.
+
+#+attr_latex: :options label=../sage/show\_expression.sage
+#+begin_src sage :exports code :results none :tangle ../sage/show_expression.sage
+def show(s, simplify=True):
+    return show_expression(s, simplify)
+#+end_src

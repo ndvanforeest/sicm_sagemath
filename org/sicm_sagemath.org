@@ -18,30 +18,41 @@
 
 (defun export-all ()
   (mapc 'export-to-latex '("Readme.org"
-                           "utils.org"
+                           "show_expression.org"
+                           "tuples.org"
+                           "functions.org"
+                           "differentiation.org"
                            "section1.4.org"
                            "section1.5.org"
                            "section1.6.org"
                            "section1.7.org"
                            "section1.8.org"
-                           "section3.1.org"
-                           "section3.2.org"
-                           "section3.4.org"
-                           "section3.5.org"
-                           "section3.9.org"
-                           "section5.1.org"
-                           "section5.2.org"
-                           "section6.4.org"
+                           "section1.9.org"
+                           ;; "section3.1.org"
+                           ;; "section3.2.org"
+                           ;; "section3.4.org"
+                           ;; "section3.5.org"
+                           ;; "section3.9.org"
+                           ;; "section5.1.org"
+                           ;; "section5.2.org"
+                           ;; "section6.4.org"
                            )))
 
 (export-all)
 #+end_src
 
+\subfile{Readme}
+
 \setcounter{chapter}{-1}
 
 * Preliminaries
-\subfile{Readme}
-\subfile{utils}
+
+Here we provide Python and Sagemath code for background functions that are used, but not defined, in the book.
+
+\subfile{show_expression}
+\subfile{tuples}
+\subfile{functions}
+\subfile{differentiation}
 
 
 
@@ -53,10 +64,12 @@
 \subfile{section1.6}
 \subfile{section1.7}
 \subfile{section1.8}
+\subfile{section1.9}
+
 
 \setcounter{chapter}{2}
 
-* Chapter 3
+* COMMENT Chapter 3
 
 \subfile{section3.1}
 \subfile{section3.2}
@@ -69,12 +82,12 @@
 
 \setcounter{chapter}{4}
 
-* Chapter 5
+* COMMENT Chapter 5
 
 \subfile{section5.1}
 \subfile{section5.2}
 
-* Chapter 6
+* COMMENT Chapter 6
 
 \setcounter{section}{3}
 \subfile{section6.4}

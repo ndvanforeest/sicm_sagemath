@@ -1,3 +1,9 @@
+load(
+    "utils6.4.sage",
+)
+
+var("t x y", domain="real")
+
 f = function("f")
 show(taylor(f(x), x, 0, 4))
 
@@ -23,9 +29,10 @@ def H_harmonic(m, k):
 
     return f
 
+H = H_harmonic(m, k)
+
 x0, p0 = var("x0 p0", domain="real")
 space = up(t, vector([x0]), vector([p0]))
-H = H_harmonic(m, k)
 lie = Lie_derivative(H)
 show(lie(coordinate)(space))
 
@@ -41,6 +48,8 @@ F = Compose(lambda x: x[0], coordinate)
 show(Lie_transform(H, dt, 4)(F)(space))
 G = Compose(lambda x: x[0], momentum)
 show(Lie_transform(H, dt, 4)(G)(space))
+
+F = Compose(column_matrix, coordinate)
 show(Lie_transform(H, dt, 4)(H)(space))
 
 def V(q):
@@ -71,5 +80,6 @@ H_state = up(t, q, p)
 show(H(H_state).expand())
 show(partial(H, 1)(H_state))
 
-show(Lie_transform(H, dt, 3)(Compose(lambda x: x[0], coordinate))(H_state)[0][0])
-show(Lie_transform(H, dt, 3)(Compose(lambda x: x[1], coordinate))(H_state)[0][0])
+res = Lie_transform(H, dt, 3)(Compose(column_matrix, coordinate))(H_state).expand()
+show(res[0][0])
+show(res[1][0])

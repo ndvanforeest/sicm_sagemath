@@ -1,31 +1,26 @@
 import re
-import tuples # see below
 
-def show_expression(s):
-    s = latex(s)
+latex.matrix_delimiters(left='[', right=']')
+latex.matrix_column_alignment("c")
+
+def simplify_latex(s):
     s = re.sub(r"\\frac{\\partial}{\\partial t}", r"\\dot ", s)
     s = re.sub(r"\\left\(t\\right\)", r"", s)
     s = re.sub(
-        r"\\frac\{\\partial\^\{2\}\}\{\(\\partial t\)\^\{2\}\}", r"\\ddot ", s
+        r"\\frac\{\\partial\^\{2\}\}\{\(\\partial t\)\^\{2\}\}",
+        r"\\ddot ",
+        s,
     )
-    #print(s)
+    return s
+
+def show_expression(s, simplify=True):
+    s = latex(s)
+    if simplify:
+        s = simplify_latex(s)
     res = r"\begin{dmath*}"
     res += "\n" + s + "\n"
     res += r"\end{dmath*}"
     print(res)
 
-
-# def show_expression(s):
-#     return r"\[" + latex(s) + r"\]"
-
-def show_tuple(tup):
-    res = r"\begin{align*}"
-    for component in tup:
-        res += "& " + latex(component) + r"\\"
-    res += r"\end{align*}"
-    return res
-
-def show(s):
-    if isinstance(s, tuples.Tuple):
-        return show_tuple(s)
-    return show_expression(s)
+def show(s, simplify=True):
+    return show_expression(s, simplify)

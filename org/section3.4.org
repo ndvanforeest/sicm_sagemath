@@ -17,7 +17,6 @@
 
 ** The standard imports.
 
-#+ATTR_LATEX: :options label=section3.4.sage
 #+begin_src sage
 import numpy as np
 
@@ -26,18 +25,16 @@ load(
     "utils3.1.sage",
 )
 
-var("t x y", domain="real")
+var("t", domain="real")
 #+end_src
 
 
-#+ATTR_LATEX: :options label=don't tangle
 #+begin_src sage :exports code  :tangle no
 load("show_expression.sage")
 #+end_src
 
 ** Motion in a central potental
 
-#+ATTR_LATEX: :options label=section3.4.sage
 #+begin_src sage
 var("m")
 
@@ -57,7 +54,6 @@ def L_polar(m, V):
 #+end_src
 
 
-#+ATTR_LATEX: :options label=section3.4.sage
 #+begin_src sage :exports both :results replace latex
 space = make_named_space(["r", "\\phi"])
 show(space)
@@ -68,7 +64,6 @@ show(space)
 \begin{align*} & t \\ & \left({r},\,{\phi}\right) \\ & \left({\dot r},\,{\dot \phi}\right) \\ \end{align*}
 #+end_export
 
-#+ATTR_LATEX: :options label=section3.4.sage
 #+begin_src sage :exports both :results replace latex
 q = vector([literal_function("r"), literal_function("\\phi")])
 p = vector([literal_function(r"p_r"), literal_function(r"p_{\phi}")])
@@ -81,7 +76,6 @@ show(H_state)
 \begin{align*} & t \\ & \left(r,\,\phi\right) \\ & \left(p_r,\,p_{\phi}\right) \\ \end{align*}
 #+end_export
 
-#+ATTR_LATEX: :options label=section3.4.sage
 #+begin_src sage :exports both :results replace latex
 H = Lagrangian_to_Hamiltonian(L_polar(m, V))  # (H_state)
 show(H(H_state))
@@ -94,7 +88,6 @@ show(H(H_state))
 
 For some reason I run into a bug of Sage when calling ~simplify_full()~ on the  above expression.
 However, by using ~expand()~ the expression is simplified.
-#+ATTR_LATEX: :options label=section3.4.sage
 #+begin_src sage :exports both :results replace latex
 show(H(H_state).expand())
 #+end_src
@@ -106,7 +99,6 @@ show(H(H_state).expand())
 
 
 Here are the Hamilton equations.
-#+ATTR_LATEX: :options label=section3.4.sage
 #+begin_src sage :exports both :results replace latex
 HE = Hamilton_equations(Lagrangian_to_Hamiltonian(L_polar(m, V)))(q, p)
 show(HE)

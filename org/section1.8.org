@@ -6,12 +6,8 @@
 #+LATEX_CLASS: subfiles
 #+LATEX_CLASS_OPTIONS: [sicm_sagemath]
 
-#+PROPERTY: header-args:sage :session section18 :eval never-export :exports code :results none :tangle sage/section1.8.sage
+#+PROPERTY: header-args:sage :session section18 :eval never-export :exports code :results none :tangle ../sage/section1.8.sage :dir ../sage
 
-#+begin_src emacs-lisp :exports results :results none :eval export
-  (make-variable-buffer-local 'org-latex-title-command)
-  ; (setq org-latex-title-command (concat "\\section{%t}\n"))
-#+end_src
 
 
 * Conserved Quantities
@@ -19,20 +15,20 @@
 
 ** Standard imports
 
-#+ATTR_LATEX: :options label=section1.8.sage
-#+begin_src sage
-import numpy as np
+#+attr_latex: :options label=../sage/utils1.8.sage
+#+begin_src sage :tangle ../sage/utils1.8.sage
+load("utils1.6.sage")
+#+end_src
 
-load(
-    "utils.sage",
-    "utils1.4.sage",
-    "utils1.5.sage",
-    "utils1.6.sage",
-)
+#+attr_latex: :options label=../sage/section1.8.sage
+#+begin_src sage
+load("utils1.8.sage")
+
+var("t", domain=RR)
 #+end_src
 
 
-#+ATTR_LATEX: :options label=don't tangle
+#+attr_latex: :options label=don't tangle
 #+begin_src sage :exports code  :tangle no
 load("show_expression.sage")
 #+end_src
@@ -40,59 +36,67 @@ load("show_expression.sage")
 ** 1.8.2 Energy Conservation
 
 From the Lagrangian we can construct the energy function.
-Here are two implementations, where the second is closed to the one in the book.
-I have my doubts whether this is carrying functional programming a bit too far; I prefer the first implementation. Note that we should cast $P = \partial_{2}L$ to a ~vector~ so that ~P * v~ becomes a number instead of a $1\times1$ matrix.
+Note that we should cast $P = \partial_{2}L$ to a ~vector~ so that ~P * v~ becomes a number instead of a $1\times1$ matrix.
+As we use the Lagrangian in functional arithmetic, we convert ~L~ into a ~Function~.
 
-#+ATTR_LATEX: :options label=section1.8.sage
+#+attr_latex: :options label=../sage/section1.8.sage
 #+begin_src sage
 def Lagrangian_to_energy(L):
     P = partial(L, 2)
-
-    def f(local):
-        v = velocity(local)
-        return vector(P(local)) * v - L(local)
-
-    return f
-
-
-def Lagrangian_to_energy(L):
-    P = partial(L, 2)
-    return lambda local: Sum(Product(Compose(vector, P), velocity), Min(L))(
-        local
-    )
+    LL = Function(lambda local: L(local))
+    return lambda local: (P * velocity - LL)(local)
 #+end_src
 
 
 ** Central  Forces in  Three Dimensions
 
-Instead of building the kinetic energy in spherical coordinates, I am going to use the ideas that have been expounded in the book in earlier sections: define the Lagrangian in convenient coordinates, and then use a coordinate transform to obtain it in coordinates that show the symmetries of the system.
+Instead of building the kinetic energy in spherical coordinates, as in Section 1.8.3 of the book, I am going to use the ideas that have been expounded  book in earlier sections: define the Lagrangian in convenient coordinates, and then use a coordinate transform to obtain it in coordinates that show the symmetries of the system.
 
 
-
-#+ATTR_LATEX: :options label=section1.8.sage
+#+attr_latex: :options label=../sage/section1.8.sage
 #+begin_src sage
-var("t x y", domain="real")
-
-space = make_named_space(["r", "\\theta", "\\phi"])
+q = path_function(
+    [
+        literal_function("r"),
+        literal_function("theta"),
+        literal_function("phi"),
+    ]
+)
 #+end_src
 
 
-This the transformation from spherical to 3D rectangular coordinates.
+Next the transformation from spherical to 3D rectangular coordinates.
 
-#+ATTR_LATEX: :options label=section1.8.sage
+#+attr_latex: :options label=../sage/section1.8.sage
 #+begin_src sage
 def s_to_r(sperical_state):
-    r, theta, phi = coordinate(sperical_state)[:]
+    r, theta, phi = coordinate(sperical_state).list()
     return vector(
         [r * sin(theta) * cos(phi), r * sin(theta) * sin(phi), r * cos(theta)]
     )
 #+end_src
 
+For example, here is are the velocities expressed in sperical coordinates.
+#+attr_latex: :options label=../sage/section1.8.sage
+#+begin_src sage :exports both :results replace latex
+show(velocity(F_to_C(s_to_r)(Gamma(q)(t))).simplify_full())
+#+end_src
 
-#+ATTR_LATEX: :options label=section1.8.sage
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{c}
+\cos\left(\phi\right) \cos\left(\theta\right) r \dot \theta - {\left(r \sin\left(\phi\right) \dot \phi - \cos\left(\phi\right) \dot r\right)} \sin\left(\theta\right) \\
+\cos\left(\theta\right) r \sin\left(\phi\right) \dot \theta + {\left(\cos\left(\phi\right) r \dot \phi + \sin\left(\phi\right) \dot r\right)} \sin\left(\theta\right) \\
+-r \sin\left(\theta\right) \dot \theta + \cos\left(\theta\right) \dot r
+\end{array}\right]
+\end{dmath*}
+#+end_export
+
+Now we are ready to check the code examples of the book.
+#+attr_latex: :options label=../sage/section1.8.sage
 #+begin_src sage
-def U(r):
-    return function("V")(r)
+V = Function(lambda r: function("V")(r))
 
 def L_3D_central(m, V):
     def Lagrangian(local):
@@ -101,65 +105,80 @@ def L_3D_central(m, V):
     return Lagrangian
 #+end_src
 
-#+ATTR_LATEX: :options label=section1.8.sage
+
+#+attr_latex: :options label=../sage/section1.8.sage
 #+begin_src sage :exports both :results replace latex
-show(partial(L_3D_central(m, U), 1)(space).simplify_full())
+show(partial(L_3D_central(m, V), 1)(Gamma(q)(t)).simplify_full())
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{rrr}
-\frac{m {\dot \phi}^{2} {r} {\left| {r} \right|} \sin\left({\theta}\right)^{2} + m {r} {\dot \theta}^{2} {\left| {r} \right|} - {r} \mathrm{D}_{0}\left(V\right)\left({\left| {r} \right|}\right)}{{\left| {r} \right|}} & m {\dot \phi}^{2} {r}^{2} \cos\left({\theta}\right) \sin\left({\theta}\right) & 0
-\end{array}\right)\]
+\begin{dmath*}
+\left[\begin{array}{ccc}
+-\frac{r \mathrm{D}_{0}\left(V\right)\left(\sqrt{r^{2}}\right) - {\left(m r \sin\left(\theta\right)^{2} \dot \phi^{2} + m r \dot \theta^{2}\right)} \sqrt{r^{2}}}{\sqrt{r^{2}}} & m \cos\left(\theta\right) r^{2} \sin\left(\theta\right) \dot \phi^{2} & 0
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
-#+ATTR_LATEX: :options label=section1.8.sage
+#+attr_latex: :options label=../sage/section1.8.sage
 #+begin_src sage :exports both :results replace latex
-show(partial(L_3D_central(m, U), 2)(space).simplify_full())
+show(partial(L_3D_central(m, V), 2)(Gamma(q)(t)).simplify_full())
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{rrr}
-m {\dot r} & m {r}^{2} {\dot \theta} & m {\dot \phi} {r}^{2} \sin\left({\theta}\right)^{2}
-\end{array}\right)\]
+\begin{dmath*}
+\left[\begin{array}{ccc}
+m \dot r & m r^{2} \dot \theta & m r^{2} \sin\left(\theta\right)^{2} \dot \phi
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
-#+ATTR_LATEX: :options label=section1.8.sage
+#+attr_latex: :options label=../sage/section1.8.sage
 #+begin_src sage :exports both :results replace latex
 def ang_mom_z(m):
     def f(rectangular_state):
-        xyx = coordinate(rectangular_state)
-        v = velocity(rectangular_state)
+        xyx = vector(coordinate(rectangular_state))
+        v = vector(velocity(rectangular_state))
         return xyx.cross_product(m * v)[2]
 
     return f
 
 
-show(Compose(ang_mom_z(m), F_to_C(s_to_r))(space).simplify_full())
+show(compose(ang_mom_z(m), F_to_C(s_to_r))(Gamma(q)(t)).simplify_full())
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[m {\dot \phi} {r}^{2} \sin\left({\theta}\right)^{2}\]
+\begin{dmath*}
+m r^{2} \sin\left(\theta\right)^{2} \dot \phi
+\end{dmath*}
 #+end_export
 
 
-This is check that $E= T + V$.
-#+ATTR_LATEX: :options label=section1.8.sage
+This is the check that $E= T + V$.
+#+attr_latex: :options label=../sage/section1.8.sage
 #+begin_src sage :exports both :results replace latex
-show(Lagrangian_to_energy(L_central_spherical(m, U))(space).simplify_full())
+show(Lagrangian_to_energy(L_3D_central(m, V))(Gamma(q)(t)).simplify_full())
 #+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{c}
+\frac{1}{2} \, m r^{2} \sin\left(\theta\right)^{2} \dot \phi^{2} + \frac{1}{2} \, m r^{2} \dot \theta^{2} + \frac{1}{2} \, m \dot r^{2} + V\left(\sqrt{r^{2}}\right)
+\end{array}\right]
+\end{dmath*}
+#+end_export
 
 ** The Restricted Three-Body Problem
 
 I decompose the potential energy function into smaller functions; I find the implementation in the book somewhat heavy.
 
 
-#+ATTR_LATEX: :options label=section1.8.sage
+#+attr_latex: :options label=../sage/section1.8.sage
 #+begin_src sage
-var("G M0 M1 a")
-assume(G > 0, M0 > 0, M1 > 0, a > 0)
+var("G M0 M1 a", domain="positive")
 
 
 def distance(x, y):
@@ -175,14 +194,13 @@ def V(a, M0, M1, m):
     a0, a1 = M1 / (M0 + M1) * a, M0 / (M0 + M1) * a
 
     def f(t, origin):
-        pos0 = -a0 * vector([cos(Omega * t), sin(Omega * t)])
-        pos1 = a1 * vector([cos(Omega * t), sin(Omega * t)])
+        pos0 = -a0 * column_matrix([cos(Omega * t), sin(Omega * t)])
+        pos1 = a1 * column_matrix([cos(Omega * t), sin(Omega * t)])
         r0 = distance(origin, pos0)
         r1 = distance(origin, pos1)
         return -G * m * (M0 / r0 + M1 / r1)
 
     return f
-
 
 def L0(m, V):
     def f(local):
@@ -193,18 +211,64 @@ def L0(m, V):
 #+end_src
 
 For the computer it's easy to compute the energy, but the formula is pretty long.
-#+ATTR_LATEX: :options label=section1.8.sage
-#+begin_src sage :exports code :eval never
-space = make_named_space(["x", "y"])
-show(Lagrangian_to_energy(L0(m, V(a, M0, M1, m)))(space).simplify_full().expand())
+#+attr_latex: :options label=../sage/section1.8.sage
+#+begin_src sage :exports both :results replace latex
+q = path_function([literal_function("x"), literal_function("y")])
+expr = (sqrt(G*M0 + G*M1)*t) / a^(3/2)
+A = var('A')
+
+show(
+    Lagrangian_to_energy(L0(m, V(a, M0, M1, m)))(Gamma(q)(t))
+    .simplify_full()
+    .expand()
+    .subs({expr: A})
+)
 #+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{c}
+-\frac{\sqrt{M_{0}^{2} + 2 \, M_{0} M_{1} + M_{1}^{2}} G M_{0} m}{\sqrt{2 \, M_{0} M_{1} a \cos\left(A\right) x + 2 \, M_{1}^{2} a \cos\left(A\right) x + 2 \, M_{0} M_{1} a \sin\left(A\right) y + 2 \, M_{1}^{2} a \sin\left(A\right) y + M_{1}^{2} a^{2} + M_{0}^{2} x^{2} + 2 \, M_{0} M_{1} x^{2} + M_{1}^{2} x^{2} + M_{0}^{2} y^{2} + 2 \, M_{0} M_{1} y^{2} + M_{1}^{2} y^{2}}} - \frac{\sqrt{M_{0}^{2} + 2 \, M_{0} M_{1} + M_{1}^{2}} G M_{1} m}{\sqrt{-2 \, M_{0}^{2} a \cos\left(A\right) x - 2 \, M_{0} M_{1} a \cos\left(A\right) x - 2 \, M_{0}^{2} a \sin\left(A\right) y - 2 \, M_{0} M_{1} a \sin\left(A\right) y + M_{0}^{2} a^{2} + M_{0}^{2} x^{2} + 2 \, M_{0} M_{1} x^{2} + M_{1}^{2} x^{2} + M_{0}^{2} y^{2} + 2 \, M_{0} M_{1} y^{2} + M_{1}^{2} y^{2}}} + \frac{1}{2} \, m \dot x^{2} + \frac{1}{2} \, m \dot y^{2}
+\end{array}\right]
+\end{dmath*}
+#+end_export
 
 I skip the rest of the code of this part as it is just copy work from the mathematical formulas.
 
 
 ** Noether's theorem
 
-#+ATTR_LATEX: :options label=section1.8.sage
+We need to rotate around a given axis in 3D space.
+ChatGPT gave me the code right away.
+
+#+attr_latex: :options label=../sage/utils1.8.sage
+#+begin_src sage :exports code :results none :tangle ../sage/utils1.8.sage
+def rotation_matrix(axis, theta):
+    """
+    Return the 3x3 rotation matrix for a rotation of angle theta (in radians)
+    about the given axis. The axis is specified as an iterable of 3 numbers.
+    """
+    # Convert the axis to a normalized vector
+    axis = vector(axis).normalized()
+    x, y, z = axis
+    c = cos(theta)
+    s = sin(theta)
+    t = 1 - c  # common factor
+
+    # Construct the rotation matrix using Rodrigues' formula
+    R = matrix(
+        [
+            [c + x**2 * t, x * y * t - z * s, x * z * t + y * s],
+            [y * x * t + z * s, c + y**2 * t, y * z * t - x * s],
+            [z * x * t - y * s, z * y * t + x * s, c + z**2 * t],
+        ]
+    )
+    return R
+#+end_src
+
+
+#+attr_latex: :options label=../sage/section1.8.sage
 #+begin_src sage
 def F_tilde(angle_x, angle_y, angle_z):
     def f(local):
@@ -218,54 +282,82 @@ def F_tilde(angle_x, angle_y, angle_z):
     return f
 #+end_src
 
-#+ATTR_LATEX: :options label=section1.8.sage
+#+attr_latex: :options label=../sage/section1.8.sage
 #+begin_src sage
-space = make_named_space(["x", "y", "z"])
-
-var("s t u")
+q = path_function(
+    [literal_function("x"), literal_function("y"), literal_function("z")]
+)
 #+end_src
 
 Let's see what we get when we exercise a rotation of $s$ radians round the $x$ axis.
-#+ATTR_LATEX: :options label=section1.8.sage
+#+attr_latex: :options label=../sage/section1.8.sage
 #+begin_src sage :exports both :results replace latex
 def Rx(s):
-    return F_tilde(s, 0, 0)(space)
+    return lambda local: F_tilde(s, 0, 0)(local)
 
 
-show(Rx(s))
-show(diff(Rx(s), s)(s=0))
+s, u, v = var("s u v")
+latex.matrix_delimiters(left='[', right=']')
+latex.matrix_column_alignment("c")
+show(Rx(s)(Gamma(q)(t)))
+show(diff(Rx(s)(Gamma(q)(t)), s)(s=0))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left({x},\,{y} \cos\left(s\right) - {z} \sin\left(s\right),\,{z} \cos\left(s\right) + {y} \sin\left(s\right)\right)\]
-\[\left(0,\,-{z},\,{y}\right)\]
+\begin{dmath*}
+\left[\begin{array}{c}
+x \\
+\cos\left(s\right) y - \sin\left(s\right) z \\
+\sin\left(s\right) y + \cos\left(s\right) z
+\end{array}\right]
+\end{dmath*}
+\begin{dmath*}
+\left[\begin{array}{c}
+0 \\
+-z \\
+y
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
 And now we check the result of the book.
 The computation of ~D F_tilde~ is somewhat complicated.
-Observe that ~F_tilde~ is a function of the angles, but returns a function that takes ~local~ as argument.
-We want to differentiate the function $(s, t, u) \to \tilde F(s, t, u)(l)$ where $l$ is the fixed local point.
-This gives the first part: ~jacobian(F_tilde(s, t, u)(space), (s, t, u))~.
-Finally, we can fill in $s=t=u=0$.
+Observe that ~F_tilde~ is a function of the rotation angles, and returns a function that takes ~local~ as argument.
+Now we want to differentiate ~F_tilde~ with respect to the angles, so these are the variables we need to provide to the Jacobian.
+For this reason, we bind the result of ~F_tilde~ to ~local~, and use a lambda function to provide the angles as the variables.
+This gives us ~Ftilde~ (note that I drop the underscore in this name).
+There is one further point: ~F_tilde~ expects three angles, while the Jacobian provides the list ~[s, u, v]~ as the argument to ~Ftilde~.
+Therefore we unpack the argument ~x~ of the lambda function to convert the list ~[s, u, v]~ into three separate arguments.
+The last step is to fill in $s=u=v=0$.
+
+Note that we differentiate wrt $s, u, v$ and not wrt $t$.
+In itself, using $t$ would not be a problem, but since we pass ~Gamma(q)(t)~ to ~F_tilde~, the function depends also on $t$ via the path $t\to\Gamma(q, t)$ which we should avoid.
 
 As for the result, I don't see why my result differs by a minus sign from the result in the book.
 
+#+attr_latex: :options label=../sage/section1.8.sage
+#+begin_src sage
+U = Function(lambda r: function("U")(r))
 
-#+ATTR_LATEX: :options label=section1.8.sage
-#+begin_src sage :exports both :results replace latex
+
 def the_Noether_integral(local):
     L = L_central_rectangular(m, U)
-    DF0 = jacobian(F_tilde(s, t, u)(local), (s, t, u))(s=0, t=0, u=0)
+    Ftilde = lambda x: F_tilde(*x)(local)
+    DF0 = Jacobian(Ftilde)([s, u, v], [s, u, v])(s=0, u=0, v=0)
     return partial(L, 2)(local) * DF0
+#+end_src
 
-
-show(the_Noether_integral(space))
+#+attr_latex: :options label=../sage/section1.8.sage
+#+begin_src sage :exports both :results replace latex
+show(the_Noether_integral(Gamma(q)(t)).simplify_full())
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[\left(\begin{array}{rrr}
--m {\dot y} {z} + m {y} {\dot z} & m {\dot x} {z} - m {x} {\dot z} & -m {\dot x} {y} + m {x} {\dot y}
-\end{array}\right)\]
+\begin{dmath*}
+\left[\begin{array}{ccc}
+-m z \dot y + m y \dot z & m z \dot x - m x \dot z & -m y \dot x + m x \dot y
+\end{array}\right]
+\end{dmath*}
 #+end_export

@@ -22,15 +22,19 @@
 #+begin_src sage :tangle ../sage/utils6.4.sage
 load(
     "utils.sage",
-    "utils1.6.sage",
     "utils3.1.sage",
     "utils3.2.sage",
     "utils3.4.sage",
 )
-
-var("t x y", domain="real")
 #+end_src
 
+#+begin_src sage
+load(
+    "utils6.4.sage",
+)
+
+var("t", domain="real")
+#+end_src
 
 
 #+ATTR_LATEX: :options label=don't tangle
@@ -127,12 +131,13 @@ def H_harmonic(m, k):
         )
 
     return f
+
+H = H_harmonic(m, k)
 #+end_src
 
 #+begin_src sage :exports both :results replace latex
 x0, p0 = var("x0 p0", domain="real")
 space = up(t, vector([x0]), vector([p0]))
-H = H_harmonic(m, k)
 lie = Lie_derivative(H)
 show(lie(coordinate)(space))
 #+end_src
@@ -199,6 +204,8 @@ The ~inner~ function uses that,  up to and including order $n$:
 F + t L_{H} F + t^{2} L_{H}^{2}/2! F + \cdots
 \end{equation*}
 
+Note that the Lie derivative $L_{H}$ (that is, the Poisson bracket) returns a column matrix when applied to a vector.
+
 #+begin_src sage :tangle ../sage/utils6.4.sage
 def Lie_transform(H, t, n):
     lie = Lie_derivative(H)
@@ -226,11 +233,35 @@ F = Compose(lambda x: x[0], coordinate)
 show(Lie_transform(H, dt, 4)(F)(space))
 G = Compose(lambda x: x[0], momentum)
 show(Lie_transform(H, dt, 4)(G)(space))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left(\begin{array}{r}
+\frac{\mathit{dt}^{4} k^{2} x_{0}}{24 \, m^{2}} - \frac{\mathit{dt}^{3} k p_{0}}{6 \, m^{2}} - \frac{\mathit{dt}^{2} k x_{0}}{2 \, m} + \frac{\mathit{dt} p_{0}}{m} + x_{0}
+\end{array}\right)
+\end{dmath*}
+\begin{dmath*}
+\left(\begin{array}{r}
+\frac{\mathit{dt}^{4} k^{2} p_{0}}{24 \, m^{2}} + \frac{\mathit{dt}^{3} k^{2} x_{0}}{6 \, m} - \frac{\mathit{dt}^{2} k p_{0}}{2 \, m} - \mathit{dt} k x_{0} + p_{0}
+\end{array}\right)
+\end{dmath*}
+#+end_export
+
+If we want to compute the Lie transform of the coordinate function, we should cast the coordinate to a column matrix first.
+#+begin_src sage :exports both :results replace latex
+F = Compose(column_matrix, coordinate)
 show(Lie_transform(H, dt, 4)(H)(space))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
+\begin{dmath*}
+\left(\begin{array}{r}
+\frac{1}{2} \, k x_{0}^{2} + \frac{p_{0}^{2}}{2 \, m}
+\end{array}\right)
+\end{dmath*}
 #+end_export
 
 The final example is the Hamiltonian for a central potential field, formulated in polar coordinates.
@@ -273,7 +304,6 @@ show(H(H_state).expand())
 show(partial(H, 1)(H_state))
 #+end_src
 
-
 #+RESULTS:
 #+begin_export latex
 \begin{dmath*}
@@ -286,22 +316,19 @@ show(partial(H, 1)(H_state))
 \end{dmath*}
 #+end_export
 
-Here is the result; it's the same as in the book.
+Here is the result; it's the same as in the book. We unpack the matrix to remove the brackets in the printing.
 #+begin_src sage :exports both :results replace latex
-show(Lie_transform(H, dt, 3)(Compose(lambda x: x[0], coordinate))(H_state)[0][0])
-show(Lie_transform(H, dt, 3)(Compose(lambda x: x[1], coordinate))(H_state)[0][0])
+res = Lie_transform(H, dt, 3)(Compose(column_matrix, coordinate))(H_state).expand()
+show(res[0][0])
+show(res[1][0])
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
 \begin{dmath*}
-\frac{\mathit{dt} p_{r}}{m} + r - \frac{{\left(m r^{3} \frac{\partial}{\partial r}U\left(r\right) - p_{\phi}^{2}\right)} \mathit{dt}^{2}}{2 \, m^{2} r^{3}} - \frac{{\left(m p_{r} r^{4} \frac{\partial^{2}}{(\partial r)^{2}}U\left(r\right) + 3 \, p_{\phi}^{2} p_{r}\right)} \mathit{dt}^{3}}{6 \, m^{3} r^{4}}
+-\frac{\mathit{dt}^{3} p_{r} \frac{\partial^{2}}{(\partial r)^{2}}U\left(r\right)}{6 \, m^{2}} - \frac{\mathit{dt}^{2} \frac{\partial}{\partial r}U\left(r\right)}{2 \, m} + \frac{\mathit{dt} p_{r}}{m} + r - \frac{\mathit{dt}^{3} p_{\phi}^{2} p_{r}}{2 \, m^{3} r^{4}} + \frac{\mathit{dt}^{2} p_{\phi}^{2}}{2 \, m^{2} r^{3}}
 \end{dmath*}
 \begin{dmath*}
-\phi - \frac{\mathit{dt}^{2} p_{\phi} p_{r}}{m^{2} r^{3}} + \frac{\mathit{dt} p_{\phi}}{m r^{2}} + \frac{{\left(m p_{\phi} r^{3} \frac{\partial}{\partial r}U\left(r\right) + 3 \, p_{\phi} p_{r}^{2} r^{2} - p_{\phi}^{3}\right)} \mathit{dt}^{3}}{3 \, m^{3} r^{6}}
+\phi + \frac{\mathit{dt}^{3} p_{\phi} \frac{\partial}{\partial r}U\left(r\right)}{3 \, m^{2} r^{3}} + \frac{\mathit{dt}^{3} p_{\phi} p_{r}^{2}}{m^{3} r^{4}} - \frac{\mathit{dt}^{2} p_{\phi} p_{r}}{m^{2} r^{3}} + \frac{\mathit{dt} p_{\phi}}{m r^{2}} - \frac{\mathit{dt}^{3} p_{\phi}^{3}}{3 \, m^{3} r^{6}}
 \end{dmath*}
 #+end_export
-
-** TODO
-- sort out why giving the argument ~[0][0]~ in the last example is necessary to remove the brackets
-- Why does the Lie derivative work on the coordinate function, but for the transform we should consider coordinate[0]?

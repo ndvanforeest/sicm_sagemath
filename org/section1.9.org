@@ -1,0 +1,386 @@
+#+TITLE: Section 1.9
+#+AUTHOR: Nicky
+#+date: <2025-05-19 Mon>
+
+#+LATEX_CLASS: subfiles
+#+LATEX_CLASS_OPTIONS: [sicm_sagemath]
+
+#+PROPERTY: header-args:sage :session section19 :eval never-export :exports code :results none :tangle ../sage/section1.9.sage :dir ../sage
+
+* Abstraction of Path Functions
+
+I found this section difficult to understand, so I work in small steps to the final result, and include checks to see what goes on.
+
+** Standard imports
+
+#+attr_latex: :options label=../sage/utils1.9.sage
+#+begin_src sage :tangle ../sage/utils1.9.sage
+load("utils1.6.sage")
+#+end_src
+
+#+attr_latex: :options label=../sage/section1.9.sage
+#+begin_src sage
+load("utils1.9.sage")
+
+var("t", domain=RR)
+#+end_src
+
+
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :exports code  :tangle no
+load("show_expression.sage")
+#+end_src
+
+**  Understanding ~F_to_C~
+
+The Scheme code starts with defining ~Gamma_bar~ in terms of ~f_bar~ and ~osculating_path~.
+We build ~f_bar~ first and apply it to the example in which polar coordinates are converted to rectilinear coordinates.
+
+
+Next, let's spell out the arguments of all functions to see how everything works together.
+A literal function maps time $t$ to some part of the space, often to a coordinate, $x$ say.
+#+attr_latex: :options label=../sage/section1.9.sage
+#+begin_src sage :exports both :results replace latex
+r, theta = literal_function("r"), literal_function("theta")
+show(r)
+#+end_src
+
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\text{\texttt{<{\char`\_}{\char`\_}main{\char`\_}{\char`\_}.Function{ }object{ }at{ }0x752ed4eb27a0>}}
+\end{dmath*}
+#+end_export
+
+So, ~r~ is a ~Function~.
+We can evaluate ~r~ at $t$.
+I pass ~simplify=False~ to ~show~ to /not/ suppress the dependence on $t$.
+#+attr_latex: :options label=../sage/section1.9.sage
+#+begin_src sage :exports both :results replace latex
+show((r(t), theta(t)), simplify=False)
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+ \left(r\left(t\right), \theta\left(t\right)\right)
+ \end{dmath*}
+#+end_export
+
+A ~path_function~ takes literal functions as arguments and returns a coordinate path. Hence, it is a function of $t$ and returns $q(t)$.
+(I use the notation of the code examples of the book such as ~q_prime~ so that I can copy the examples into the functions I build later.)
+#+attr_latex: :options label=../sage/section1.9.sage
+#+begin_src sage :exports both :results replace latex
+q_prime = path_function([r, theta])
+show(q_prime(t), simplify=False)
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+ \left[\begin{array}{c}
+r\left(t\right) \\
+\theta\left(t\right)
+\end{array}\right]
+ \end{dmath*}
+#+end_export
+
+
+The function $\Gamma$ takes a coordinate path $q$ (which is a function of time) as input, and returns a function of $t$ that maps to a local up tuple $l$:
+\begin{align*}
+\Gamma[q]: t \to l=(t, q(t), v(t), \ldots).
+\end{align*}
+
+#+attr_latex: :options label=../sage/section1.9.sage
+#+begin_src sage :exports both :results replace latex
+show(Gamma(q_prime))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\text{\texttt{<function{ }Gamma.<locals>.<lambda>{ }at{ }0x752ed4ba0cc0>}}
+\end{dmath*}
+#+end_export
+
+Indeed, ~Gamma~ is a function, and has to be applied to some argument to result into a value. In fact,
+when $\Gamma(q)$ is applied to $t$, we get the local up tuple $l$.
+Observe, that a local tuple is /not/ a functions of time, by that I mean, a local is not a Python function of time, and therefore does not take any further arguments.
+#+attr_latex: :options label=../sage/section1.9.sage
+#+begin_src sage :exports both :results replace latex
+show(Gamma(q_prime)(t), simplify=False)
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+ \begin{array}{c}\begin{array}{c} t \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+r\left(t\right) \\
+\theta\left(t\right)
+\end{array}\right] \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+\frac{\partial}{\partial t}r\left(t\right) \\
+\frac{\partial}{\partial t}\theta\left(t\right)
+\end{array}\right] \end{array} \\ \end{array}
+ \end{dmath*}
+#+end_export
+
+
+The coordinate transformation $F$ in the example that transforms polar coordinates to rectilinear coordinates is ~p_to_r~.
+This transform $F$ maps a local tuple $l$ to coordinates ~q(t)~.
+Therefore, we can apply $F$ to $\Gamma[q](t)$, and use composition like this:
+\begin{align*}
+F(\Gamma[q](t)) = (F\circ \Gamma[q])(t).
+\end{align*}
+Observe that $F\circ \Gamma[q]$ is a function of $t$.
+
+
+#+attr_latex: :options label=../sage/section1.9.sage
+#+begin_src sage :exports both :results replace latex
+F = p_to_r
+show(compose(F, Gamma(q_prime))(t), simplify=False)
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+ \left[\begin{array}{c}
+\cos\left(\theta\left(t\right)\right) r\left(t\right) \\
+r\left(t\right) \sin\left(\theta\left(t\right)\right)
+\end{array}\right]
+ \end{dmath*}
+#+end_export
+
+Since $F\circ \Gamma[q]$ is a function of $t$ to a coordinate path $q(t)$, this function has the same `protocol' as a coordinate path function.
+We can therefore apply $\Gamma$ to the composite function $F\circ \Gamma[q]$ to obtain a function that maps $t$ to a local tuple in the transformed space.
+\begin{align*}
+Q: t \to \Gamma[F\circ \Gamma[q]](t).
+\end{align*}
+
+#+attr_latex: :options label=../sage/section1.9.sage
+#+begin_src sage :exports both :results replace latex
+Q = lambda t: compose(p_to_r, Gamma(q_prime))(t)
+show(Gamma(Q)(t), simplify=False)
+#+end_src
+
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+ \begin{array}{c}\begin{array}{c} t \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+\cos\left(\theta\left(t\right)\right) r\left(t\right) \\
+r\left(t\right) \sin\left(\theta\left(t\right)\right)
+\end{array}\right] \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+-r\left(t\right) \sin\left(\theta\left(t\right)\right) \frac{\partial}{\partial t}\theta\left(t\right) + \cos\left(\theta\left(t\right)\right) \frac{\partial}{\partial t}r\left(t\right) \\
+\cos\left(\theta\left(t\right)\right) r\left(t\right) \frac{\partial}{\partial t}\theta\left(t\right) + \sin\left(\theta\left(t\right)\right) \frac{\partial}{\partial t}r\left(t\right)
+\end{array}\right] \end{array} \\ \end{array}
+ \end{dmath*}
+#+end_export
+
+Now that we have analyzed all steps, we can make ~f_bar~.
+#+attr_latex: :options label=../sage/utils1.9.sage
+#+begin_src sage :tangle ../sage/utils1.9.sage
+def f_bar(q_prime):
+    q = lambda t: compose(F, Gamma(q_prime))(t)
+    return lambda t: Gamma(q)(t)
+#+end_src
+
+Here is the check. I suppress the depence on $t$ again to keep the result easier to read.
+#+attr_latex: :options label=../sage/section1.9.sage
+#+begin_src sage :exports both :results replace latex
+show(f_bar(q_prime)(t))
+#+end_src
+
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\begin{array}{c}\begin{array}{c} t \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+\cos\left(\theta\right) r \\
+r \sin\left(\theta\right)
+\end{array}\right] \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+-r \sin\left(\theta\right) \dot \theta + \cos\left(\theta\right) \dot r \\
+\cos\left(\theta\right) r \dot \theta + \sin\left(\theta\right) \dot r
+\end{array}\right] \end{array} \\ \end{array}
+\end{dmath*}
+#+end_export
+
+
+The second function to build is ~osculating_path~. This is the Taylor series of the book in which a local tuple is mapped to coordinate space:
+\begin{align*}
+O(t, q, v, a, \ldots)(\cdot) = q + v(\cdot -t) + a/2 (\cdot - t)^{2} + \cdots.
+\end{align*}
+I write $\cdot$ instead of $t'$ to make explicit that $O(l)$ is still a function, of $t'$ in this case.
+
+Clearly, the RHS is a sum of vectors all of which have the same dimension as the space of coordinates.
+
+Rather than computing $\d t^n$ as $(t-t')^n$, and $n!$ for each $n$, I compute these values recursively.
+The implementation assumes that the local tuple $\Gamma[q](t)$ contains at least the elements $t$ and $q$, that is $\Gamma[q](t) = (t, q, \ldots)$. This local tuple has length $2$;  the local tuple $l = (t, q, v)$ has length $3$.
+#+attr_latex: :options label=../sage/utils1.9.sage
+#+begin_src sage :tangle ../sage/utils1.9.sage
+def osculating_path(local):
+    t = time(local)
+    q = coordinate(local)
+
+    def wrapper(t_prime):
+        res = q
+        dt = 1
+        factorial = 1
+        for k in range(2, len(local)):
+            factorial *= k
+            dt *= t_prime - t
+            res += local[k] * dt / factorial
+        return res
+
+    return wrapper
+#+end_src
+
+Here is an example.
+#+attr_latex: :options label=../sage/section1.9.sage
+#+begin_src sage :exports both :results replace latex
+t_prime = var("tt", domain="positive", latex_name="t'")
+q = path_function([literal_function("r"), literal_function("theta")])
+local = Gamma(q)(t)
+show(osculating_path(local)(t_prime))
+#+end_src
+
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{c}
+-\frac{1}{2} \, {\left(t - {t'}\right)} \dot r + r \\
+-\frac{1}{2} \, {\left(t - {t'}\right)} \dot \theta + \theta
+\end{array}\right]
+\end{dmath*}
+#+end_export
+
+With the above pieces we can finally build ~Gamma_bar~.
+#+attr_latex: :options label=../sage/utils1.9.sage
+#+begin_src sage :tangle ../sage/utils1.9.sage
+def Gamma_bar(f_bar):
+    def wrapped(local):
+        t = time(local)
+        q_prime = osculating_path(local)
+        return f_bar(q_prime)(t)
+
+    return wrapped
+#+end_src
+
+
+#+attr_latex: :options label=../sage/section1.9.sage
+#+begin_src sage :exports both :results replace latex
+show(Gamma_bar(f_bar)(local))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\begin{array}{c}\begin{array}{c} t \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+\cos\left(\theta\right) r \\
+r \sin\left(\theta\right)
+\end{array}\right] \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+-r \sin\left(\theta\right) \dot \theta + \cos\left(\theta\right) \dot r \\
+\cos\left(\theta\right) r \dot \theta + \sin\left(\theta\right) \dot r
+\end{array}\right] \end{array} \\ \end{array}
+\end{dmath*}
+#+end_export
+
+We can use ~Gamma_bar~ in to produce the transformation for polar to rectilinear coordinates.
+#+attr_latex: :options label=../sage/utils1.9.sage
+#+begin_src sage :tangle ../sage/utils1.9.sage
+def F_to_C(F):
+    def C(local):
+        n = len(local)
+
+        def f_bar(q_prime):
+            q = lambda t: compose(F, Gamma(q_prime))(t)
+            return lambda t: Gamma(q, n)(t)
+
+        return Gamma_bar(f_bar)(local)
+
+    return C
+#+end_src
+
+
+#+attr_latex: :options label=../sage/section1.9.sage
+#+begin_src sage :exports both :results replace latex
+show(F_to_C(p_to_r)(local))
+#+end_src
+
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\begin{array}{c}\begin{array}{c} t \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+\cos\left(\theta\right) r \\
+r \sin\left(\theta\right)
+\end{array}\right] \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+-r \sin\left(\theta\right) \dot \theta + \cos\left(\theta\right) \dot r \\
+\cos\left(\theta\right) r \dot \theta + \sin\left(\theta\right) \dot r
+\end{array}\right] \end{array} \\ \end{array}
+\end{dmath*}
+#+end_export
+
+
+Here is the total time derivative.
+#+attr_latex: :options label=../sage/utils1.9.sage
+#+begin_src sage :tangle ../sage/utils1.9.sage
+@Func
+def Dt(F):
+    def DtF(local):
+        n = len(local)
+
+        def DF_on_path(q):
+            return D(lambda t: F(Gamma(q, n - 1)(t)))
+
+        return Gamma_bar(DF_on_path)(local)
+
+    return lambda state: DtF(local)
+#+end_src
+
+
+** Lagrange equations at a moment
+
+#+attr_latex: :options label=../sage/utils1.9.sage
+#+begin_src sage :tangle ../sage/utils1.9.sage
+def Euler_Lagrange_operator(L):
+    return lambda local: (Dt(partial(L, 2)) - partial(L, 1))(local)
+#+end_src
+
+To apply this operator to a local tuple, we need to include the acceleration.
+#+attr_latex: :options label=../sage/section1.9.sage
+#+begin_src sage :exports both :results replace latex
+q = path_function([literal_function("x")])
+local = Gamma(q, 4)(t)
+show(local)
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\begin{array}{c}\begin{array}{c} t \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+x
+\end{array}\right] \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+\dot x
+\end{array}\right] \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+\ddot x
+\end{array}\right] \end{array} \\ \end{array}
+\end{dmath*}
+#+end_export
+
+#+attr_latex: :options label=../sage/section1.9.sage
+#+begin_src sage :exports both :results replace latex
+m, k = var("m k", domain="positive")
+L = L_harmonic(m, k)
+show(Euler_Lagrange_operator(L)(local))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{c}
+k x + m \ddot x
+\end{array}\right]
+\end{dmath*}
+#+end_export

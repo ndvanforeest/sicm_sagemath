@@ -1,12 +1,9 @@
 load(
     "utils.sage",
-    "utils1.6.sage",
     "utils3.1.sage",
     "utils3.2.sage",
     "utils3.4.sage",
 )
-
-var("t x y", domain="real")
 
 def Lie_derivative(H):
     def f(F):

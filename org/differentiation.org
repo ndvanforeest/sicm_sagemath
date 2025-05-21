@@ -1,0 +1,503 @@
+#+TITLE: Differentiation
+#+AUTHOR: Nicky
+
+#+OPTIONS: toc:nil author:nil date:nil title:t
+
+#+LATEX_CLASS: subfiles
+#+LATEX_CLASS_OPTIONS: [sicm_sagemath]
+
+#+PROPERTY: header-args:sage :session differentiation :eval never-export :exports code :results none :tangle ../sage/differentiation_tests.sage :dir ../sage/
+
+* Differentiation
+
+
+** Standard imports
+
+
+#+attr_latex: :options label=../sage/differentiation.sage
+#+begin_src sage :tangle ../sage/differentiation.sage
+load(
+    "functions.sage",
+    "tuples.sage",
+)
+#+end_src
+
+#+attr_latex: :options label=../sage/differentiation\_tests.sage
+#+begin_src sage
+load("differentiation.sage")
+
+var("t", domain="real")
+#+end_src
+
+
+#+attr_latex: :options label=don't tangle
+#+begin_src sage  :tangle no
+load("show_expression.sage")
+#+end_src
+
+
+
+** Examples with matrices, functions and tuples
+
+#+attr_latex: :options label=../sage/differentiation\_tests.sage
+#+begin_src sage
+_ = var("a b c x y", domain=RR)
+M = matrix([[a, b], [b, c]])
+b = vector([a, b])
+v = vector([x, y])
+F = 1 / 2 * v * M * v + b * v + c
+#+end_src
+
+#+attr_latex: :options label=../sage/differentiation\_tests.sage
+#+begin_src sage :exports both :results replace latex
+show(F)
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\frac{1}{2} \, {\left(a x + b y\right)} x + a x + \frac{1}{2} \, {\left(b x + c y\right)} y + b y + c
+\end{dmath*}
+#+end_export
+
+#+attr_latex: :options label=../sage/differentiation\_tests.sage
+#+begin_src sage :exports both :results replace latex
+show(F.expand())
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\frac{1}{2} \, a x^{2} + b x y + \frac{1}{2} \, c y^{2} + a x + b y + c
+\end{dmath*}
+#+end_export
+
+#+attr_latex: :options label=../sage/differentiation\_tests.sage
+#+begin_src sage :exports both :results replace latex
+show(diff(F, x))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+a x + b y + a
+\end{dmath*}
+#+end_export
+
+Repeated differentiation works nicely.
+#+attr_latex: :options label=../sage/differentiation\_tests.sage
+#+begin_src sage :exports both :results replace latex
+show(diff(F, [x, y]))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+b
+\end{dmath*}
+#+end_export
+
+This is the Jacobian.
+#+attr_latex: :options label=../sage/differentiation\_tests.sage
+#+begin_src sage :exports both :results replace latex
+show(jacobian(F, [x, y]))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{cc}
+a x + b y + a & b x + c y + b
+\end{array}\right]
+\end{dmath*}
+#+end_export
+
+#+attr_latex: :options label=../sage/differentiation\_tests.sage
+#+begin_src sage :exports both :results replace latex
+show(jacobian(F, v.list()))  # convert the column matrix to a list
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{cc}
+a x + b y + a & b x + c y + b
+\end{array}\right]
+\end{dmath*}
+#+end_export
+
+
+This expression gives an error.
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :tangle no :eval never
+diff(F, v) # v is not a list, but a vector
+#+end_src
+
+
+To differentiate a Python function we need to provide the arguments to the function.
+#+attr_latex: :options label=../sage/differentiation\_tests.sage
+#+begin_src sage
+def F(v):
+    return 1 / 2 * v * M * v + b * v + c
+#+end_src
+
+
+#+attr_latex: :options label=../sage/differentiation\_tests.sage
+#+begin_src sage :exports both :results replace latex
+show(diff(F(v), x)) # add the arguments to F
+show(jacobian(F(v), v.list()))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+a x + b y + a
+\end{dmath*}
+\begin{dmath*}
+\left[\begin{array}{cc}
+a x + b y + a & b x + c y + b
+\end{array}\right]
+\end{dmath*}
+#+end_export
+
+The next two examples do not work.
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :tangle no :evel never
+jacobian(F, v) # F has no arguments
+jacobian(F(v), v) # v is not a list
+#+end_src
+
+The ~Tuple~ class supports differentiation.
+#+attr_latex: :options label=../sage/differentiation\_tests.sage
+#+begin_src sage :exports both :results replace latex
+T = up(t, t ^ 2, t ^ 3, sin(3 * t))
+show(diff(T, t))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\begin{array}{c}\begin{array}{c} 1 \end{array} \\ \begin{array}{c} 2 \, t \end{array} \\ \begin{array}{c} 3 \, t^{2} \end{array} \\ \begin{array}{c} 3 \, \cos\left(3 \, t\right) \end{array} \\ \end{array}
+\end{dmath*}
+#+end_export
+
+
+** Differentation with respect to time
+
+
+The function ~D~ takes a function (of time) as argument, and  returns the derivative with respect to time:
+\begin{align*}
+D(f(\cdot) : t \to f'(t).
+\end{align*}
+
+#+attr_latex: :options label=../sage/differentiation.sage
+#+begin_src sage :tangle ../sage/differentiation.sage
+@Func
+def D(f):
+    return lambda t: diff(f(t), t)
+    #return derivative(expr, t)
+#+end_src
+
+Here is an example.
+
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :exports both :results replace latex :tangle no
+q = Function(lambda t: function("q")(t))
+
+show(D(q)(t))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\dot q
+\end{dmath*}
+#+end_export
+
+
+** Differentiation with respect to function arguments
+
+
+The Euler-Lagrange equations depend on the partial derivative of a Lagrangian $L$ with respect to $q$ and $v$, and a total derivative with respect to time.
+Now ~q~ and ~v~ will often by  functions of time, so we need to find a way to differentiate with respect to /functions/, like $q(\cdot)$, rather than just symbols, like $x$.
+To implement this in Sagemath turned out to be far from easy, at least for me.
+
+First, observe that the Jacobian in Sagemath takes as arguments a function and the variables with respect to which to take the derivatives.
+So, I tried this first:
+#+attr_latex: :options label=../sage/differentiation\_tests.sage
+#+begin_src sage
+q = Function(lambda t: function("q")(t))
+#+end_src
+
+But the next code gives errors saying that the argument ~q~ should be a symbolic function, which it is not.
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :tangle no :exports code :exec never
+F = 5 * q + 3 * t
+
+show(diff(F, r)) # does not work
+show(jacobian(F, [q, t])) # does not work
+#+end_src
+
+
+To get around this problem, I use the following strategy to differentiate a function $F$ with respect to functions.
+1. Make a list of dummy symbols, one for /each argument/ of $F$ that is /not a symbol/. To understand this in detail, observe that arguments like ~t~ or ~x~ are symbols, but such symbols need not be protection. In other words:  we don't have to replace a symbol by another symbol, because Sagemath can already differentiate wrt symbols; it's the other `things' are the things that have to be replaced by a variable. Thus, arguments like ~q(t)~  that are /not/ symbols have to be protected by replacing them with dummy symbols.
+2. Replace in $F$ the arguments by their dummy variables. We use the Sagemath ~subs~ functionality of Sagemath to substitute the dummy variables for the functions. Now there is one further problem: ~subs~ does not work on lists or tuples. However, ~subs~ /does work/ on vectors and matrices. Therefore, we cast all relevant lists to vectors, which suffices for our goal.
+3. Take the Jacobian of $F$ with respect to the dummy symbols. We achieve this by substituting the dummy symbols in the vector of arguments and the vector of variables.
+4. Invert: Replace in the final result the dummy symbols by their related arguments.
+
+
+We use ~id(v)~ to create a unique variable name for each dummy variable and store the mapping from the functions to the dummy variables in a dictionary ~subs~.
+(As these are internal names, the actual variable names are irrelevant; as long as they are unique, it's OK.)
+
+We know from the above that ~jacobian~ expects a /list/ with the variables with respect to which to differentiate.
+Therefore, we turn the vector with substituted variables to a list.
+
+#+attr_latex: :options label=../sage/differentiation.sage
+#+begin_src sage :tangle ../sage/differentiation.sage
+def Jacobian(F):
+    def f(args, vrs):
+        if isinstance(args, (list, tuple)):
+            args = vector(args)
+        if isinstance(vrs, (list, tuple)):
+            vrs = vector(vrs)
+        subs = {
+            v: var(f"v{id(v)}", domain=RR)
+            for v in args.list()
+            if not v.is_symbol()
+        }
+        result = jacobian(F(args.subs(subs)), vrs.subs(subs).list())
+        inverse_subs = {v: k for k, v in subs.items()}
+        return result.subs(inverse_subs)
+
+    return f
+#+end_src
+
+
+Here are some examples to see how to use this ~Jacobian~.
+Note that ~Jacobian~ expects the arguments and variables to be /lists/, or list like.
+As a result, in the function  ~F~ we have to unpack the list.
+
+#+attr_latex: :options label=../sage/differentiation\_tests.sage
+#+begin_src sage :tangle ../sage/differentiation_tests.sage :exports both :results replace latex
+v = var("v", domain=RR)
+
+
+def F(v):
+    r, t = v.list()
+    return 5 * r ^ 3 + 3 * t ^ 2 * r
+
+
+show(Jacobian(F)([v, t], [t]))
+show(Jacobian(F)([v, t], [v, t]))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{c}
+6 \, t v
+\end{array}\right]
+\end{dmath*}
+\begin{dmath*}
+\left[\begin{array}{cc}
+3 \, t^{2} + 15 \, v^{2} & 6 \, t v
+\end{array}\right]
+\end{dmath*}
+#+end_export
+
+This works. Now we try the same with a function like argument. Recall, ~v~ must a be list for ~partial~ on which ~gradient~ depends.
+
+#+attr_latex: :options label=../sage/differentiation\_tests.sage
+#+begin_src sage :tangle ../sage/differentiation_tests.sage :exports both :results replace latex
+q = Function(lambda t: function("q")(t))
+v = [q(t), t]
+show(Jacobian(F)(v, v))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{cc}
+3 \, t^{2} + 15 \, q^{2} & 6 \, t q
+\end{array}\right]
+\end{dmath*}
+#+end_export
+
+
+*** COMMENT Some more details which can be skipped
+
+I struggled a lot with finding the right type of substitution.
+
+To find the problem, I decided to look into how substitution works in Sagemath.
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :tangle no :exports both :results replace output
+vrs = vector((r, t))
+subs = {v: var(f"v{id(v)}", domain=RR) for v in vrs.list()}
+print(subs)
+print(vrs.subs(subs).list())
+#+end_src
+
+#+RESULTS:
+
+This is interesting, but contrary to what I expected.
+In the ~subs~ dictionary, ~r(t)~ has its own value.
+However, when substituting this dict into the list of variables, the ~t~ in ~r(t)~ is replaced by its new variable, but ~r(t)~ itself is /not/ changed.
+As a consequence, the differentiation in ~jacobian~ still uses the chain rule to compute the derivative wrt ~t~.
+
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :tangle no :exports both :results replace output
+subs = {
+    v: var(f"v{id(v)}", domain=RR) for v in vrs.list() if not v.is_symbol()
+}
+print(subs)
+print(vrs.subs(subs).list())
+#+end_src
+
+#+RESULTS:
+
+And now all looks OK: ~r(t)~ is replaced by some new variable.
+
+Here is my improved Jacobian; I just added a check ~is_symbol()~ in the ~subs~ dict.
+
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :tangle no
+def Jacobian(F):
+    def f(args, vrs):
+        if isinstance(args, (list, tuple)):
+            args = vector(args)
+        if isinstance(vrs, (list, tuple)):
+            vrs = vector(vrs)
+        subs = {
+            v: var(f"v{id(v)}", domain=RR)
+            for v in vrs.list()
+            if not v.is_symbol()
+        }
+        inv_subs = {v: k for k, v in subs.items()}  # inverse of subs
+        result = jacobian(F(args.subs(subs)), vrs.subs(subs).list())
+        return result.subs(inv_subs)
+
+    return f
+#+end_src
+
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :tangle no :exports both :results replace latex
+show(Jacobian(F)((r, t), [t]))
+show(Jacobian(F)((r, t), [r]))
+show(Jacobian(F)((r, t), [t, r]))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+#+end_export
+
+This is still not completely OK.
+The second and the third examples are correct, but the first is not.
+Why is that?
+Well, after some thought, it occured to me that in the first example, the list ~vrs~ of variables is ~[t]~, that is, ~vrs~ does not contain ~r(t)~.
+Therefore ~r(t)~ will not be substituted with a new variable, hence not protected against differentiation with the chain rule.
+In the second and third example, ~r(t)~ is in the list of variables, so it /will be/ substituted correctly, hence protected.
+This observation lead me to the idea to base the ~subs~ dict on the list ~args~ of /arguments/ of the function ~F~ rather than on the list ~vrs~ of variables wrt which to take the derivatives.
+
+** Gradient and Hessian
+
+Next we build the gradient.
+We can use Sagemath's ~jacobian~, but as is clear from above, we need to indicate explicitly the variable names with respect to which to differentiate.
+Moreover, we like to be able to take the gradient with respect to literal functions. Thus, we use the ~Jacobian~ defined above.
+
+One idea for the gradient is like this.
+However, this does not allow to use ~gradient~ as a function in functional composition.
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :tangle no
+def gradient(F, v):
+    return Jacobian(F)(v, v).T
+#+end_src
+
+We therefore favor the next implementation.
+BTW, note that the gradient is a vector in a tangent space, hence it is column vector.
+For that reason we transpose the Jacobian.
+#+attr_latex: :options label=../sage/differentiation.sage
+#+begin_src sage :tangle ../sage/differentiation.sage
+def gradient(F):
+    return lambda v: Jacobian(F)(v, v).T
+#+end_src
+
+#+attr_latex: :options label=../sage/differentiation\_tests.sage
+#+begin_src sage :exports both :results replace latex
+show(gradient(F)(v))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{c}
+3 \, t^{2} + 15 \, q^{2} \\
+6 \, t q
+\end{array}\right]
+\end{dmath*}
+#+end_export
+
+
+When differentiating a symbolic function, wrap such a function in a ~Function~.
+#+attr_latex: :options label=../sage/differentiation\_tests.sage
+#+begin_src sage :exports both :results replace latex
+U = Function(lambda x: function("U")(square(x)))
+show(gradient(U)(v))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{c}
+2 \, q \mathrm{D}_{0}\left(U\right)\left(t^{2} + q^{2}\right) \\
+2 \, t \mathrm{D}_{0}\left(U\right)\left(t^{2} + q^{2}\right)
+\end{array}\right]
+\end{dmath*}
+#+end_export
+
+
+The Hessian can now be defined as the composition of the gradient with itself.
+#+attr_latex: :options label=../sage/differentiation.sage
+#+begin_src sage :tangle ../sage/differentiation.sage
+def Hessian(F):
+    return lambda v: compose(gradient, gradient)(F)(v)
+#+end_src
+
+
+#+attr_latex: :options label=../sage/differentiation\_tests.sage
+#+begin_src sage :exports both :results replace latex
+show(Hessian(F)(v))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{cc}
+30 \, q & 6 \, t \\
+6 \, t & 6 \, q
+\end{array}\right]
+\end{dmath*}
+#+end_export
+
+** Differentiation with respect to slots
+
+To follow the notation of the book, we need to define a python function that computes partial derivatives with respect to the slot of a function; for example, in $\partial_1 L$ the ~1~ indicates that the partial derivatives are supposed to be taken wrt the coordinate variables.
+The ~Jacobian~ function built above allows us a very simple solution.
+Note that we return a ~Function~ so that we can use this operator in functional composition if we like.
+
+#+attr_latex: :options label=../sage/differentiation.sage
+#+begin_src sage :tangle ../sage/differentiation.sage
+@Func
+def partial(f, slot):
+    def wrapper(local):
+        if slot == 0:
+            selection = [time(local)]
+        elif slot == 1:
+            selection = coordinate(local)
+        elif slot == 2:
+            selection = velocity(local)
+        return Jacobian(f)(local, selection)
+
+    return wrapper
+#+end_src
+
+The main text contains many examples.

@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import re
 
 
@@ -21,7 +23,7 @@ def remove_attr_option_strings(fname):
 
     with open(fname, 'w') as file:
         for line in lines:
-            if "#+ATTR_LATEX: :options label=" in line:
+            if "#+attr_latex: :options label=" in line.lower():
                 continue
             file.write(line)
 
@@ -53,7 +55,7 @@ def process_org_file(filename):
                 if tangle_fname == "no":
                     tangle_fname = "don't tangle"
             tangle_fname = tangle_fname.replace("_", r"\_")
-            attr_line = f"#+ATTR_LATEX: :options label={tangle_fname}\n"
+            attr_line = f"#+attr_latex: :options label={tangle_fname}\n"
             output_lines.append(attr_line)
 
         output_lines.append(line)
@@ -64,12 +66,6 @@ def process_org_file(filename):
 
 
 files = [
-    "utils.org",
-    "section1.4.org",
-    "section1.5.org",
-    "section1.6.org",
-    "section1.7.org",
-    "section1.8.org",
     "section3.1.org",
     "section3.2.org",
     "section3.4.org",
@@ -77,6 +73,20 @@ files = [
     "section3.9.org",
     "section5.1.org",
     "section5.2.org",
+]
+
+
+files = [
+    "show_expression.org",
+    "tuples.org",
+    "functions.org",
+    "differentiation.org",
+    "section1.4.org",
+    "section1.5.org",
+    "section1.6.org",
+    "section1.7.org",
+    "section1.8.org",
+    "section1.9.org",
 ]
 
 
