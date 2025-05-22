@@ -13,13 +13,13 @@
 
 * Functional programming with Python functions
 
-In this section we set up some generic functionality to support the summation, products and composition of functions:
+In this section we set up some generic functionality to support the summation, product, and composition of functions:
 \begin{align*}
 (f+g)(x) &= f(x) + g(x), \\
 (fg)(x) &= f(x)g(x), \\
 (f \circ g)(x) &= f(g(x).
 \end{align*}
-This is easy to code by means of recursion.
+This is easy to code with recursion.
 
 
 
@@ -38,20 +38,17 @@ We need to load ~functions.sage~ to run the examples in the test file.
 load("functions.sage")
 #+end_src
 
-I load ~show_expression~ to control the LaTeX output in this org file.
+We load ~show_expression~ to control the LaTeX output in this org file.
 #+attr_latex: :options label=don't tangle
 #+begin_src sage  :tangle no
 load("show_expression.sage")
-
-def show(s, simplify=True):
-    return show_expression(s, simplify)
 #+end_src
 
 
 
 ** The ~Function~ class
 
-The ~Function~ class offers the functionality we need for functional programming.
+The ~Function~ class provides the functionality we need for functional programming.
 #+attr_latex: :options label=../sage/functions.sage
 #+begin_src sage :tangle ../sage/functions.sage
 class Function:
@@ -85,7 +82,7 @@ class Function:
             return self * (self ** (exponent - 1))
 #+end_src
 
-The next function will be used as decorator on a function ~f~, say,that returns another function ~inner_f~, say, so that ~inner_f~ becomes a Function.
+The next function decorates a function ~f~ that returns another function ~inner_f~, so that ~inner_f~ becomes a ~Function~.
 
 #+attr_latex: :options label=../sage/functions.sage
 #+begin_src sage :tangle ../sage/functions.sage
@@ -96,6 +93,7 @@ def Func(f):
     return wrapper
 #+end_src
 
+Below I include an example to see how to use, and understand, this decorator.
 
 Composition is just a recursive call of functions.
 #+attr_latex: :options label=../sage/functions.sage
@@ -106,6 +104,7 @@ def compose(*funcs):
         return lambda x: funcs[0](x)
     return lambda x: funcs[0](compose(*funcs[1:])(x))
 #+end_src
+
 
 
 

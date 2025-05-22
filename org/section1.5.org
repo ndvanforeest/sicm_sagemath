@@ -405,7 +405,7 @@ I recently read the books of Larry Susskind on the theoretical minimum for physi
 The Euler-Lagrange equations are simple to implement now that we have a good function for computing partial derivatives.
 
 
-*** The Euler Langrange  Equations
+*** The Euler Lagrange  Equations
 
 We work in steps to see how all components tie together.
 #+attr_latex: :options label=../sage/section1.5.sage

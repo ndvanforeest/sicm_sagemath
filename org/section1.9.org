@@ -185,7 +185,7 @@ def f_bar(q_prime):
     return lambda t: Gamma(q)(t)
 #+end_src
 
-Here is the check. I suppress the depence on $t$ again to keep the result easier to read.
+Here is the check. I suppress the dependence on $t$ again to keep the result easier to read.
 #+attr_latex: :options label=../sage/section1.9.sage
 #+begin_src sage :exports both :results replace latex
 show(f_bar(q_prime)(t))

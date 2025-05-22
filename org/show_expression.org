@@ -9,11 +9,13 @@
 
 #+PROPERTY: header-args:sage :session output_to_latex :eval never-export :exports code :results none :tangle ../sage/show_expression.sage :dir ../sage/
 
-* Output to LaTeX
+* TODO Output to LaTeX
+
+We need some tricks to adapt  the LaTeX output of Sagemath to our liking.
+
+We use ~re~ to modify LateX strings. I discovered the two latex options from this site: [[https://doc.sagemath.org/html/en/tutorial/latex.html][Sage, LateX and Friends]].
 
 
-We use ~re~ to modify LateX strings.
-Note in passing that the title of the code block shows the file to which the code is tangled, and if a code block is not tangled, the title says this too.
 #+attr_latex: :options label=../sage/show\_expression.sage
 #+begin_src sage :exports code :results none :tangle ../sage/show_expression.sage
 import re
@@ -21,6 +23,8 @@ import re
 latex.matrix_delimiters(left='[', right=']')
 latex.matrix_column_alignment("c")
 #+end_src
+
+Note in passing that the title of the code block shows the file to which the code is tangled, and if a code block is not tangled, the title says "don't tangle".
 
 To keep the formulas short in LaTeX, I remove all strings like $(t)$, and replace $\partial x/\partial t$ by $\dot x$.
 This is the job of the regular expressions below.

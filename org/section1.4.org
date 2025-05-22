@@ -13,8 +13,8 @@
 
 ** Standard setup
 
-I make an org file for each separate section of the book; for this section it's ~section1.4.org~.
-Code that is useful for later sections gets tangled to ~utils1.4.sage~, otherwise to ~section1.4.sage~.
+I create an Org file for each separate section of the book; for this section it's ~section1.4.org~.
+Code that is useful for later sections is tangled to ~utils1.4.sage~ and otherwise to ~section1.4.sage~.
 This allows me to run the sage scripts on the prompt.
 Note that the titles of the  code blocks correspond to the file to which the code is written when tangled.
 
@@ -27,7 +27,7 @@ import numpy as np
 load("functions.sage", "differentiation.sage", "tuples.sage")
 #+end_src
 
-BTW, don't load ~from sage.all import *~ after loading ~utils.sage~, because that will lead to name space conflict with the ~Gamma~ function, which we define below.
+BTW, don't do ~from sage.all import *~ because that will lead to name space conflicts, for instance with the ~Gamma~ function which we define below.
 
 
 #+attr_latex: :options label=../sage/section1.4.sage
@@ -188,7 +188,7 @@ That is,
 To follow the conventions of the book, we use an ~up~ tuple for ~Gamma~.
 However, I don't build the coordinate path nor the velocity as up tuples because I find Sagemath vectors more convenient.
 
-$\Gamma$ just receives $q$ as an argument. Then it computes the velocity $v=Dq$, from which the acceleration follows recursively as $a=Dv$, \ldots.
+$\Gamma$ just receives $q$ as an argument. Then it computes the velocity $v=Dq$, from which the acceleration follows recursively as $a=D v$, \ldots.
 Recall that ~D~ computes the derivative (wrt time) of a function that depends on time.
 
 When $n=3$, it returns a function of time that produces the first three elements of the local tuple $(t, q(t), v(t)$.
@@ -388,7 +388,7 @@ Of course, Sagemath already supports a definite integral in a library.
 from sage.symbolic.integration.integral import definite_integral
 #+end_src
 
-I don't like to read $dt$ at the end of the integral because $dt$ reads like the product of the variables $d$ and $t$.
+I don't like to read $d t$ at the end of the integral because $d t$ reads like the product of the variables $d$ and $t$.
 Instead, I prefer to read $\d t$; for this reason I overwrite the LaTeX formatting of ~definite_integral~.
 #+attr_latex: :options label=../sage/utils1.4.sage
 #+begin_src sage :tangle ../sage/utils1.4.sage

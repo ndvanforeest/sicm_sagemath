@@ -158,7 +158,7 @@ p = points(pp, color='blue', size=3)
 p.save(f'circle.png')
 #+end_src
 
-However, if I replace the rhs of the DE by by constants,, I get an error that the integration variables are unknown.
+However, if I replace the RHS of the DE by by constants,, I get an error that the integration variables are unknown.
 
 #+attr_latex: :options label=don't tangle
 #+begin_src sage :tangle no

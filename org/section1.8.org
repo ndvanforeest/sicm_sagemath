@@ -70,13 +70,13 @@ Next the transformation from spherical to 3D rectangular coordinates.
 #+attr_latex: :options label=../sage/section1.8.sage
 #+begin_src sage
 def s_to_r(sperical_state):
-    r, theta, phi = coordinate(sperical_state).list()
+    r, theta, phi = coordinate(spherical_state).list()
     return vector(
         [r * sin(theta) * cos(phi), r * sin(theta) * sin(phi), r * cos(theta)]
     )
 #+end_src
 
-For example, here is are the velocities expressed in sperical coordinates.
+For example, here is are the velocities expressed in spherical coordinates.
 #+attr_latex: :options label=../sage/section1.8.sage
 #+begin_src sage :exports both :results replace latex
 show(velocity(F_to_C(s_to_r)(Gamma(q)(t))).simplify_full())

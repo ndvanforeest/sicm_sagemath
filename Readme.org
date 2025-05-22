@@ -10,8 +10,8 @@
 
 This is a translation to Python and Sagemath of (most of) the Scheme code of the book `Structure and interpretation of classical mechanics' by Sussman and Wisdom.
 When referring to /the book/, I mean their book.
-I expect the reader to read the related parts of the book, and use the Scheme code of the book to understand the Python code.
-In other words, I don't explain much of the logic of the code in this document.
+I expect the reader to read the related parts of the book, and use the Python code to understand the Scheme code of the book (and vice versa).
+I therefore don't explain much of the logic of the code in this document.
 I'll try to stick to the naming of functions and variables as used in the book.
 I also try to keep the functional programming approach of the book; consequently, I don't strive to the most pythonic code possible.
 To keep the code clean, I never protect functions against stupid input; realize that this is research project, the aim is not to produce a fool-proof software product.
@@ -22,9 +22,9 @@ To keep the code clean, I never protect functions against stupid input; realize 
 
 In the pdf file I tend to place explanations, comments, and observations about the code and the results /above/ the code blocks.
 
-I wrote this document in emacs and org mode.
+I wrote this document in Emacs and Org mode.
 When developing, I first made a sage file with all code for a specific section of the book.
-Once all worked, I copied the code to an org file and make code blocks.
+Once all worked, I copied the code to an Org file and make code blocks.
 Then I tangled, for instance, generally useful code of ~secton1.4.org~ to ~utils1.4.sage~ and to ~section1.4.sage~ for code specific for  Section 1.4 of the book. This way I can load the utils files at later stages.
 
 I found it convenient to test things in a ~tests.sage~ file.
