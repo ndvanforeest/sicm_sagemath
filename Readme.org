@@ -24,11 +24,13 @@ In the pdf file I tend to place explanations, comments, and observations about t
 
 I wrote this document in Emacs and Org mode.
 When developing, I first made a sage file with all code for a specific section of the book.
-Once all worked, I copied the code to an Org file and make code blocks.
-Then I tangled, for instance, generally useful code of ~secton1.4.org~ to ~utils1.4.sage~ and to ~section1.4.sage~ for code specific for  Section 1.4 of the book. This way I can load the utils files at later stages.
+Once everything worked, I copied the code to an Org file and make code blocks.
+Then I tangled, for instance, generally useful code of ~section1.4.org~ to ~utils1.4.sage~ and code specific for Section 1.4 to ~section1.4.sage~.
+A ~util~ file does not contain code that will be executed when loading the ~util~ file.
+This way I can load the utils files at later stages, and by runnning, for instance ~sage section1.4.sage~ I can test all functionality offered by the `module' ~utils1.4.sage~.
 
 I found it convenient to test things in a ~tests.sage~ file.
-Then, I could edit within emacs and see the consequences directly in the sage session by opening a sage session on the command prompt and attaching the session to the file like so:
+I can edit ~tests.sage~ within Emacs and see the consequences directly in the sage session by opening a sage session on the command prompt and attaching the session to the file like so:
 #+begin_example
 sage: attach("tests.sage")
 #+end_example
