@@ -121,34 +121,10 @@ F = Function(lambda x: f(x))
 #+end_src
 
 
-We will use quadratic functions often, so let's make a function for this.
-When $x$ is a vector, Sagemath interprets $x^2$  as $x^{t} \cdot x$, which we want.
 The identity is just interesting. Perhaps we'll use it later.
 #+attr_latex: :options label=../sage/functions.sage
 #+begin_src sage :tangle ../sage/functions.sage
 identity = Function(lambda x: x)
-
-def _square(x):
-    if isinstance(
-        x,
-        (
-            int,
-            float,
-            sage.symbolic.expression.Expression,
-            sage.rings.integer.Integer,
-        ),
-    ):
-        return x ^ 2
-    elif isinstance(x, (Vector, list, tuple)):
-        v = vector(x)
-        return v.dot_product(v)
-    elif isinstance(x, Matrix) and x.ncols() == 1:
-        return (x.transpose() * x)[0, 0]
-    else:
-        raise TypeError(f"Unsupported type: {type(x)}")
-
-
-square = Function(lambda x: _square(x))
 #+end_src
 
 To be able to code things like ~(sin + cos)(x)~ we need to postpone the application of ~sin~ and ~cos~ to their arguments.
@@ -159,6 +135,49 @@ Therefore we override their definitions.
 sin = Function(lambda x: sage.functions.trig.sin(x))
 cos = Function(lambda x: sage.functions.trig.cos(x))
 #+end_src
+
+We will use quadratic functions often.
+#+attr_latex: :options label=../sage/functions.sage
+#+begin_src sage :tangle ../sage/functions.sage
+from functools import singledispatch
+
+
+@singledispatch
+def _square(x):
+    raise TypeError(f"Unsupported type: {type(x)}")
+
+
+@_square.register(int)
+@_square.register(float)
+@_square.register(Expression)
+@_square.register(Integer)
+def _(x):
+    return x ^ 2
+
+
+@_square.register(Vector)
+@_square.register(list)
+@_square.register(tuple)
+def _(x):
+    v = vector(x)
+    return v.dot_product(v)
+
+
+@_square.register(Matrix)
+def _(x):
+    if x.ncols() == 1:
+        return (x.T * x)[0, 0]
+    elif x.nrows() == 1:
+        return (x * x.T)[0, 0]
+    else:
+        raise TypeError(
+            f"Matrix must be a row or column vector, got shape {x.nrows()}×{x.ncols()}"
+        )
+
+
+square = Function(lambda x: _square(x))
+#+end_src
+
 
 To use Sagemath functions we make an abbreviation.
 #+attr_latex: :options label=../sage/functions.sage

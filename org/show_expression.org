@@ -9,7 +9,7 @@
 
 #+PROPERTY: header-args:sage :session output_to_latex :eval never-export :exports code :results none :tangle ../sage/show_expression.sage :dir ../sage/
 
-* TODO Output to LaTeX
+* Output to LaTeX
 
 We need some tricks to adapt  the LaTeX output of Sagemath to our liking.
 
@@ -42,15 +42,6 @@ def simplify_latex(s):
     return s
 #+end_src
 
-# As Sagemath vectors do not support `orientation' (they are similar to lists and tuples), we print a vector as a column.
-# #+begin_src sage :exports code :results none :tangle ../sage/show_expression.sage
-# def Latex(s):
-#     if isinstance(s, sage.structure.element.Vector):
-#         s = latex(s.column())
-#     else:
-#         s = latex(s)
-#     return s
-# #+end_src
 
 The function ~show_expression~ prints expressions to LaTeX.
 There is a caveat, though.

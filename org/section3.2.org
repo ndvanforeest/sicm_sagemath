@@ -19,244 +19,223 @@
 
 ** The standard imports.
 
-#+begin_src sage
-load(
-    "utils.sage",
-    "utils1.6.sage",
-    "utils3.1.sage",
-    "utils3.2.sage",
-)
+** Standard imports
 
-var("t", domain="real")
+
+#+attr_latex: :options label=../sage/utils3.2.sage
+#+begin_src sage :tangle ../sage/utils3.2.sage
+load("utils3.1.sage")
+#+end_src
+
+#+attr_latex: :options label=../sage/section3.2.sage
+#+begin_src sage
+load("utils3.2.sage")
+
+t = var("t", domain="real")
 #+end_src
 
 
-
+#+attr_latex: :options label=don't tangle
 #+begin_src sage :exports code  :tangle no
 load("show_expression.sage")
 #+end_src
 
+
 ** The Poisson Bracket
 
-I make two implementations: one is more or less standard Python code, the second maximizes the amount of functional programming.
 
-This is the first.
-#+begin_src sage :eval never
+This is the Poisson bracket.
+#+attr_latex: :options label=../sage/utils3.2.sage
+#+begin_src sage :tangle ../sage/utils3.2.sage
+@Func
 def Poisson_bracket(F, G):
     def f(state):
-        left = partial(F, 1)(state) * partial(G, 2)(state).T
-        right = partial(F, 2)(state) * partial(G, 1)(state).T
+        left = (partial(F, 1) * compose(transpose, partial(G, 2)))(state)
+        right = (partial(F, 2) * compose(transpose, partial(G, 1)))(state)
         return (left - right).simplify_full()
 
     return f
 #+end_src
 
-For the second I need two helper functions that are self explanatory.
+We can make general state functions like so.
+#+attr_latex: :options label=../sage/utils3.2.sage
 #+begin_src sage :tangle ../sage/utils3.2.sage
-def transpose(M):
-    return M.T
-
-
-def simplify(expr):
-    return expr.simplify_full()
+@Func
+def state_function(name):
+    return lambda H_state: function(name)(
+        time(H_state), *coordinate(H_state).list(), *momentum(H_state).list()
+    )
 #+end_src
 
-This is the second implementation
+The first test is to see whether $\{Q, H\} = \partial_{2} H$ and $\{P, H\} = -\partial_{1} H$, where $Q$ and $P$ are the coordinate and momentum selectors, and $H$ is a general state function.
 
-#+begin_src sage :tangle ../sage/utils3.2.sage
-def Poisson_bracket(F, G):
-    def f(state):
-        return Compose(
-            simplify,
-            Sum(
-                Product(partial(F, 1), Compose(transpose, partial(G, 2))),
-                Min(Product(partial(F, 2), Compose(transpose, partial(G, 1)))),
-            ),
-        )(state)
-
-    return f
-#+end_src
-
-The first test is to see whether $\{Q, H\} = \partial_{2} H$ and $\{P, H\} = -\partial_{1} H$, where $Q$ and $P$ are the coordinate and momentum selectors.
-For the Hamiltonian I take a general function and  check $\{Q_{0}, H\}$, $\{P_{0}, H\}$, and $\{Q, H\}$.
-
+#+attr_latex: :options label=../sage/section3.2.sage
 #+begin_src sage :exports both :results replace latex
-space = make_space("q", dim=2)
+q = column_matrix([var("q_x"), var("q_y")])
+p = row_matrix([var("p_x"), var("p_y")])
+sigma = up(t, q, p)
+H = state_function("H")
 
-def Hamiltonian(local):
-    return function("H")(time(local), *coordinate(local), *velocity(local))
-
-
-show(Poisson_bracket(lambda local: coordinate(local)[0], Hamiltonian)(space))
-show(Poisson_bracket(lambda local: momentum(local)[0], Hamiltonian)(space))
-show(Poisson_bracket(coordinate, Hamiltonian)(space))
-show(Poisson_bracket(coordinate, momentum)(space))
+show(Poisson_bracket(coordinate, H)(sigma))
+show(Poisson_bracket(momentum, H)(sigma))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
 \begin{dmath*}
-\left(\begin{array}{r}
-\frac{\partial}{\partial {\dot q_1}}H\left(t, {q_1}, {q_2}, {\dot q_1}, {\dot q_2}\right)
-\end{array}\right)
+\left[\begin{array}{c}
+\frac{\partial}{\partial p_{x}}H\left(t, q_{x}, q_{y}, p_{x}, p_{y}\right) \\
+\frac{\partial}{\partial p_{y}}H\left(t, q_{x}, q_{y}, p_{x}, p_{y}\right)
+\end{array}\right]
 \end{dmath*}
 \begin{dmath*}
-\left(\begin{array}{r}
--\frac{\partial}{\partial {q_1}}H\left(t, {q_1}, {q_2}, {\dot q_1}, {\dot q_2}\right)
-\end{array}\right)
-\end{dmath*}
-\begin{dmath*}
-\left(\begin{array}{r}
-\frac{\partial}{\partial {\dot q_1}}H\left(t, {q_1}, {q_2}, {\dot q_1}, {\dot q_2}\right) \\
-\frac{\partial}{\partial {\dot q_2}}H\left(t, {q_1}, {q_2}, {\dot q_1}, {\dot q_2}\right)
-\end{array}\right)
-\end{dmath*}
-\begin{dmath*}
-\left(\begin{array}{rr}
-1 & 0 \\
-0 & 1
-\end{array}\right)
+\left[\begin{array}{c}
+-\frac{\partial}{\partial q_{x}}H\left(t, q_{x}, q_{y}, p_{x}, p_{y}\right) \\
+-\frac{\partial}{\partial q_{y}}H\left(t, q_{x}, q_{y}, p_{x}, p_{y}\right)
+\end{array}\right]
 \end{dmath*}
 #+end_export
 
-All is correct.
+All is correct. Note that both results are standing vectors.
 
 ** Properties of the Poisson bracket
 
-We know that $\{F, F\} = 0$ for any functions.
+We know that $\{H, H\} = 0$ for any function.
 Let's test this for our implementation.
 
+#+attr_latex: :options label=../sage/section3.2.sage
 #+begin_src sage :exports both :results replace latex
-def F(local):
-    return function("f")(time(local), *coordinate(local), *velocity(local))
-
-show(Poisson_bracket(F, F)(space))
+show(Poisson_bracket(H, H)(sigma))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
 \begin{dmath*}
-\left(\begin{array}{r}
+\left[\begin{array}{c}
 0
-\end{array}\right)
+\end{array}\right]
 \end{dmath*}
 #+end_export
 
 
 The property $\{F, F\} = 0$ is actually implied when we can show that the Poisson bracket is anti-symmetric.
-We need an extra function to check the anti-symmetry.
-#+begin_src sage
-def G(local):
-    return function("g")(time(local), *coordinate(local), *velocity(local))
-#+end_src
-
+#+attr_latex: :options label=../sage/section3.2.sage
 #+begin_src sage :exports both :results replace latex
-show(Sum(Poisson_bracket(F, G), Poisson_bracket(G, F))(space))
+F = state_function("F")
+G = state_function("G")
+
+show((Poisson_bracket(F, G) + Poisson_bracket(G, F))(sigma))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
 \begin{dmath*}
-\left(\begin{array}{r}
+\left[\begin{array}{c}
 0
-\end{array}\right)
+\end{array}\right]
 \end{dmath*}
 #+end_export
 
 
 How about $\{F, G+H\} = \{F, G\} + \{F, H\}$?
+#+attr_latex: :options label=../sage/section3.2.sage
 #+begin_src sage :exports both :results replace latex
-def H(local):
-    return function("h")(time(local), *coordinate(local), *velocity(local))
-
-
 show(
-    Poisson_bracket(F, Sum(G, H))(space)
-    == Sum(Poisson_bracket(F, G), Poisson_bracket(F, H))(space)
+    (
+        Poisson_bracket(F, G + H)
+        - Poisson_bracket(F, G)
+        - Poisson_bracket(F, H)
+    )(sigma)
 )
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
 \begin{dmath*}
-\mathrm{True}
+\left[\begin{array}{c}
+0
+\end{array}\right]
 \end{dmath*}
 #+end_export
 
 To check the rule $\{F, c G\} = c\{F, G\}$ we need a constant function.
 By making the next ~function~ independent of any argument, it becomes constant.
+#+attr_latex: :options label=../sage/section3.2.sage
 #+begin_src sage
-def constant(local):
-    return function("c")()
+constant = Function(lambda H_state: function("c")())
 #+end_src
 
 Is it indeed constant?
+#+attr_latex: :options label=../sage/section3.2.sage
 #+begin_src sage :exports both :results replace latex
-show(diff(constant(space), time(space)))
-show(diff(constant(space), *coordinate(space)))
+show(Jacobian(constant)(sigma, sigma))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
 \begin{dmath*}
-0
-\end{dmath*}
-\begin{dmath*}
-0
+\left[\begin{array}{ccccc}
+0 & 0 & 0 & 0 & 0
+\end{array}\right]
 \end{dmath*}
 #+end_export
 
-So, next we can check $\{F, cG\}$.
+So, next we can check $\{F, cG\} = c \{F, G\}$.
+#+attr_latex: :options label=../sage/section3.2.sage
 #+begin_src sage :exports both :results replace latex
 show(
-    Poisson_bracket(F, Product(constant, G))(space)
-    == Product(constant, Poisson_bracket(F, G))(space)
+    (Poisson_bracket(F, constant * G) - constant * Poisson_bracket(F, G))(
+        sigma
+    ).simplify_full()
 )
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
 \begin{dmath*}
-\mathrm{True}
+\left[\begin{array}{c}
+0
+\end{array}\right]
 \end{dmath*}
 #+end_export
-
-
 
 Finally, here is the check on Jacobi's identity.
+#+attr_latex: :options label=../sage/section3.2.sage
 #+begin_src sage :exports both :results replace latex
-jacobi = Compose(
-    simplify,
-    Sum(
-        Poisson_bracket(F, Poisson_bracket(G, H)),
-        Poisson_bracket(G, Poisson_bracket(H, F)),
-        Poisson_bracket(H, Poisson_bracket(F, G)),
-    ),
+jacobi = (
+    Poisson_bracket(F, Poisson_bracket(G, H))
+    + Poisson_bracket(G, Poisson_bracket(H, F))
+    + Poisson_bracket(H, Poisson_bracket(F, G))
 )
-show(jacobi(space))
+
+show(jacobi(sigma).simplify_full())
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
 \begin{dmath*}
-\left(\begin{array}{r}
+\left[\begin{array}{c}
 0
-\end{array}\right)
+\end{array}\right]
 \end{dmath*}
 #+end_export
 
-** Poisson bracket of conserved quantities
+** Poisson bracket of a conserved quantity
 
 To check that the Poisson bracket of a conserved quantity is conserved we need a function that does not depend on time.
+#+attr_latex: :options label=../sage/section3.2.sage
 #+begin_src sage
-def F(local):
-    return function("f")(*coordinate(local), *velocity(local))
+def f(H_state):
+    return function("f")(
+        *coordinate(H_state).list(), *momentum(H_state).list()
+    )
 #+end_src
 
 Clearly, the derivative with respect to time of this function is zero, so it does what we need.
 
+#+attr_latex: :options label=../sage/section3.2.sage
 #+begin_src sage :exports both :results replace latex
-show(diff(F(space), time(space)))
+show(diff(f(sigma), time(sigma)))
 #+end_src
 
 #+RESULTS:
@@ -267,10 +246,9 @@ show(diff(F(space), time(space)))
 #+end_export
 
 Now consider $\{F, H\}$ where $H$ is the rectangular Hamiltonian.
+#+attr_latex: :options label=../sage/section3.2.sage
 #+begin_src sage
-def V(q):
-    return function("U")(*q)
-
+V = Function(lambda q: function("V")(*q.list()))
 
 var(m, domain="positive")
 
@@ -278,17 +256,27 @@ H = H_rectangular(m, V)
 #+end_src
 
 I compute the Poisson bracket of $F$ and $H$ for one dimension so that the result remains small.
+#+attr_latex: :options label=../sage/section3.2.sage
 #+begin_src sage :exports both :results replace latex
-space = make_space("q", dim=1)
-show(Poisson_bracket(F, H)(space).expand()[0, 0])
+q = column_matrix([var("q")])
+p = row_matrix([var("p")])
+sigma = up(t, q, p)
+
+show(Poisson_bracket(f, H)(sigma).expand())
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
 \begin{dmath*}
--\frac{\partial}{\partial {q_1}}U\left({q_1}\right) \frac{\partial}{\partial {\dot q_1}}f\left({q_1}, {\dot q_1}\right) + \frac{{\dot q_1} \frac{\partial}{\partial {q_1}}f\left({q_1}, {\dot q_1}\right)}{m}
+\left[\begin{array}{c}
+-\frac{\partial}{\partial q}V\left(q\right) \frac{\partial}{\partial p}f\left(q, p\right) + \frac{p \frac{\partial}{\partial q}f\left(q, p\right)}{m}
+\end{array}\right]
 \end{dmath*}
 #+end_export
 
-To complete the check, note that, by Hamilton's equation,  $\dot q = \partial H/ \partial p$, $\dot p = - \partial H/ \partial q$.
-If we replace that in the above equation we obtain $\dot p \partial F/\partial \dot q + \dot q \partial F/\partial q$, but this is equal to $\d F/\d t$, and since $F$ is conserved, the total time derivative of $F$ is zero.
+To complete the check, note that, by Hamilton's equation,  $\dot q = \partial H/ \partial p$, $\dot p = - \partial H/ \partial q = - \partial V/\partial q$.
+If we replace that in the above equation we obtain
+\begin{align*}
+\dot p \frac{\partial f}{\partial p} + \dot q \frac{\partial f}{\partial q} = \frac{\d f}{\d t}.
+\end{align*}
+Since $f$ is conserved, the total time derivative of $F$ is zero, hence $f$ and $H$ commute.

@@ -7,7 +7,7 @@ def Lagrangian_to_energy(L):
     LL = Function(lambda local: L(local))
     return lambda local: (P * velocity - LL)(local)
 
-q = path_function(
+q = column_path(
     [
         literal_function("r"),
         literal_function("theta"),
@@ -16,7 +16,7 @@ q = path_function(
 )
 
 def s_to_r(sperical_state):
-    r, theta, phi = coordinate(sperical_state).list()
+    r, theta, phi = coordinate(spherical_state).list()
     return vector(
         [r * sin(theta) * cos(phi), r * sin(theta) * sin(phi), r * cos(theta)]
     )
@@ -79,7 +79,7 @@ def L0(m, V):
 
     return f
 
-q = path_function([literal_function("x"), literal_function("y")])
+q = column_path([literal_function("x"), literal_function("y")])
 expr = (sqrt(G*M0 + G*M1)*t) / a^(3/2)
 A = var('A')
 
@@ -101,7 +101,7 @@ def F_tilde(angle_x, angle_y, angle_z):
 
     return f
 
-q = path_function(
+q = column_path(
     [literal_function("x"), literal_function("y"), literal_function("z")]
 )
 
@@ -110,6 +110,8 @@ def Rx(s):
 
 
 s, u, v = var("s u v")
+latex.matrix_delimiters(left='[', right=']')
+latex.matrix_column_alignment("c")
 show(Rx(s)(Gamma(q)(t)))
 show(diff(Rx(s)(Gamma(q)(t)), s)(s=0))
 

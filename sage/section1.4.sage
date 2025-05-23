@@ -2,7 +2,7 @@ load("utils1.4.sage")
 
 t = var("t", domain="real")
 
-q = path_function(
+q = column_path(
     [
         literal_function("x"),
         literal_function("y"),

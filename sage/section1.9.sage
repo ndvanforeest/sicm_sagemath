@@ -7,12 +7,11 @@ show(r)
 
 show((r(t), theta(t)), simplify=False)
 
-q_prime = path_function([r, theta])
+q_prime = column_path([r, theta])
 show(q_prime(t), simplify=False)
 
 show(Gamma(q_prime))
 
-# load("show_expression.sage")
 show(Gamma(q_prime)(t), simplify=False)
 
 F = p_to_r
@@ -24,7 +23,7 @@ show(Gamma(Q)(t), simplify=False)
 show(f_bar(q_prime)(t))
 
 t_prime = var("tt", domain="positive", latex_name="t'")
-q = path_function([literal_function("r"), literal_function("theta")])
+q = column_path([literal_function("r"), literal_function("theta")])
 local = Gamma(q)(t)
 show(osculating_path(local)(t_prime))
 
@@ -32,7 +31,7 @@ show(Gamma_bar(f_bar)(local))
 
 show(F_to_C(p_to_r)(local))
 
-q = path_function([literal_function("x")])
+q = column_path([literal_function("x")])
 local = Gamma(q, 4)(t)
 show(local)
 

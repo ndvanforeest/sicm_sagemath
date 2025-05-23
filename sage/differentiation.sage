@@ -10,6 +10,9 @@ def D(expr):
     # return derivative(expr, t)
 
 
+D = Function(lambda expr: Function(lambda t: diff(expr(t), t)))
+
+
 def Jacobian(F):
     def f(args, vrs):
         if isinstance(args, (list, tuple)):

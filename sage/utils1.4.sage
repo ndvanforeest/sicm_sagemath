@@ -14,7 +14,7 @@ def literal_function(name):
     return lambda t: function(name)(t)
 
 @Func
-def path_function(lst):
+def column_path(lst):
     #return lambda t: vector([l(t) for l in lst])
     return lambda t: column_matrix([l(t) for l in lst])
 

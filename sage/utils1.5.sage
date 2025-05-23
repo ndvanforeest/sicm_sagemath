@@ -5,8 +5,8 @@ var("m g l", domain="positive")
 
 def L_planar_pendulum(m, g, l):
     def Lagrangian(local):
-        theta = coordinate(local)[0]
-        theta_dot = velocity(local)
+        theta = coordinate(local).list()[0]
+        theta_dot = velocity(local).list()[0]
         T = (1 / 2) * m * l ^ 2 * square(theta_dot)
         V = m * g * l * (1 - cos(theta))
         return T - V

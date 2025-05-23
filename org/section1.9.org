@@ -2,10 +2,14 @@
 #+AUTHOR: Nicky
 #+date: <2025-05-19 Mon>
 
+#+OPTIONS: toc:nil author:nil date:nil title:t
+
 #+LATEX_CLASS: subfiles
 #+LATEX_CLASS_OPTIONS: [sicm_sagemath]
 
 #+PROPERTY: header-args:sage :session section19 :eval never-export :exports code :results none :tangle ../sage/section1.9.sage :dir ../sage
+
+
 
 * Abstraction of Path Functions
 
@@ -68,11 +72,11 @@ show((r(t), theta(t)), simplify=False)
  \end{dmath*}
 #+end_export
 
-A ~path_function~ takes literal functions as arguments and returns a coordinate path. Hence, it is a function of $t$ and returns $q(t)$.
+A ~column_path~ takes literal functions as arguments and returns a coordinate path. Hence, it is a function of $t$ and returns $q(t)$.
 (I use the notation of the code examples of the book such as ~q_prime~ so that I can copy the examples into the functions I build later.)
 #+attr_latex: :options label=../sage/section1.9.sage
 #+begin_src sage :exports both :results replace latex
-q_prime = path_function([r, theta])
+q_prime = column_path([r, theta])
 show(q_prime(t), simplify=False)
 #+end_src
 
@@ -239,7 +243,7 @@ Here is an example.
 #+attr_latex: :options label=../sage/section1.9.sage
 #+begin_src sage :exports both :results replace latex
 t_prime = var("tt", domain="positive", latex_name="t'")
-q = path_function([literal_function("r"), literal_function("theta")])
+q = column_path([literal_function("r"), literal_function("theta")])
 local = Gamma(q)(t)
 show(osculating_path(local)(t_prime))
 #+end_src
@@ -351,7 +355,7 @@ def Euler_Lagrange_operator(L):
 To apply this operator to a local tuple, we need to include the acceleration.
 #+attr_latex: :options label=../sage/section1.9.sage
 #+begin_src sage :exports both :results replace latex
-q = path_function([literal_function("x")])
+q = column_path([literal_function("x")])
 local = Gamma(q, 4)(t)
 show(local)
 #+end_src

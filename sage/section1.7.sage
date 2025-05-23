@@ -2,7 +2,7 @@ load("utils1.7.sage")
 
 var("t", domain=RR)
 
-q = path_function([literal_function("x"), literal_function("y")])
+q = column_path([literal_function("x"), literal_function("y")])
 local = Gamma(q)(t)
 m, k = var("m k", domain="positive")
 L = L_harmonic(m, k)
@@ -27,8 +27,8 @@ def harmonic_state_derivative(m, k):
 show(harmonic_state_derivative(m, k)(local))
 
 res = Lagrange_equations_first_order(L_harmonic(m, k))(
-    path_function([literal_function("x"), literal_function("y")]),
-    path_function([literal_function("v_x"), literal_function("v_y")]),
+    column_path([literal_function("x"), literal_function("y")]),
+    column_path([literal_function("v_x"), literal_function("v_y")]),
 )
 show(res(t))
 
@@ -38,7 +38,7 @@ state_advancer(
     T=10,
 )
 
-q = path_function([literal_function("theta")])
+q = column_path([literal_function("theta")])
 show(
     L_periodically_driven_pendulum(m, l, g, A, omega)(
         Gamma(q)(t)

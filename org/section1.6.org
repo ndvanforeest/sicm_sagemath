@@ -52,7 +52,7 @@ def L_uniform_acceleration(m, g):
 
 #+attr_latex: :options label=../sage/section1.6.sage
 #+begin_src sage :exports both :results replace latex
-q = path_function([literal_function("x"), literal_function("y")])
+q = column_path([literal_function("x"), literal_function("y")])
 l_eq = Lagrange_equations(L_uniform_acceleration(m, g))(q)
 show(l_eq(t))
 #+end_src
@@ -156,7 +156,7 @@ We need to make the appropriate variables for the space in terms of $r$ and $\ph
 #+begin_src sage :exports both :results replace latex
 r = literal_function("r")
 phi = literal_function("phi")
-q = path_function([r, phi])
+q = column_path([r, phi])
 show(p_to_r(Gamma(q)(t)))
 #+end_src
 
@@ -314,7 +314,7 @@ def L_rotating_rectangular(m, Omega):
 #+attr_latex: :options label=../sage/section1.6.sage
 #+begin_src sage
 _ = var("Omega", domain="positive")
-q_xy = path_function([literal_function("x"), literal_function("y")])
+q_xy = column_path([literal_function("x"), literal_function("y")])
 expr = L_rotating_rectangular(m, Omega)(Gamma(q_xy)(t)).simplify_full()
 #+end_src
 
@@ -385,7 +385,7 @@ def L_pend(m, l, g, ys):
 #+begin_src sage :exports both :results replace latex
 _ = var("l", domain="positive")
 
-theta = path_function([literal_function("theta")])
+theta = column_path([literal_function("theta")])
 ys = literal_function("y")
 
 expr = L_pend(m, l, g, ys)(Gamma(theta)(t)).simplify_full()

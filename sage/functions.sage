@@ -44,29 +44,45 @@ def compose(*funcs):
 
 identity = Function(lambda x: x)
 
+sin = Function(lambda x: sage.functions.trig.sin(x))
+cos = Function(lambda x: sage.functions.trig.cos(x))
+
+from functools import singledispatch
+
+
+@singledispatch
 def _square(x):
-    if isinstance(
-        x,
-        (
-            int,
-            float,
-            sage.symbolic.expression.Expression,
-            sage.rings.integer.Integer,
-        ),
-    ):
-        return x ^ 2
-    elif isinstance(x, (Vector, list, tuple)):
-        v = vector(x)
-        return v.dot_product(v)
-    elif isinstance(x, Matrix) and x.ncols() == 1:
-        return (x.transpose() * x)[0, 0]
+    raise TypeError(f"Unsupported type: {type(x)}")
+
+
+@_square.register(int)
+@_square.register(float)
+@_square.register(Expression)
+@_square.register(Integer)
+def _(x):
+    return x ^ 2
+
+
+@_square.register(Vector)
+@_square.register(list)
+@_square.register(tuple)
+def _(x):
+    v = vector(x)
+    return v.dot_product(v)
+
+
+@_square.register(Matrix)
+def _(x):
+    if x.ncols() == 1:
+        return (x.T * x)[0, 0]
+    elif x.nrows() == 1:
+        return (x * x.T)[0, 0]
     else:
-        raise TypeError(f"Unsupported type: {type(x)}")
+        raise TypeError(
+            f"Matrix must be a row or column vector, got shape {x.nrows()}×{x.ncols()}"
+        )
 
 
 square = Function(lambda x: _square(x))
-
-sin = Function(lambda x: sage.functions.trig.sin(x))
-cos = Function(lambda x: sage.functions.trig.cos(x))
 
 function = sage.symbolic.function_factory.function

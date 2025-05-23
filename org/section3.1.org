@@ -6,117 +6,99 @@
 #+LATEX_CLASS: subfiles
 #+LATEX_CLASS_OPTIONS: [sicm_sagemath]
 
-#+PROPERTY: header-args:sage :session section31 :eval never-export :exports code :results none :tangle sage/section3.1.sage
+#+PROPERTY: header-args:sage :session section31 :eval never-export :exports code :results none :tangle ../sage/section3.1.sage :dir ../sage
 
-#+begin_src emacs-lisp :exports results :results none :eval export
-  (make-variable-buffer-local 'org-latex-title-command)
-  ; (setq org-latex-title-command (concat "\\chapter{%t}\n"))
-#+end_src
+
 
 * Hamilton's equations
 ** Standard imports
 
 
-#+begin_src sage :tangle sage/utils3.1.sage
-load(
-    "utils.sage",
-    "utils1.6.sage",
-)
+#+attr_latex: :options label=../sage/utils3.1.sage
+#+begin_src sage :tangle ../sage/utils3.1.sage
+load("utils1.6.sage")
 #+end_src
 
+#+attr_latex: :options label=../sage/section3.1.sage
 #+begin_src sage
-import numpy as np
+load("utils3.1.sage")
 
-
-load(
-    "utils.sage",
-    "utils1.5.sage",
-    "utils1.6.sage",
-    "utils3.1.sage",
-)
-
-var("t", domain="real")
+t = var("t", domain="real")
 #+end_src
 
 
+#+attr_latex: :options label=don't tangle
 #+begin_src sage :exports code  :tangle no
 load("show_expression.sage")
 #+end_src
 
 
 
-** Exercise 3.1
-
-We will use the code below to solve Exercise 3.1.
-
-
-
 ** Computing Hamilton's equations
 
-#+begin_src sage :tangle sage/utils3.1.sage
+The code in Section 3.1 of the book starts with the following function.
+#+attr_latex: :options label=../sage/utils3.1.sage
+#+begin_src sage :tangle ../sage/utils3.1.sage
 def Hamilton_equations(Hamiltonian):
     def f(q, p):
-        state_path = qp_to_H_state_path(q, p)(t)
-        return D(state_path) - Hamiltonian_to_state_derivative(Hamiltonian)(
-            state_path
+        state_path = qp_to_H_state_path(q, p)
+        return D(state_path) - compose(
+            Hamiltonian_to_state_derivative(Hamiltonian), state_path
         )
 
     return f
 #+end_src
 
-#+begin_src sage :tangle sage/utils3.1.sage
-def Hamiltonian_to_state_derivative(Hamiltonian):
-    def f(H_state):
-        return up(
-            SR(1),
-            vector(partial(Hamiltonian, 2)(H_state)),
-            -vector(partial(Hamiltonian, 1)(H_state)),
-        )
-
-    return f
-#+end_src
-
-#+begin_src sage :tangle sage/utils3.1.sage
+This needs the next function.
+#+attr_latex: :options label=../sage/utils3.1.sage
+#+begin_src sage :tangle ../sage/utils3.1.sage
 def qp_to_H_state_path(q, p):
     def f(t):
-        return up(t, q(t=t), p(t=t))
+        return up(t, q(t), p(t))
 
     return f
 #+end_src
 
-#+begin_src sage :tangle sage/utils3.1.sage
-def momentum(H_state):
-    return H_state[2]
-#+end_src
-
-In the book, they use just the first and second component of ~q~ to pass on to the potential.
-I don't see why, so I keep it general.
-#+begin_src sage :tangle sage/utils3.1.sage
-def H_rectangular(m, V):
-    def f(state):
-        q, p = coordinate(state), velocity(state)
-        return square(p) / 2 / m + V(q)
-
-    return f
-#+end_src
+Here ~p~ is a function that maps $t$ to a momentum vector.
+Such vectors are represented as lying vectors (or down tuples in the book).
+To implement this, ~row_path~ takes a list and returns a function that maps time to the transpose of a column path.
+In passing we define ~row_matrix~ as the transpose of ~column_matrix~, which is the function provided by Sagemath, and a ~transpose~ function.
+#+attr_latex: :options label=../sage/utils3.1.sage
+#+begin_src sage :tangle ../sage/utils3.1.sage
+def transpose(M):
+    return M.T
 
 
-I discovered that if I use the same name for a python function (here ~V~) as the symbolic function (here ~U~), I get errors.
-Therefore I use ~U~ instead of ~V~ in ~function("U")~.
-Recall, to use symbolic functions in differentiation, the symbolic function want the argument list unpacked.
-#+begin_src sage
-def V(q):
-    return function("U")(*q)
+def row_path(lst):
+    return lambda t: transpose(column_path(lst)(t))
+
+
+def row_matrix(lst):
+    return transpose(column_matrix(lst))
 #+end_src
 
 Let's try what we built.
+#+attr_latex: :options label=../sage/section3.1.sage
 #+begin_src sage
-var("m")
-q = vector([literal_function("q_x"), literal_function("q_y")])
-p = vector([literal_function("p_x"), literal_function("p_y")])
+q = column_path([literal_function("q_x"), literal_function("q_y")])
+p = row_path([literal_function("p_x"), literal_function("p_y")])
 #+end_src
 
+#+attr_latex: :options label=../sage/section3.1.sage
+#+begin_src sage :exports both :results replace latex
+show(p(t))
+#+end_src
 
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{cc}
+p_{x} & p_{y}
+\end{array}\right]
+\end{dmath*}
+#+end_export
+
+#+attr_latex: :options label=../sage/section3.1.sage
 #+begin_src sage :exports both :results replace latex
 H_state = qp_to_H_state_path(q, p)(t)
 show(H_state)
@@ -124,10 +106,60 @@ show(H_state)
 
 #+RESULTS:
 #+begin_export latex
-\[ \text{\texttt{up(t,{ }(q{\char`\_}x(t),{ }q{\char`\_}y(t)),{ }(p{\char`\_}x(t),{ }p{\char`\_}y(t)))}} \]
+\begin{dmath*}
+\begin{array}{c}\begin{array}{c} t \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+q_{x} \\
+q_{y}
+\end{array}\right] \end{array} \\ \begin{array}{c} \left[\begin{array}{cc}
+p_{x} & p_{y}
+\end{array}\right] \end{array} \\ \end{array}
+\end{dmath*}
 #+end_export
 
+The next function on which ~Hamiltonian_equations~ depends is ~Hamiltonian_to_state_derivative~. The book prints the system of differential equations as a column vector. Therefore we transpose $\partial_2 H$.
+#+attr_latex: :options label=../sage/utils3.1.sage
+#+begin_src sage :tangle ../sage/utils3.1.sage
+def Hamiltonian_to_state_derivative(Hamiltonian):
+    def f(H_state):
+        return up(
+            SR(1),
+            partial(Hamiltonian, 2)(H_state).T,
+            -partial(Hamiltonian, 1)(H_state),
+        )
 
+    return f
+#+end_src
+
+Here is an example with ~H_rectangular~.
+For some reason, the book takes just the first and second component of ~q~, i.e.
+~(req q 0)~ and ~(ref q 1)~, to pass to the potential, but the general formula works just as well.
+#+attr_latex: :options label=../sage/utils3.1.sage
+#+begin_src sage :tangle ../sage/utils3.1.sage
+var("m")
+
+def H_rectangular(m, V):
+    def f(state):
+        q, p = coordinate(state), momentum(state)
+        return square(p) / 2 / m + V(q)
+
+    return f
+#+end_src
+
+For this to work, we need a momentum projection operator. It's the same as the ~velocity~ projection.
+#+attr_latex: :options label=../sage/utils3.1.sage
+#+begin_src sage :tangle ../sage/utils3.1.sage
+momentum = Function(lambda H_state: H_state[2])
+#+end_src
+
+
+Recall, to use symbolic functions in differentiation, the symbolic function requires an unpacked list of arguments.
+#+attr_latex: :options label=../sage/section3.1.sage
+#+begin_src sage
+V = Function(lambda x: function("V")(*x.list()))
+#+end_src
+
+This is the Hamiltonian.
+#+attr_latex: :options label=../sage/section3.1.sage
 #+begin_src sage :exports both :results replace latex
 H = H_rectangular
 show(H(m, V)(H_state))
@@ -135,59 +167,94 @@ show(H(m, V)(H_state))
 
 #+RESULTS:
 #+begin_export latex
-\[ \frac{p_x^{2} + p_y^{2}}{2 \, m} + U\left(q_x, q_y\right) \]
+\begin{dmath*}
+\frac{p_{x}^{2} + p_{y}^{2}}{2 \, m} + V\left(q_{x}, q_{y}\right)
+\end{dmath*}
 #+end_export
 
+Partial derivatives work.
+#+attr_latex: :options label=../sage/section3.1.sage
 #+begin_src sage :exports both :results replace latex
 show(partial(H(m, V), 1)(H_state))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[ \left(\begin{array}{rr}
-\mathrm{D}_{0}\left(U\right)\left(q_x, q_y\right) & \mathrm{D}_{1}\left(U\right)\left(q_x, q_y\right)
-\end{array}\right) \]
+\begin{dmath*}
+\left[\begin{array}{cc}
+\mathrm{D}_{0}\left(V\right)\left(q_{x}, q_{y}\right) & \mathrm{D}_{1}\left(V\right)\left(q_{x}, q_{y}\right)
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
+#+attr_latex: :options label=../sage/section3.1.sage
 #+begin_src sage :exports both :results replace latex
-show_tuple(Hamiltonian_to_state_derivative(H(m, V))(H_state))
+show(Hamiltonian_to_state_derivative(H(m, V))(H_state))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\begin{align*} & 1 \\ & \left(\frac{p_x}{m},\,\frac{p_y}{m}\right) \\ & \left(-\mathrm{D}_{0}\left(U\right)\left(q_x, q_y\right),\,-\mathrm{D}_{1}\left(U\right)\left(q_x, q_y\right)\right) \\ \end{align*}
+\begin{dmath*}
+\begin{array}{c}\begin{array}{c} 1 \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+\frac{p_{x}}{m} \\
+\frac{p_{y}}{m}
+\end{array}\right] \end{array} \\ \begin{array}{c} \left[\begin{array}{cc}
+-\mathrm{D}_{0}\left(V\right)\left(q_{x}, q_{y}\right) & -\mathrm{D}_{1}\left(V\right)\left(q_{x}, q_{y}\right)
+\end{array}\right] \end{array} \\ \end{array}
+\end{dmath*}
 #+end_export
 
+#+attr_latex: :options label=../sage/section3.1.sage
 #+begin_src sage :exports both :results replace latex
-show_tuple(Hamilton_equations(H(m, V))(q, p))
+show(Hamilton_equations(H(m, V))(q, p)(t))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\begin{align*} & 0 \\ & \left(-\frac{p_x}{m} + \frac{\partial}{\partial t}q_x,\,-\frac{p_y}{m} + \frac{\partial}{\partial t}q_y\right) \\ & \left(\mathrm{D}_{0}\left(U\right)\left(q_x, q_y\right) + \frac{\partial}{\partial t}p_x,\,\mathrm{D}_{1}\left(U\right)\left(q_x, q_y\right) + \frac{\partial}{\partial t}p_y\right) \\ \end{align*}
+\begin{dmath*}
+\begin{array}{c}\begin{array}{c} 0 \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+-\frac{p_{x}}{m} + \dot q_{x} \\
+-\frac{p_{y}}{m} + \dot q_{y}
+\end{array}\right] \end{array} \\ \begin{array}{c} \left[\begin{array}{cc}
+\mathrm{D}_{0}\left(V\right)\left(q_{x}, q_{y}\right) + \dot p_{x} & \mathrm{D}_{1}\left(V\right)\left(q_{x}, q_{y}\right) + \dot p_{y}
+\end{array}\right] \end{array} \\ \end{array}
+\end{dmath*}
 #+end_export
+
 
 ** The Legendre Transformation
 
 To understand the code of the book, observe the following.
-When $F(v) = 1/2 v^{T} M v + b^{T} v + c$, then $\partial_{v} F = M v + b$, and so $\partial_{v}F(v=0) = b$, because $M 0=0$.
-Likewise, if $F$ has orders of $v$ higher than $2$, then $\partial_v^{2} F(v=0) = M$.
-In code, $\partial_{v} F(v=0)$ is ~gradient(F, zero)~.
-Note further that---at least for the examples we consider---the argument ~w~ corresponds to a moment, and ~zero~ is a velocity vector with the same dimension of ~w~.
+\begin{align*}
+F(v) &= 1/2 v^{T} M v + b^{t} v + c, \\
+\partial_{v} F(v) &= M v + b, \\
+\partial_{v} F(0) &= b, \\
+\partial_{v}^{2} F(v) &= M.
+\end{align*}
+Clearly, $\partial_v F$ is the gradient, and $\partial_v^2 F$ is the Hessian. Observe that under the operation of the gradient, the vector $b$ changes shape: from $b^t$ to $b$.
 
-#+begin_src sage :tangle sage/utils3.1.sage
+In the code, the argument ~w~ corresponds to a moment, hence is a lying vector.
+We need some dummy symbols with respect to which to differentiate, and then we set the dummy variables to 0 in the gradient and the Hessian.
+For this second step, Sagemath uses substitution with a dictionary when multiple arguments are involved, which is the case here because $w$ is a vector.
+So, by making a ~zeros~ dictionary that maps symbols to 0, we can use the keys of ~zeros~ as the dummy symbols, and then use ~zeros~ itself in the substitution.
+Then, to solve for $v$ such that $Mv = w^t - b$, the lying vector $w$ has to be transposed.
+
+#+attr_latex: :options label=../sage/utils3.1.sage
+#+begin_src sage :tangle ../sage/utils3.1.sage
 def Legendre_transform(F):
     def G(w):
-        zero = [0] * len(w)
-        b = gradient(F, zero)
-        M = hessian(F, zero)
-        v = M.solve_left(w - b)
+        zeros = {var(f"v_{i}"): 0 for i in range(w.ncols())}
+        b = gradient(F)(list(zeros.keys())).subs(zeros)
+        M = Hessian(F)(list(zeros.keys())).subs(zeros)
+        v = M.solve_right(w.T - b)
         return w * v - F(v)
 
     return G
 #+end_src
 
-#+begin_src sage :tangle sage/utils3.1.sage
+Now we are equiped to convert a Lagrangian into a Hamiltonian.
+#+attr_latex: :options label=../sage/utils3.1.sage
+#+begin_src sage :tangle ../sage/utils3.1.sage
 def Lagrangian_to_Hamiltonian(Lagrangian):
     def f(H_state):
         t = time(H_state)
@@ -202,6 +269,7 @@ def Lagrangian_to_Hamiltonian(Lagrangian):
     return f
 #+end_src
 
+#+attr_latex: :options label=../sage/section3.1.sage
 #+begin_src sage :exports both :results replace latex
 res = Lagrangian_to_Hamiltonian(L_central_rectangular(m, V))(H_state)
 show(res)
@@ -209,27 +277,39 @@ show(res)
 
 #+RESULTS:
 #+begin_export latex
-\[ -\frac{1}{2} \, m {\left(\frac{p_x^{2}}{m^{2}} + \frac{p_y^{2}}{m^{2}}\right)} + \frac{p_x^{2}}{m} + \frac{p_y^{2}}{m} + U\left(q_x, q_y\right) \]
+\begin{dmath*}
+\left[\begin{array}{c}
+-\frac{1}{2} \, m {\left(\frac{p_{x}^{2}}{m^{2}} + \frac{p_{y}^{2}}{m^{2}}\right)} + \frac{p_{x}^{2}}{m} + \frac{p_{y}^{2}}{m} + V\left(\sqrt{q_{x}^{2} + q_{y}^{2}}\right)
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
+#+attr_latex: :options label=../sage/section3.1.sage
 #+begin_src sage :exports both :results replace latex
 show(res.simplify_full())
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[ \frac{2 \, m U\left(q_x, q_y\right) + p_x^{2} + p_y^{2}}{2 \, m} \]
+\begin{dmath*}
+\left[\begin{array}{c}
+\frac{2 \, m V\left(\sqrt{q_{x}^{2} + q_{y}^{2}}\right) + p_{x}^{2} + p_{y}^{2}}{2 \, m}
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
 
+
+#+attr_latex: :options label=../sage/section3.1.sage
 #+begin_src sage
 var("m g l")
-q = vector([literal_function("q_x")])
-p = vector([literal_function("p_x")])
+q = column_path([literal_function("theta")])
+p = row_path([literal_function("p")])
 #+end_src
 
 Here is exercise 3.1.
 
+#+attr_latex: :options label=../sage/section3.1.sage
 #+begin_src sage :exports both :results replace latex
 # space = make_named_space(["\\theta"])
 H_state = qp_to_H_state_path(q, p)(t)
@@ -238,26 +318,36 @@ show(Lagrangian_to_Hamiltonian(L_planar_pendulum(m, g, l))(H_state))
 
 #+RESULTS:
 #+begin_export latex
-\[ -g l m {\left(\cos\left(q_x\right) - 1\right)} + \frac{p_x^{2}}{2 \, l^{2} m} \]
+\begin{dmath*}
+\left[\begin{array}{c}
+-g l m {\left(\cos\left(\theta\right) - 1\right)} + \frac{p^{2}}{2 \, l^{2} m}
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
+#+attr_latex: :options label=../sage/section3.1.sage
 #+begin_src sage :exports both :results replace latex
-q = vector([literal_function("q_x"), literal_function("q_y")])
-p = vector([literal_function("p_x"), literal_function("p_y")])
+q = column_path([literal_function("q_x"), literal_function("q_y")])
+p = row_path([literal_function("p_x"), literal_function("p_y")])
 H_state = qp_to_H_state_path(q, p)(t)
 show(Lagrangian_to_Hamiltonian(L_Henon_Heiles(m))(H_state))
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[ q_x^{2} q_y - \frac{1}{3} \, q_y^{3} + \frac{1}{2} \, p_x^{2} + \frac{1}{2} \, p_y^{2} + \frac{1}{2} \, q_x^{2} + \frac{1}{2} \, q_y^{2} \]
+\begin{dmath*}
+\left[\begin{array}{c}
+q_{x}^{2} q_{y} - \frac{1}{3} \, q_{y}^{3} + \frac{1}{2} \, p_{x}^{2} + \frac{1}{2} \, p_{y}^{2} + \frac{1}{2} \, q_{x}^{2} + \frac{1}{2} \, q_{y}^{2}
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
+#+attr_latex: :options label=../sage/section3.1.sage
 #+begin_src sage
 def L_sphere(m, R):
     def Lagrangian(local):
-        theta, phi = coordinate(local)
-        thetadot, phidot = velocity(local)
+        theta, phi = coordinate(local).list()
+        thetadot, phidot = velocity(local).list()
         return 1 / 2 * m * R ^ 2 * (
             square(thetadot) + square(phidot * sin(theta))
         )
@@ -265,15 +355,22 @@ def L_sphere(m, R):
     return Lagrangian
 
 
-var("R")
+var("R", domain="positive")
 #+end_src
 
+#+attr_latex: :options label=../sage/section3.1.sage
 #+begin_src sage :exports both :results replace latex
-space = make_named_space(["\\theta", "\\phi"])
+q = column_path([literal_function("theta"), literal_function("phi")])
+p = row_path([literal_function("p_x"), literal_function("p_y")])
+H_state = qp_to_H_state_path(q, p)(t)
 show(Lagrangian_to_Hamiltonian(L_sphere(m, R))(H_state).simplify_full())
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[ \frac{p_x^{2} \sin\left(q_x\right)^{2} + p_y^{2}}{2 \, R^{2} m \sin\left(q_x\right)^{2}} \]
+\begin{dmath*}
+\left[\begin{array}{c}
+\frac{p_{x}^{2} \sin\left(\theta\right)^{2} + p_{y}^{2}}{2 \, R^{2} m \sin\left(\theta\right)^{2}}
+\end{array}\right]
+\end{dmath*}
 #+end_export

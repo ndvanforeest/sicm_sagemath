@@ -40,7 +40,7 @@ We build the functions ~Lagrangian_to_acceleration~ and ~Lagrangian_to_state_der
 
 #+attr_latex: :options label=../sage/section1.7.sage
 #+begin_src sage :exports both :results replace latex
-q = path_function([literal_function("x"), literal_function("y")])
+q = column_path([literal_function("x"), literal_function("y")])
 local = Gamma(q)(t)
 m, k = var("m k", domain="positive")
 L = L_harmonic(m, k)
@@ -260,8 +260,8 @@ def Lagrange_equations_first_order(L):
 #+attr_latex: :options label=../sage/section1.7.sage
 #+begin_src sage :exports both :results replace latex
 res = Lagrange_equations_first_order(L_harmonic(m, k))(
-    path_function([literal_function("x"), literal_function("y")]),
-    path_function([literal_function("v_x"), literal_function("v_y")]),
+    column_path([literal_function("x"), literal_function("y")]),
+    column_path([literal_function("v_x"), literal_function("v_y")]),
 )
 show(res(t))
 #+end_src
@@ -370,7 +370,7 @@ def L_periodically_driven_pendulum(m, l, g, A, omega):
 
 #+attr_latex: :options label=../sage/section1.7.sage
 #+begin_src sage :exports both :results replace latex
-q = path_function([literal_function("theta")])
+q = column_path([literal_function("theta")])
 show(
     L_periodically_driven_pendulum(m, l, g, A, omega)(
         Gamma(q)(t)

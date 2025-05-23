@@ -6,7 +6,7 @@
 #+latex_header: \usepackage{preamble}
 #+options: toc:1
 
-#+begin_src emacs-lisp :exports results :results none :eval export :dir ../sage/
+#+begin_src emacs-lisp :exports none :results none
 (defun export-to-latex(f)
   (find-file f)
   ; (ispell-buffer)
@@ -28,8 +28,8 @@
                            "section1.7.org"
                            "section1.8.org"
                            "section1.9.org"
-                           ;; "section3.1.org"
-                           ;; "section3.2.org"
+                           "section3.1.org"
+                           "section3.2.org"
                            ;; "section3.4.org"
                            ;; "section3.5.org"
                            ;; "section3.9.org"
@@ -68,29 +68,28 @@ In the next sections we provide Python and Sagemath code for background function
 \subfile{section1.9}
 
 
-* Chapter 2
+* Chapter 2: skipped
 
-I skipped this one.
-
-* COMMENT Chapter 3
+* Chapter 3
 
 \subfile{section3.1}
 \subfile{section3.2}
-\setcounter{section}{3}
-\subfile{section3.4}
-\subfile{section3.5}
-\setcounter{section}{8}
-\subfile{section3.9}
+# \setcounter{section}{3}
+# \subfile{section3.4}
+# \subfile{section3.5}
+# \setcounter{section}{8}
+# \subfile{section3.9}
 
 
-\setcounter{chapter}{4}
+* Chapter 4: skipped
 
-* COMMENT Chapter 5
 
-\subfile{section5.1}
-\subfile{section5.2}
+* Chapter 5
 
-* COMMENT Chapter 6
+# \subfile{section5.1}
+# \subfile{section5.2}
 
-\setcounter{section}{3}
-\subfile{section6.4}
+* Chapter 6
+
+# \setcounter{section}{3}
+# \subfile{section6.4}

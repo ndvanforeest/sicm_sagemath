@@ -1,6 +1,6 @@
 load("utils1.6.sage")
 
-q = path_function([literal_function("x"), literal_function("y")])
+q = column_path([literal_function("x"), literal_function("y")])
 l_eq = Lagrange_equations(L_uniform_acceleration(m, g))(q)
 show(l_eq(t))
 
@@ -14,7 +14,7 @@ show(Lagrange_equations(L_central_rectangular(m, U))(q)(t))
 
 r = literal_function("r")
 phi = literal_function("phi")
-q = path_function([r, phi])
+q = column_path([r, phi])
 show(p_to_r(Gamma(q)(t)))
 
 show((partial(p_to_r, 0)(Gamma(q)(t))))
@@ -30,14 +30,14 @@ expr = Lagrange_equations(L_central_polar(m, U))(q)(t)
 show(expr.simplify_full().expand())
 
 _ = var("Omega", domain="positive")
-q_xy = path_function([literal_function("x"), literal_function("y")])
+q_xy = column_path([literal_function("x"), literal_function("y")])
 expr = L_rotating_rectangular(m, Omega)(Gamma(q_xy)(t)).simplify_full()
 
 show(expr)
 
 _ = var("l", domain="positive")
 
-theta = path_function([literal_function("theta")])
+theta = column_path([literal_function("theta")])
 ys = literal_function("y")
 
 expr = L_pend(m, l, g, ys)(Gamma(theta)(t)).simplify_full()

@@ -55,7 +55,7 @@ Instead of building the kinetic energy in spherical coordinates, as in Section 1
 
 #+attr_latex: :options label=../sage/section1.8.sage
 #+begin_src sage
-q = path_function(
+q = column_path(
     [
         literal_function("r"),
         literal_function("theta"),
@@ -213,7 +213,7 @@ def L0(m, V):
 For the computer it's easy to compute the energy, but the formula is pretty long.
 #+attr_latex: :options label=../sage/section1.8.sage
 #+begin_src sage :exports both :results replace latex
-q = path_function([literal_function("x"), literal_function("y")])
+q = column_path([literal_function("x"), literal_function("y")])
 expr = (sqrt(G*M0 + G*M1)*t) / a^(3/2)
 A = var('A')
 
@@ -284,7 +284,7 @@ def F_tilde(angle_x, angle_y, angle_z):
 
 #+attr_latex: :options label=../sage/section1.8.sage
 #+begin_src sage
-q = path_function(
+q = column_path(
     [literal_function("x"), literal_function("y"), literal_function("z")]
 )
 #+end_src

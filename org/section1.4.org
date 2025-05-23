@@ -99,12 +99,12 @@ Note that, to keep the notation brief, the $t$ is suppressed in the LaTeX output
 ** Paths
 
 We will represent coordinate path functions $q$ and velocity path functions $v$ as functions that map time to vectors.
-Thus, ~path_function~ returns a function of time, not yet a path.
+Thus, ~column_path~ returns a function of time, not yet a path.
 We also need to perform arithmetic on paths, like $3 q$, therefore we encapsulate the path in a ~Function~.
 #+attr_latex: :options label=../sage/utils1.4.sage
 #+begin_src sage :tangle ../sage/utils1.4.sage
 @Func
-def path_function(lst):
+def column_path(lst):
     #return lambda t: vector([l(t) for l in lst])
     return lambda t: column_matrix([l(t) for l in lst])
 #+end_src
@@ -112,7 +112,7 @@ def path_function(lst):
 
 #+attr_latex: :options label=don't tangle
 #+begin_src sage :tangle no
-q = path_function(
+q = column_path(
     [
         literal_function("x"),
         literal_function("y"),
@@ -200,9 +200,6 @@ Once all derivatives are computed, we convert the result to a function that maps
 #+attr_latex: :options label=../sage/utils1.4.sage
 #+begin_src sage :tangle ../sage/utils1.4.sage
 def Gamma(q, n=3):
-    # if isinstance(q, np.ndarray):
-    #     q = vector(q.tolist()) # todo, is this still needed?
-
     if n < 2:
         raise ValueError("n must be > 1")
     Dq = [q]
@@ -254,8 +251,6 @@ y
 \end{dmath*}
 #+end_export
 
-todo: revise the definitions of time, coordiante, velocity, below.
-
 Finally, here are some projections operators from the local tuple to supspaces.
 #+attr_latex: :options label=../sage/utils1.4.sage
 #+begin_src sage :tangle ../sage/utils1.4.sage
@@ -287,7 +282,7 @@ Now we know how to build literal functions and $\Gamma$, we can continue with th
 
 #+attr_latex: :options label=../sage/section1.4.sage
 #+begin_src sage
-q = path_function(
+q = column_path(
     [
         literal_function("x"),
         literal_function("y"),
