@@ -1,5 +1,6 @@
 load("utils1.6.sage")
 
+
 def Lagrangian_to_acceleration(L):
     def f(local):
         P = partial(L, 2)
@@ -9,8 +10,10 @@ def Lagrangian_to_acceleration(L):
 
     return f
 
+
 def convert_to_expr(n):
     return SR(n)
+
 
 def Lagrangian_to_state_derivative(L):
     acceleration = Lagrangian_to_acceleration(L)
@@ -18,8 +21,10 @@ def Lagrangian_to_state_derivative(L):
         convert_to_expr(1), velocity(state), acceleration(state)
     )
 
+
 def qv_to_state_path(q, v):
     return lambda t: up(t, q(t), v(t))
+
 
 def Lagrange_equations_first_order(L):
     def f(q, v):
@@ -30,8 +35,10 @@ def Lagrange_equations_first_order(L):
 
     return f
 
+
 def make_dummy_vector(name, dim):
     return column_matrix([var(f"{name}{i}", domain=RR) for i in range(dim)])
+
 
 def evolve(state_derivative, ics, times):
     dim = coordinate(ics).nrows()
@@ -47,11 +54,13 @@ def evolve(state_derivative, ics, times):
     )
     return soln
 
+
 def state_advancer(state_derivative, ics, T):
     init_time = time(ics)
     times = [init_time, init_time + T]
     soln = evolve(state_derivative, ics, times)
     return soln[-1]
+
 
 def periodic_drive(amplitude, frequency, phase):
     def f(t):
@@ -59,16 +68,18 @@ def periodic_drive(amplitude, frequency, phase):
 
     return f
 
+
 _ = var("m l g A omega")
 
 
 def L_periodically_driven_pendulum(m, l, g, A, omega):
     ys = periodic_drive(A, omega, 0)
 
-    def Lagrangian(local):
+    def L_periodic(local):
         return L_pend(m, l, g, ys)(local)
 
-    return Lagrangian
+    return L_periodic
+
 
 def principal_value(cut_point):
     def f(x):

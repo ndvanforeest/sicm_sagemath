@@ -5,14 +5,14 @@ var("g m", domain="positive")
 
 
 def L_uniform_acceleration(m, g):
-    def Lagrangian(local):
+    def wrap_L_unif(local):
         x, y  = coordinate(local).list()
         v = velocity(local)
         T = 1 / 2 * m * square(v)
         V = m * g * y
         return T - V
 
-    return Lagrangian
+    return wrap_L_unif
 
 def L_central_rectangular(m, U):
     def Lagrangian(local):
@@ -24,14 +24,14 @@ def L_central_rectangular(m, U):
     return Lagrangian
 
 def F_to_C(F):
-    def f(local):
+    def wrap_F_to_C(local):
         return up(
             time(local),
             F(local),
             partial(F, 0)(local) + partial(F, 1)(local) * velocity(local),
         )
 
-    return f
+    return wrap_F_to_C
 
 def p_to_r(local):
     r, phi = coordinate(local).list()
@@ -88,17 +88,17 @@ def L_rotating_rectangular(m, Omega):
 
 def dp_coordinates(l, ys):
     "From theta to x, y coordinates."
-    def f(local):
+    def wrap_dp(local):
         t = time(local)
         theta = coordinate(local)[0, 0]
         return column_matrix([l * sin(theta), ys(t) - l * cos(theta)])
 
-    return f
+    return wrap_dp
 
 def L_pend(m, l, g, ys):
-    def Lagrangian(local):
+    def wrap_L_pend(local):
         return L_uniform_acceleration(m, g)(
             F_to_C(dp_coordinates(l, ys))(local)
         )
 
-    return Lagrangian
+    return wrap_L_pend

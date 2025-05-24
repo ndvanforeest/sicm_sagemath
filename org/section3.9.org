@@ -6,17 +6,13 @@
 #+LATEX_CLASS: subfiles
 #+LATEX_CLASS_OPTIONS: [sicm_sagemath]
 
-#+PROPERTY: header-args:sage :session section39 :eval never-export :exports code :results none :tangle sage/section3.9.sage
+#+PROPERTY: header-args:sage :session section39 :eval never-export :exports code :results none :tangle ../sage/section3.9.sage :dir ../sage
 
-#+begin_src emacs-lisp :exports results :results none :eval export
-  (make-variable-buffer-local 'org-latex-title-command)
-  ; (setq org-latex-title-command (concat "\\chapter{%t}\n"))
-#+end_src
 
 
 * The standard map
 
-We take a number of uniformly distributed starting points for the paths. The result is very nice.
+We take a number of uniformly distributed starting points for the paths. The result, shown in \cref{fig:standardmap}, is very nice.
 
 #+begin_src python
 import numpy as np
@@ -47,7 +43,7 @@ plt.savefig('../figures/standard_map.png', bbox_inches='tight')
 
 
 
-#+CAPTION: The standard map with $K=0.6$
+#+CAPTION: The standard map with $K=0.6$.
 #+NAME: fig:standardmap
 #+ATTR_LATEX: :height 18cm :width 18cm :placement [h]
 [[./../figures/standard_map.png]]

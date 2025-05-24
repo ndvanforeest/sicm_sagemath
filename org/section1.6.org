@@ -40,14 +40,14 @@ var("g m", domain="positive")
 
 
 def L_uniform_acceleration(m, g):
-    def Lagrangian(local):
+    def wrap_L_unif(local):
         x, y  = coordinate(local).list()
         v = velocity(local)
         T = 1 / 2 * m * square(v)
         V = m * g * y
         return T - V
 
-    return Lagrangian
+    return wrap_L_unif
 #+end_src
 
 #+attr_latex: :options label=../sage/section1.6.sage
@@ -130,18 +130,18 @@ We have to cast $\partial_0 F$ into a vector to enable the summation of these tw
 #+attr_latex: :options label=../sage/utils1.6.sage
 #+begin_src sage :tangle ../sage/utils1.6.sage
 def F_to_C(F):
-    def f(local):
+    def wrap_F_to_C(local):
         return up(
             time(local),
             F(local),
             partial(F, 0)(local) + partial(F, 1)(local) * velocity(local),
         )
 
-    return f
+    return wrap_F_to_C
 #+end_src
 
 
-** polar coordinates
+** Polar coordinates
 
 #+attr_latex: :options label=../sage/utils1.6.sage
 #+begin_src sage :tangle ../sage/utils1.6.sage
@@ -361,23 +361,23 @@ Another point is that here ~ys~ needs to be evaluated at ~t~; in the other funct
 #+begin_src sage :tangle ../sage/utils1.6.sage
 def dp_coordinates(l, ys):
     "From theta to x, y coordinates."
-    def f(local):
+    def wrap_dp(local):
         t = time(local)
         theta = coordinate(local)[0, 0]
         return column_matrix([l * sin(theta), ys(t) - l * cos(theta)])
 
-    return f
+    return wrap_dp
 #+end_src
 
 #+attr_latex: :options label=../sage/utils1.6.sage
 #+begin_src sage :tangle ../sage/utils1.6.sage
 def L_pend(m, l, g, ys):
-    def Lagrangian(local):
+    def wrap_L_pend(local):
         return L_uniform_acceleration(m, g)(
             F_to_C(dp_coordinates(l, ys))(local)
         )
 
-    return Lagrangian
+    return wrap_L_pend
 #+end_src
 
 

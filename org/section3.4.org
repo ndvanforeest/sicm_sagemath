@@ -21,7 +21,7 @@
 ** Standard imports
 
 
-#+attr_latex: :options label=../sage/section3.2.sage
+#+attr_latex: :options label=../sage/section3.4.sage
 #+begin_src sage
 load("utils3.1.sage")
 
@@ -37,10 +37,12 @@ load("show_expression.sage")
 
 ** Motion in a central potental
 
+#+attr_latex: :options label=../sage/section3.4.sage
 #+begin_src sage
 #+end_src
 
 
+#+attr_latex: :options label=../sage/section3.4.sage
 #+begin_src sage
 var("m")
 
@@ -58,6 +60,7 @@ def L_polar(m, V):
 #+end_src
 
 
+#+attr_latex: :options label=../sage/section3.4.sage
 #+begin_src sage :exports both :results replace latex
 q = column_path([literal_function("r"), literal_function("phi")])
 p = row_path([literal_function("p_r"), literal_function("p_phi")])
@@ -77,6 +80,7 @@ p_{r} & p_{\phi}
 \end{dmath*}
 #+end_export
 
+#+attr_latex: :options label=../sage/section3.4.sage
 #+begin_src sage :exports both :results replace latex
 H = Lagrangian_to_Hamiltonian(L_polar(m, V))
 show(H(H_state).simplify_full())
@@ -92,6 +96,7 @@ show(H(H_state).simplify_full())
 #+end_export
 
 Here are the Hamilton equations.
+#+attr_latex: :options label=../sage/section3.4.sage
 #+begin_src sage :exports both :results replace latex
 HE = Hamilton_equations(Lagrangian_to_Hamiltonian(L_polar(m, V)))(q, p)(t)
 show(HE)

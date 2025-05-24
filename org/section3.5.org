@@ -6,7 +6,7 @@
 #+LATEX_CLASS: subfiles
 #+LATEX_CLASS_OPTIONS: [sicm_sagemath]
 
-#+PROPERTY: header-args:sage :session section35 :eval never-export :exports code :results none :tangle sage/section3.5.sage
+#+PROPERTY: header-args:sage :session section35 :eval never-export :exports code :results none :tangle ../sage/section3.5.sage :dir ../sage
 
 #+begin_src emacs-lisp :exports results :results none :eval export
   (make-variable-buffer-local 'org-latex-title-command)
@@ -14,70 +14,86 @@
 #+end_src
 
 
-* Phase space evolution
+* Phase Space Evolution
 
 
 ** The standard imports.
+#+attr_latex: :options label=../sage/section3.5.sage
 #+begin_src sage
 import numpy as np
 
-load(
-    "utils.sage",
-    "utils1.7.sage",
-    "utils3.1.sage",
-)
+load("utils1.7.sage", "utils3.1.sage")
 
 var("t", domain="real")
 #+end_src
 
 
 
+#+attr_latex: :options label=don't tangle
 #+begin_src sage :exports code  :tangle no
 load("show_expression.sage")
 #+end_src
 
 ** The Hamiltonian for the driven pendulum
 
+#+attr_latex: :options label=../sage/section3.5.sage
 #+begin_src sage :exports both :results replace latex
-q = vector([literal_function("\\theta")])
-p = vector([literal_function(r"p_\theta")])
+q = column_path([literal_function("theta")])
+p = row_path([literal_function(r"p_theta")])
 H_state = qp_to_H_state_path(q, p)(t)
 show(H_state)
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\begin{align*} & t \\ & \left(\theta\right) \\ & \left(p_\theta\right) \\ \end{align*}
+\begin{dmath*}
+\begin{array}{c}\begin{array}{c} t \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+\theta
+\end{array}\right] \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+p_{\theta}
+\end{array}\right] \end{array} \\ \end{array}
+\end{dmath*}
 #+end_export
 
-
+This is the Hamiltonian. The computations return a $(1\times 1)$ matrix; we therefore unpack it.
+#+attr_latex: :options label=../sage/section3.5.sage
 #+begin_src sage :exports both :results replace latex
+_ = var("A g l m omega", domain="positive")
+
 H = Lagrangian_to_Hamiltonian(
     L_periodically_driven_pendulum(m, l, g, A, omega)
 )
-expr = H(H_state).simplify_full()
-show(expr.expand())
+show(H(H_state)[0,0].simplify_full().expand())
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[ -\frac{1}{2} \, A^{2} m \omega^{2} \cos\left(\theta\left(t\right)\right)^{2} \sin\left(\omega t\right)^{2} + A g m \cos\left(\omega t\right) \]
-\[-  g l m \cos\left(\theta\left(t\right)\right) + \frac{A \omega p_{\theta}\left(t\right) \sin\left(\omega t\right) \sin\left(\theta\left(t\right)\right)}{l} + \frac{p_{\theta}\left(t\right)^{2}}{2 \, l^{2} m} \]
+\begin{dmath*}
+-\frac{1}{2} \, A^{2} m \omega^{2} \cos\left(\theta\right)^{2} \sin\left(\omega t\right)^{2} + A g m \cos\left(\omega t\right) - g l m \cos\left(\theta\right) + \frac{A \omega p_{\theta} \sin\left(\omega t\right) \sin\left(\theta\right)}{l} + \frac{p_{\theta}^{2}}{2 \, l^{2} m}
+\end{dmath*}
 #+end_export
 
+Next is the system derivative, i.e., the LHS of the Hamilton equations.
+#+attr_latex: :options label=../sage/section3.5.sage
 #+begin_src sage :exports both :results replace latex
 DH = Hamiltonian_to_state_derivative(H)(H_state)
-show(DH[1].simplify_full())
-show(DH[2].simplify_full())
+show(DH[1].simplify_full()[0,0])
+show(DH[2].simplify_full()[0,0])
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[ \left(\frac{A l m \omega \sin\left(\omega t\right) \sin\left(\theta\left(t\right)\right) + p_{\theta}\left(t\right)}{l^{2} m}\right) \]
-\[ \left(-\frac{A \omega \cos\left(\theta\left(t\right)\right) p_{\theta}\left(t\right) \sin\left(\omega t\right) + {\left(A^{2} l m \omega^{2} \cos\left(\theta\left(t\right)\right) \sin\left(\omega t\right)^{2} + g l^{2} m\right)} \sin\left(\theta\left(t\right)\right)}{l}\right) \]
+\begin{dmath*}
+\frac{A l m \omega \sin\left(\omega t\right) \sin\left(\theta\right) + p_{\theta}}{l^{2} m}
+\end{dmath*}
+\begin{dmath*}
+-\frac{A \omega \cos\left(\theta\right) p_{\theta} \sin\left(\omega t\right) + {\left(A^{2} l m \omega^{2} \cos\left(\theta\right) \sin\left(\omega t\right)^{2} + g l^{2} m\right)} \sin\left(\theta\right)}{l}
+\end{dmath*}
 #+end_export
 
-This is the system derivative, i.e., the LHS of the Hamilton equations.
+The last step is to numerically integrate the HE and make a graph of $\theta$ and $p_{\theta}$.
+
+#+attr_latex: :options label=../sage/section3.5.sage
 #+begin_src sage
 def H_pend_sysder(m, l, g, A, omega):
     Hamiltonian = Lagrangian_to_Hamiltonian(
@@ -90,29 +106,29 @@ def H_pend_sysder(m, l, g, A, omega):
     return f
 #+end_src
 
-Then last step is to numerically integrate the HE and make a graph of $\theta$ and $p_{\theta}$.
 
+#+attr_latex: :options label=../sage/section3.5.sage
 #+begin_src sage
-times = srange(0, 100, 0.01, include_endpoint=True)
+times = srange(0, 100, 0.001, include_endpoint=True)
 soln = evolve(
     H_pend_sysder(m=1, l=1, g=9.8, A=0.1, omega=2 * sqrt(9.8)),
-    ics=up(0, vector([1]), vector([0])),
+    ics=up(0, column_matrix([1]), row_matrix([0])),
     times=times,
 )
 thetas = principal_value(np.pi)(soln[:, 1])
 thetadots = soln[:, 2]
 pp = list(zip(thetas, thetadots))
 p = points(pp, color='blue', size=3)
-p.save(f'./../figures/hamiltonian_driven_pendulum_0.01.png')
+p.save(f'./../figures/hamiltonian_driven_pendulum_0.001.png')
 #+end_src
 
 
 #+CAPTION: The driven pendulum obtained from numerically integrating the Hamilton equations. The graph is not identital to the one in the book, because of the inherent chaotic behavior.
 #+NAME: fig:hampendulum
 #+ATTR_LATEX: :height 5cm :placement [h]
-[[./../figures/hamiltonian_driven_pendulum_0.01.png]]
+[[./../figures/hamiltonian_driven_pendulum_0.001.png]]
 
-
+#+attr_latex: :options label=../sage/section3.5.sage
 #+begin_src sage :export none
 times = srange(0, 100, 0.005, include_endpoint=True)
 soln = evolve(
@@ -128,7 +144,7 @@ p.save(f'./../figures/hamiltonian_driven_pendulum_0.005.png')
 #+end_src
 
 
-#+CAPTION: The driven pendulum obtained from numerically integrating the Hamilton equations, but now with time steps $0.005$ instead of $0.01$. The graphs for both step-sizes seem to  be  qualitatively the same, but the details are different.
+#+CAPTION: The driven pendulum obtained from numerically integrating the Hamilton equations, but now with time steps $0.005$ instead of $0.001$. The graphs for both step-sizes seem to  be  qualitatively the same, but the details are different.
 #+NAME: fig:hampendulum5
 #+ATTR_LATEX: :height 5cm :placement [h]
 [[./../figures/hamiltonian_driven_pendulum_0.005.png]]

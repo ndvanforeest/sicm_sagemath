@@ -241,13 +241,16 @@ show(jacobian(F, [q, t])) # does not work
 
 To get around this problem, I use the following strategy to differentiate a function $F$ with respect to functions.
 1. Make a list of dummy symbols, one for /each argument/ of $F$ that is /not a symbol/. To understand this in detail, observe that arguments like ~t~ or ~x~ are symbols, but such symbols need not be protection. In other words:  we don't have to replace a symbol by another symbol, because Sagemath can already differentiate wrt symbols; it's the other `things' are the things that have to be replaced by a variable. Thus, arguments like ~q(t)~  that are /not/ symbols have to be protected by replacing them with dummy symbols.
-2. Replace in $F$ the arguments by their dummy variables. We use the Sagemath ~subs~ functionality of Sagemath to substitute the dummy variables for the functions. Now there is one further problem: ~subs~ does not work on lists or tuples. However, ~subs~ /does work/ on vectors and matrices. Therefore, we cast all relevant lists to vectors, which suffices for our goal.
-3. Take the Jacobian of $F$ with respect to the dummy symbols. We achieve this by substituting the dummy symbols in the vector of arguments and the vector of variables.
-4. Invert: Replace in the final result the dummy symbols by their related arguments.
+2. Replace in $F$ the arguments by their dummy variables. We use the Sagemath ~subs~ functionality of Sagemath to substitute the dummy variables for the functions.
+3. Now there is one further problem: ~subs~ does not work on lists or tuples. However, ~subs~ /does work/ on  matrices. Therefore, we cast all relevant lists to matrices. (We could have used vectors. However, when ~args~ is a vector, ~results~ will be a vector too, but we need a matrix to distinguish between standing and lying vectors.)
+4. Take the Jacobian of $F$ with respect to the dummy symbols. We achieve this by substituting the dummy symbols in the vector of arguments and the vector of variables.
+5. Invert: Replace in the final result the dummy symbols by their related arguments.
 
 
 We use ~id(v)~ to create a unique variable name for each dummy variable and store the mapping from the functions to the dummy variables in a dictionary ~subs~.
 (As these are internal names, the actual variable names are irrelevant; as long as they are unique, it's OK.)
+
+
 
 We know from the above that ~jacobian~ expects a /list/ with the variables with respect to which to differentiate.
 Therefore, we turn the vector with substituted variables to a list.
@@ -255,11 +258,11 @@ Therefore, we turn the vector with substituted variables to a list.
 #+attr_latex: :options label=../sage/differentiation.sage
 #+begin_src sage :tangle ../sage/differentiation.sage
 def Jacobian(F):
-    def f(args, vrs):
+    def wrap_Jacobian(args, vrs):
         if isinstance(args, (list, tuple)):
-            args = vector(args)
+            args = matrix(args)
         if isinstance(vrs, (list, tuple)):
-            vrs = vector(vrs)
+            vrs = matrix(vrs)
         subs = {
             v: var(f"v{id(v)}", domain=RR)
             for v in args.list()
@@ -269,7 +272,7 @@ def Jacobian(F):
         inverse_subs = {v: k for k, v in subs.items()}
         return result.subs(inverse_subs)
 
-    return f
+    return wrap_Jacobian
 #+end_src
 
 

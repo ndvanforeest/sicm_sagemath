@@ -10,7 +10,7 @@
 
 
 
-* Hamilton's equations
+* Hamilton's Equations
 ** Standard imports
 
 
@@ -116,7 +116,9 @@ p_{x} & p_{y}
 \end{dmath*}
 #+end_export
 
-The next function on which ~Hamiltonian_equations~ depends is ~Hamiltonian_to_state_derivative~. The book prints the system of differential equations as a column vector. Therefore we transpose $\partial_2 H$.
+The next function on which ~Hamiltonian_equations~ depends is ~Hamiltonian_to_state_derivative~.
+The book prints the system of differential equations as a column vector.
+Therefore we transpose $\partial_2 H$.
 #+attr_latex: :options label=../sage/utils3.1.sage
 #+begin_src sage :tangle ../sage/utils3.1.sage
 def Hamiltonian_to_state_derivative(Hamiltonian):

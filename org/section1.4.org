@@ -105,7 +105,6 @@ We also need to perform arithmetic on paths, like $3 q$, therefore we encapsulat
 #+begin_src sage :tangle ../sage/utils1.4.sage
 @Func
 def column_path(lst):
-    #return lambda t: vector([l(t) for l in lst])
     return lambda t: column_matrix([l(t) for l in lst])
 #+end_src
 

@@ -359,13 +359,14 @@ With this we make the Lagrangian.
 _ = var("m l g A omega")
 
 
+
 def L_periodically_driven_pendulum(m, l, g, A, omega):
     ys = periodic_drive(A, omega, 0)
 
-    def Lagrangian(local):
+    def L_periodic(local):
         return L_pend(m, l, g, ys)(local)
 
-    return Lagrangian
+    return L_periodic
 #+end_src
 
 #+attr_latex: :options label=../sage/section1.7.sage

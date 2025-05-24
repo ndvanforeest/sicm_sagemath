@@ -32,10 +32,11 @@
                            "section3.2.org"
                            "section3.4.org"
                            "section3.5.org"
-                           ;; "section3.9.org"
+                           "section3.9.org"
                            ;; "section5.1.org"
                            ;; "section5.2.org"
                            ;; "section6.4.org"
+                           ;; "section7.2.org"
                            )))
 
 (export-all)
@@ -77,8 +78,8 @@ In the next sections we provide Python and Sagemath code for background function
 \setcounter{section}{3}
 \subfile{section3.4}
 \subfile{section3.5}
-# \setcounter{section}{8}
-# \subfile{section3.9}
+\setcounter{section}{8}
+\subfile{section3.9}
 
 
 * Chapter 4: skipped
@@ -93,3 +94,8 @@ In the next sections we provide Python and Sagemath code for background function
 
 # \setcounter{section}{3}
 # \subfile{section6.4}
+
+* Chapter 7
+
+# \setcounter{section}{1}
+# \subfile{section7.2}

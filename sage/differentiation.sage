@@ -3,22 +3,17 @@ load(
     "tuples.sage",
 )
 
-
 @Func
-def D(expr):
-    return lambda t: diff(expr(t), t)
-    # return derivative(expr, t)
-
-
-D = Function(lambda expr: Function(lambda t: diff(expr(t), t)))
-
+def D(f):
+    return lambda t: diff(f(t), t)
+    #return derivative(expr, t)
 
 def Jacobian(F):
-    def f(args, vrs):
+    def wrap_Jacobian(args, vrs):
         if isinstance(args, (list, tuple)):
-            args = vector(args)
+            args = matrix(args)
         if isinstance(vrs, (list, tuple)):
-            vrs = vector(vrs)
+            vrs = matrix(vrs)
         subs = {
             v: var(f"v{id(v)}", domain=RR)
             for v in args.list()
@@ -28,16 +23,13 @@ def Jacobian(F):
         inverse_subs = {v: k for k, v in subs.items()}
         return result.subs(inverse_subs)
 
-    return f
-
+    return wrap_Jacobian
 
 def gradient(F):
     return lambda v: Jacobian(F)(v, v).T
 
-
 def Hessian(F):
     return lambda v: compose(gradient, gradient)(F)(v)
-
 
 @Func
 def partial(f, slot):
