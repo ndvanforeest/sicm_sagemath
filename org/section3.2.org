@@ -17,8 +17,6 @@
 * Poisson Brackets
 
 
-** The standard imports.
-
 ** Standard imports
 
 

@@ -30,8 +30,8 @@
                            "section1.9.org"
                            "section3.1.org"
                            "section3.2.org"
-                           ;; "section3.4.org"
-                           ;; "section3.5.org"
+                           "section3.4.org"
+                           "section3.5.org"
                            ;; "section3.9.org"
                            ;; "section5.1.org"
                            ;; "section5.2.org"
@@ -74,9 +74,9 @@ In the next sections we provide Python and Sagemath code for background function
 
 \subfile{section3.1}
 \subfile{section3.2}
-# \setcounter{section}{3}
-# \subfile{section3.4}
-# \subfile{section3.5}
+\setcounter{section}{3}
+\subfile{section3.4}
+\subfile{section3.5}
 # \setcounter{section}{8}
 # \subfile{section3.9}
 

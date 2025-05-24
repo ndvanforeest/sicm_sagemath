@@ -6,47 +6,51 @@
 #+LATEX_CLASS: subfiles
 #+LATEX_CLASS_OPTIONS: [sicm_sagemath]
 
-#+PROPERTY: header-args:sage :session section34 :eval never-export :exports code :results none :tangle ../sage/section3.4.sage
+#+PROPERTY: header-args:sage :session section34 :eval never-export :exports code :results none :tangle ../sage/section3.4.sage :dir ../sage
+
 
 #+begin_src emacs-lisp :exports results :results none :eval export
   (make-variable-buffer-local 'org-latex-title-command)
   ; (setq org-latex-title-command (concat "\\chapter{%t}\n"))
 #+end_src
 
+
 * Phase Space Reduction
 
-** The standard imports.
 
+** Standard imports
+
+
+#+attr_latex: :options label=../sage/section3.2.sage
 #+begin_src sage
-import numpy as np
+load("utils3.1.sage")
 
-load(
-    "utils.sage",
-    "utils3.1.sage",
-)
-
-var("t", domain="real")
+t = var("t", domain="real")
 #+end_src
 
-
+#+attr_latex: :options label=don't tangle
 #+begin_src sage :exports code  :tangle no
 load("show_expression.sage")
 #+end_src
 
+
+
 ** Motion in a central potental
+
+#+begin_src sage
+#+end_src
+
 
 #+begin_src sage
 var("m")
 
 V = function("V")
-#+end_src
 
 
-#+begin_src sage :tangle ../sage/utils3.4.sage
 def L_polar(m, V):
     def Lagrangian(local):
-        r, phi = coordinate(local)
-        rdot, phidot = velocity(local)
+        r, phi = coordinate(local).list()
+        rdot, phidot = velocity(local).list()
         T = 1 / 2 * m * (square(rdot) + square(r * phidot))
         return T - V(r)
 
@@ -55,58 +59,54 @@ def L_polar(m, V):
 
 
 #+begin_src sage :exports both :results replace latex
-space = make_named_space(["r", "\\phi"])
-show(space)
-#+end_src
-
-#+RESULTS:
-#+begin_export latex
-\begin{align*} & t \\ & \left({r},\,{\phi}\right) \\ & \left({\dot r},\,{\dot \phi}\right) \\ \end{align*}
-#+end_export
-
-#+begin_src sage :exports both :results replace latex
-q = vector([literal_function("r"), literal_function("\\phi")])
-p = vector([literal_function(r"p_r"), literal_function(r"p_{\phi}")])
+q = column_path([literal_function("r"), literal_function("phi")])
+p = row_path([literal_function("p_r"), literal_function("p_phi")])
 H_state = qp_to_H_state_path(q, p)(t)
 show(H_state)
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\begin{align*} & t \\ & \left(r,\,\phi\right) \\ & \left(p_r,\,p_{\phi}\right) \\ \end{align*}
+\begin{dmath*}
+\begin{array}{c}\begin{array}{c} t \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+r \\
+\phi
+\end{array}\right] \end{array} \\ \begin{array}{c} \left[\begin{array}{cc}
+p_{r} & p_{\phi}
+\end{array}\right] \end{array} \\ \end{array}
+\end{dmath*}
 #+end_export
 
 #+begin_src sage :exports both :results replace latex
-H = Lagrangian_to_Hamiltonian(L_polar(m, V))  # (H_state)
-show(H(H_state))
+H = Lagrangian_to_Hamiltonian(L_polar(m, V))
+show(H(H_state).simplify_full())
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[ -\frac{1}{2} \, m {\left(\frac{p_r^{2}}{m^{2}} + \frac{p_{\phi}^{2}}{m^{2} r^{2}}\right)} + \frac{p_r^{2}}{m} + \frac{p_{\phi}^{2}}{m r^{2}} + V\left(r\right) \]
+\begin{dmath*}
+\left[\begin{array}{c}
+\frac{2 \, m V\left(r\right) r^{2} + p_{r}^{2} r^{2} + p_{\phi}^{2}}{2 \, m r^{2}}
+\end{array}\right]
+\end{dmath*}
 #+end_export
-
-For some reason I run into a bug of Sage when calling ~simplify_full()~ on the  above expression.
-However, by using ~expand()~ the expression is simplified.
-#+begin_src sage :exports both :results replace latex
-show(H(H_state).expand())
-#+end_src
-
-#+RESULTS:
-#+begin_export latex
-\[ \frac{p_r^{2}}{2 \, m} + \frac{p_{\phi}^{2}}{2 \, m r^{2}} + V\left(r\right) \]
-#+end_export
-
 
 Here are the Hamilton equations.
 #+begin_src sage :exports both :results replace latex
-HE = Hamilton_equations(Lagrangian_to_Hamiltonian(L_polar(m, V)))(q, p)
+HE = Hamilton_equations(Lagrangian_to_Hamiltonian(L_polar(m, V)))(q, p)(t)
 show(HE)
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\begin{align*} & 0 \\ & \left(-\frac{p_r}{m} + \frac{\partial}{\partial t}r,\,-\frac{p_{\phi}}{m r^{2}} + \frac{\partial}{\partial t}\phi\right) \\ & \left(-\frac{p_{\phi}^{2}}{m r^{3}} + \mathrm{D}_{0}\left(V\right)\left(r\right) + \frac{\partial}{\partial t}p_r,\,\frac{\partial}{\partial t}p_{\phi}\right) \\ \end{align*}
+\begin{dmath*}
+\begin{array}{c}\begin{array}{c} 0 \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+-\frac{p_{r}}{m} + \dot r \\
+-\frac{p_{\phi}}{m r^{2}} + \dot \phi
+\end{array}\right] \end{array} \\ \begin{array}{c} \left[\begin{array}{cc}
+-\frac{p_{\phi}^{2}}{m r^{3}} + \mathrm{D}_{0}\left(V\right)\left(r\right) + \dot p_{r} & \dot p_{\phi}
+\end{array}\right] \end{array} \\ \end{array}
+\end{dmath*}
 #+end_export
 
 Realize, we have obtained the LHS of the system of differential equations $D z(t) - F(t, z(t)) = 0$.
