@@ -6,12 +6,7 @@
 #+LATEX_CLASS: subfiles
 #+LATEX_CLASS_OPTIONS: [sicm_sagemath]
 
-#+PROPERTY: header-args:sage :session section51 :eval never-export :exports code :results none :tangle sage/section5.1.sage
-
-#+begin_src emacs-lisp :exports results :results none :eval export
-  (make-variable-buffer-local 'org-latex-title-command)
-  ; (setq org-latex-title-command (concat "\\chapter{%t}\n"))
-#+end_src
+#+PROPERTY: header-args:sage :session section51 :eval never-export :exports code :results none :tangle ../sage/section5.1.sage :dir ../sage
 
 
 * Point Transformations
@@ -19,16 +14,18 @@
 
 ** The standard imports.
 
-#+begin_src sage
+#+begin_src sage :tangle ../sage/utils5.1.sage
 load(
-    "utils.sage",
     "utils1.6.sage",
     "utils3.1.sage",
 )
-
-var("t", domain="real")
 #+end_src
 
+#+begin_src sage
+load("utils5.1.sage")
+
+t = var("t", domain="real")
+#+end_src
 
 
 #+begin_src sage :exports code  :tangle no
@@ -37,7 +34,7 @@ load("show_expression.sage")
 
 ** Implementing point transformations
 
-#+begin_src sage :tangle sage/utils5.1.sage
+#+begin_src sage :tangle ../sage/utils5.1.sage
 def F_to_CH(F):
     M = partial(F, 1)
 
@@ -52,22 +49,33 @@ Let's test this function.
 var("r, phi, p_r, p_phi", domain="real")
 assume(r > 0)
 
-q = vector([r, phi])
-p = vector([p_r, p_phi])
-local = up(t, q, p)
+q = column_matrix([r, phi])
+p = row_matrix([p_r, p_phi])
+state = up(t, q, p)
 #+end_src
 
 #+begin_src sage :exports both :results replace latex
-show((F_to_CH(p_to_r))(local)[0].simplify_full())
-show((F_to_CH(p_to_r))(local)[1].simplify_full())
-show((F_to_CH(p_to_r))(local)[2].simplify_full())
+show((F_to_CH(p_to_r))(state)[0].simplify_full())
+show((F_to_CH(p_to_r))(state)[1].simplify_full())
+show((F_to_CH(p_to_r))(state)[2].simplify_full())
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[t\]
-\[\left(r \cos\left(\phi\right),\,r \sin\left(\phi\right)\right)\]
-\[\left(\frac{p_{r} r \cos\left(\phi\right) - p_{\phi} \sin\left(\phi\right)}{r},\,\frac{p_{r} r \sin\left(\phi\right) + p_{\phi} \cos\left(\phi\right)}{r}\right)\]
+\begin{dmath*}
+t
+\end{dmath*}
+\begin{dmath*}
+\left[\begin{array}{c}
+r \cos\left(\phi\right) \\
+r \sin\left(\phi\right)
+\end{array}\right]
+\end{dmath*}
+\begin{dmath*}
+\left[\begin{array}{cc}
+\frac{p_{r} r \cos\left(\phi\right) - p_{\phi} \sin\left(\phi\right)}{r} & \frac{p_{r} r \sin\left(\phi\right) + p_{\phi} \cos\left(\phi\right)}{r}
+\end{array}\right]
+\end{dmath*}
 #+end_export
 
 The central Hamiltonian in rectangular coordinates.
@@ -78,18 +86,17 @@ def H_central(m, V):
         return square(p) / (2 * m) + V(sqrt(square(x)))
 
     return f
+
+var("m", domain="positive")
 #+end_src
 
 Now we convert it to polar coordinates.
 #+begin_src sage
-var("r, phi, p_r, p_phi", domain="real")
-assume(r > 0)
-var("m", domain="positive")
 #+end_src
 
 #+begin_src sage :exports both :results replace latex
 show(
-    Compose(H_central(m, function("V")), (F_to_CH(p_to_r)))(local)
+    compose(H_central(m, function("V")), (F_to_CH(p_to_r)))(state)
     .simplify_full()
     .expand()
 )
@@ -97,23 +104,25 @@ show(
 
 #+RESULTS:
 #+begin_export latex
-\[\frac{p_{r}^{2}}{2 \, m} + \frac{p_{\phi}^{2}}{2 \, m r^{2}} + V\left(r\right)\]
+\begin{dmath*}
+\frac{p_{r}^{2}}{2 \, m} + \frac{p_{\phi}^{2}}{2 \, m r^{2}} + V\left(r\right)
+\end{dmath*}
 #+end_export
 
 The correction term for time dependent Hamiltonians.
-#+begin_src sage :tangle sage/utils5.1.sage
+#+begin_src sage :tangle ../sage/utils5.1.sage
 def F_to_K(F):
     M = partial(F, 1)
 
     def f(state):
         p = M(state).solve_left(momentum(state))
-        return -vector(p) * vector(partial(F, 0)(state))
+        return -p * partial(F, 0)(state)
 
     return f
 #+end_src
 
 We apply this to a 2D translation.
-#+begin_src sage :tangle sage/utils5.1.sage
+#+begin_src sage :tangle ../sage/utils5.1.sage
 def translating(v):
     def f(state):
         return coordinate(state) + v * time(state)
@@ -123,19 +132,21 @@ def translating(v):
 
 #+begin_src sage
 var("q_x q_y v_x v_y p_x p_y", domain="real")
-q = vector([q_x, q_y])
-v = vector([v_x, v_y])
-p = vector([p_x, p_y])
-local = up(t, q, p)
+q = column_matrix([q_x, q_y])
+v = column_matrix([v_x, v_y])
+p = row_matrix([p_x, p_y])
+state = up(t, q, p)
 #+end_src
 
 #+begin_src sage :exports both :results replace latex
-show(F_to_K(translating(v))(local))
+show(F_to_K(translating(v))(state)[0, 0])
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[-p_{x} v_{x} - p_{y} v_{y}\]
+\begin{dmath*}
+-p_{x} v_{x} - p_{y} v_{y}
+\end{dmath*}
 #+end_export
 
 Finally, we transform the Hamiltonian of a particle not subject to forces due to a potential field.
@@ -148,15 +159,16 @@ def H_free(m):
 
 
 def H_prime():
-    return Sum(
-        Compose(H_free(m), F_to_CH(translating(v))), F_to_K(translating(v))
-    )
+    return compose(H_free(m), F_to_CH(translating(v))) + F_to_K(translating(v))
 
 
-show(H_prime()(local))
+
+show(H_prime()(state)[0, 0])
 #+end_src
 
 #+RESULTS:
 #+begin_export latex
-\[-p_{x} v_{x} - p_{y} v_{y} + \frac{p_{x}^{2} + p_{y}^{2}}{2 \, m}\]
+\begin{dmath*}
+-p_{x} v_{x} - p_{y} v_{y} + \frac{p_{x}^{2} + p_{y}^{2}}{2 \, m}
+\end{dmath*}
 #+end_export

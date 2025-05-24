@@ -1,3 +1,8 @@
+load(
+    "utils1.6.sage",
+    "utils3.1.sage",
+)
+
 def F_to_CH(F):
     M = partial(F, 1)
 
@@ -11,7 +16,7 @@ def F_to_K(F):
 
     def f(state):
         p = M(state).solve_left(momentum(state))
-        return -vector(p) * vector(partial(F, 0)(state))
+        return -p * partial(F, 0)(state)
 
     return f
 

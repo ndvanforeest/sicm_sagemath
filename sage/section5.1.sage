@@ -1,21 +1,17 @@
-load(
-    "utils.sage",
-    "utils1.6.sage",
-    "utils3.1.sage",
-)
+load("utils5.1.sage")
 
-var("t x y", domain="real")
+t = var("t", domain="real")
 
 var("r, phi, p_r, p_phi", domain="real")
 assume(r > 0)
 
-q = vector([r, phi])
-p = vector([p_r, p_phi])
-local = up(t, q, p)
+q = column_matrix([r, phi])
+p = row_matrix([p_r, p_phi])
+state = up(t, q, p)
 
-show((F_to_CH(p_to_r))(local)[0].simplify_full())
-show((F_to_CH(p_to_r))(local)[1].simplify_full())
-show((F_to_CH(p_to_r))(local)[2].simplify_full())
+show((F_to_CH(p_to_r))(state)[0].simplify_full())
+show((F_to_CH(p_to_r))(state)[1].simplify_full())
+show((F_to_CH(p_to_r))(state)[2].simplify_full())
 
 def H_central(m, V):
     def f(state):
@@ -24,23 +20,23 @@ def H_central(m, V):
 
     return f
 
-var("r, phi, p_r, p_phi", domain="real")
-assume(r > 0)
 var("m", domain="positive")
 
+
+
 show(
-    Compose(H_central(m, function("V")), (F_to_CH(p_to_r)))(local)
+    compose(H_central(m, function("V")), (F_to_CH(p_to_r)))(state)
     .simplify_full()
     .expand()
 )
 
 var("q_x q_y v_x v_y p_x p_y", domain="real")
-q = vector([q_x, q_y])
-v = vector([v_x, v_y])
-p = vector([p_x, p_y])
-local = up(t, q, p)
+q = column_matrix([q_x, q_y])
+v = column_matrix([v_x, v_y])
+p = row_matrix([p_x, p_y])
+state = up(t, q, p)
 
-show(F_to_K(translating(v))(local))
+show(F_to_K(translating(v))(state)[0, 0])
 
 def H_free(m):
     def f(state):
@@ -50,9 +46,8 @@ def H_free(m):
 
 
 def H_prime():
-    return Sum(
-        Compose(H_free(m), F_to_CH(translating(v))), F_to_K(translating(v))
-    )
+    return compose(H_free(m), F_to_CH(translating(v))) + F_to_K(translating(v))
 
 
-show(H_prime()(local))
+
+show(H_prime()(state)[0, 0])
