@@ -60,3 +60,12 @@ def f(x):
     return Function(lambda y: g(y))
 
 show((f(3) + f(2))(4))
+
+h = compose(cube, sin)
+a = var('a', domain=RR)
+show(h(a))
+show(h(float(2)))
+
+g = cube * sin
+
+show(g(2).n())

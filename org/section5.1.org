@@ -14,13 +14,12 @@
 
 ** The standard imports.
 
+#+attr_latex: :options label=../sage/utils5.1.sage
 #+begin_src sage :tangle ../sage/utils5.1.sage
-load(
-    "utils1.6.sage",
-    "utils3.1.sage",
-)
+load("utils3.1.sage")
 #+end_src
 
+#+attr_latex: :options label=../sage/section5.1.sage
 #+begin_src sage
 load("utils5.1.sage")
 
@@ -28,12 +27,14 @@ t = var("t", domain="real")
 #+end_src
 
 
+#+attr_latex: :options label=don't tangle
 #+begin_src sage :exports code  :tangle no
 load("show_expression.sage")
 #+end_src
 
 ** Implementing point transformations
 
+#+attr_latex: :options label=../sage/utils5.1.sage
 #+begin_src sage :tangle ../sage/utils5.1.sage
 def F_to_CH(F):
     M = partial(F, 1)
@@ -45,6 +46,7 @@ def F_to_CH(F):
 #+end_src
 
 Let's test this function.
+#+attr_latex: :options label=../sage/section5.1.sage
 #+begin_src sage
 var("r, phi, p_r, p_phi", domain="real")
 assume(r > 0)
@@ -54,6 +56,7 @@ p = row_matrix([p_r, p_phi])
 state = up(t, q, p)
 #+end_src
 
+#+attr_latex: :options label=../sage/section5.1.sage
 #+begin_src sage :exports both :results replace latex
 show((F_to_CH(p_to_r))(state)[0].simplify_full())
 show((F_to_CH(p_to_r))(state)[1].simplify_full())
@@ -79,6 +82,7 @@ r \sin\left(\phi\right)
 #+end_export
 
 The central Hamiltonian in rectangular coordinates.
+#+attr_latex: :options label=../sage/section5.1.sage
 #+begin_src sage
 def H_central(m, V):
     def f(state):
@@ -91,9 +95,11 @@ var("m", domain="positive")
 #+end_src
 
 Now we convert it to polar coordinates.
+#+attr_latex: :options label=../sage/section5.1.sage
 #+begin_src sage
 #+end_src
 
+#+attr_latex: :options label=../sage/section5.1.sage
 #+begin_src sage :exports both :results replace latex
 show(
     compose(H_central(m, function("V")), (F_to_CH(p_to_r)))(state)
@@ -110,6 +116,7 @@ show(
 #+end_export
 
 The correction term for time dependent Hamiltonians.
+#+attr_latex: :options label=../sage/utils5.1.sage
 #+begin_src sage :tangle ../sage/utils5.1.sage
 def F_to_K(F):
     M = partial(F, 1)
@@ -122,6 +129,7 @@ def F_to_K(F):
 #+end_src
 
 We apply this to a 2D translation.
+#+attr_latex: :options label=../sage/utils5.1.sage
 #+begin_src sage :tangle ../sage/utils5.1.sage
 def translating(v):
     def f(state):
@@ -130,6 +138,7 @@ def translating(v):
     return f
 #+end_src
 
+#+attr_latex: :options label=../sage/section5.1.sage
 #+begin_src sage
 var("q_x q_y v_x v_y p_x p_y", domain="real")
 q = column_matrix([q_x, q_y])
@@ -138,6 +147,7 @@ p = row_matrix([p_x, p_y])
 state = up(t, q, p)
 #+end_src
 
+#+attr_latex: :options label=../sage/section5.1.sage
 #+begin_src sage :exports both :results replace latex
 show(F_to_K(translating(v))(state)[0, 0])
 #+end_src
@@ -150,6 +160,7 @@ show(F_to_K(translating(v))(state)[0, 0])
 #+end_export
 
 Finally, we transform the Hamiltonian of a particle not subject to forces due to a potential field.
+#+attr_latex: :options label=../sage/section5.1.sage
 #+begin_src sage :exports both :results replace latex
 def H_free(m):
     def f(state):

@@ -1,7 +1,4 @@
-load(
-    "utils1.6.sage",
-    "utils3.1.sage",
-)
+load("utils3.1.sage")
 
 def F_to_CH(F):
     M = partial(F, 1)

@@ -308,7 +308,7 @@ show(Jacobian(F)([v, t], [v, t]))
 \end{dmath*}
 #+end_export
 
-This works. Now we try the same with a function like argument. Recall, ~v~ must a be list for ~partial~ on which ~gradient~ depends.
+This works. Now we try the same with a function-like argument. Recall, ~v~ must a be list for ~partial~.
 
 #+attr_latex: :options label=../sage/differentiation\_tests.sage
 #+begin_src sage :tangle ../sage/differentiation_tests.sage :exports both :results replace latex
@@ -325,6 +325,8 @@ show(Jacobian(F)(v, v))
 \end{array}\right]
 \end{dmath*}
 #+end_export
+
+
 
 
 *** COMMENT Some more details which can be skipped
@@ -438,6 +440,32 @@ show(gradient(F)(v))
 \end{array}\right]
 \end{dmath*}
 #+end_export
+
+
+The function may return a list too.
+#+attr_latex: :options label=../sage/differentiation\_tests.sage
+#+begin_src sage :exports both :results replace latex
+q = Function(lambda t: function("q")(t))
+v = [q(t), t]
+
+def G(v):
+    r, t = v.list()
+    return [5 * r ^ 3 + 3 * t ^ 2 * r, r^2 + t]
+
+
+show(gradient(G)(v))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{cc}
+3 \, t^{2} + 15 \, q^{2} & 2 \, q \\
+6 \, t q & 1
+\end{array}\right]
+\end{dmath*}
+#+end_export
+
 
 
 When differentiating a symbolic function, wrap such a function in a ~Function~.

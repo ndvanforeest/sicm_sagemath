@@ -66,13 +66,6 @@ def process_org_file(filename):
 
 
 files = [
-    "section3.9.org",
-    "section5.1.org",
-    "section5.2.org",
-]
-
-
-files = [
     "show_expression.org",
     "tuples.org",
     "functions.org",
@@ -87,6 +80,9 @@ files = [
     "section3.2.org",
     "section3.4.org",
     "section3.5.org",
+    "section3.9.org",
+    "section5.1.org",
+    "section5.2.org",
 ]
 
 

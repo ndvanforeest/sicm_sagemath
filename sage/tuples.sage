@@ -5,6 +5,7 @@ https://github.com/jtauber/functional-differential-geometry.
 
 from sage.structure.element import Matrix, Vector
 
+
 class Tuple:
     def __init__(self, *components):
         self._components = components
@@ -17,8 +18,8 @@ class Tuple:
 
     def __eq__(self, other):
         if (
-                isinstance(other, self.__class)
-                and self._components == other._components
+            isinstance(other, self.__class)
+            and self._components == other._components
         ):
             return True
         else:
@@ -30,7 +31,7 @@ class Tuple:
     def __add__(self, other):
         if isinstance(self, Tuple):
             if not isinstance(other, self.__class__) or len(self) != len(
-                    other
+                other
             ):
                 raise TypeError("can't add incompatible Tuples")
             else:

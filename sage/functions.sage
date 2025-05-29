@@ -86,3 +86,5 @@ def _(x):
 square = Function(lambda x: _square(x))
 
 function = sage.symbolic.function_factory.function
+
+cube = Function(lambda x: x * square(x))

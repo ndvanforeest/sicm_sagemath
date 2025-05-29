@@ -401,6 +401,7 @@ def f(x):
     return Function(lambda y: g(y))
 #+end_src
 
+
 #+attr_latex: :options label=../sage/functions\_tests.sage
 #+begin_src sage :exports both :results replace latex
 show((f(3) + f(2))(4))
@@ -410,5 +411,44 @@ show((f(3) + f(2))(4))
 #+begin_export latex
 \begin{dmath*}
 80
+\end{dmath*}
+#+end_export
+
+An example from the Appendix of the book.
+
+#+attr_latex: :options label=../sage/functions.sage
+#+begin_src sage :tangle ../sage/functions.sage
+cube = Function(lambda x: x * square(x))
+#+end_src
+
+#+attr_latex: :options label=../sage/functions\_tests.sage
+#+begin_src sage :exports both :results replace latex
+h = compose(cube, sin)
+a = var('a', domain=RR)
+show(h(a))
+show(h(float(2)))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+0.7518269446689928
+\end{dmath*}
+\begin{dmath*}
+\sin\left(a\right)^{3}
+\end{dmath*}
+#+end_export
+
+#+attr_latex: :options label=../sage/functions\_tests.sage
+#+begin_src sage :exports both :results replace latex
+g = cube * sin
+
+show(g(2).n())
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+7.27437941460545
 \end{dmath*}
 #+end_export
