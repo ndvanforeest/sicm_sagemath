@@ -83,6 +83,7 @@ files = [
     "section3.9.org",
     "section5.1.org",
     "section5.2.org",
+    "section6.4.org",
 ]
 
 

@@ -1,26 +1,24 @@
-load(
-    "utils.sage",
-    "utils3.1.sage",
-    "utils3.2.sage",
-    "utils3.4.sage",
-)
+load("utils3.2.sage")
 
+@Func
 def Lie_derivative(H):
     def f(F):
         return Poisson_bracket(F, H)
 
     return f
 
-def Lie_transform(H, t, n):
+def Lie_transform(H, t):
     lie = Lie_derivative(H)
 
     def outer(func):
-        def inner(local):
+        def inner(local, n):
             term = func
-            res = term(local)
+            factor = 1
+            res = factor * term(local)
             for i in range(1, n + 1):
                 term = lie(term)
-                res += t ^ i * term(local) / factorial(i)
+                factor *= t / i
+                res += factor * term(local)
             return res
 
         return inner

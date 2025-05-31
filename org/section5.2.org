@@ -306,3 +306,5 @@ show(is_symplectic_transform(a_non_canonical_transform)(theta_I))
 \mathrm{False}
 \end{dmath*}
 #+end_export
+
+Here $I$ is a momentum, not the identity matrix.

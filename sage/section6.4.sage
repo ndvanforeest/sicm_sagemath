@@ -1,8 +1,6 @@
-load(
-    "utils6.4.sage",
-)
+load("utils6.4.sage")
 
-var("t x y", domain="real")
+var("t", domain="real")
 
 f = function("f")
 show(taylor(f(x), x, 0, 4))
@@ -15,9 +13,9 @@ show(taylor((lambda x: sqrt(1 + x))(x), x, 0, 6))
 
 n = var("n", domain="integer")
 f = lambda x: (1 + x) ^ n
-show(taylor(f(x), x, 0, 4))
+show(taylor(f(x), x, 0, 7))
 
-var("m k", domain="positive")
+_ = var("m k", domain="positive")
 
 
 def H_harmonic(m, k):
@@ -32,37 +30,26 @@ def H_harmonic(m, k):
 H = H_harmonic(m, k)
 
 x0, p0 = var("x0 p0", domain="real")
-space = up(t, vector([x0]), vector([p0]))
+state = up(t, column_matrix([x0]), row_matrix([p0]))
 lie = Lie_derivative(H)
-show(lie(coordinate)(space))
+show(lie(coordinate)(state))
+show(lie(lie(coordinate))(state))
 
-show(lie(lie(coordinate))(space))
-show(lie(lie(lie(coordinate)))(space))
+_ = var('dt', domain="real", latex_name=r"\d t")
 
-# show((t * lie(coordinate))(space)) # gives an error
-show(t * lie(coordinate)(space))
-
-_ = var('dt', domain="real")
-
-F = Compose(lambda x: x[0], coordinate)
-show(Lie_transform(H, dt, 4)(F)(space))
-G = Compose(lambda x: x[0], momentum)
-show(Lie_transform(H, dt, 4)(G)(space))
-
-F = Compose(column_matrix, coordinate)
-show(Lie_transform(H, dt, 4)(H)(space))
+show(Lie_transform(H, dt)(coordinate)(state, 4))
+show(Lie_transform(H, dt)(momentum)(state, 4))
+show(Lie_transform(H, dt)(H)(state, 4))
 
 def V(q):
     return function("U")(q)
 
 m = var("m", domain="positive")
 
-H = Lagrangian_to_Hamiltonian(L_polar(m, V))
-
 def H_central_polar(m, V):
     def f(state):
-        r, phi = coordinate(state)
-        p_r, p_phi = momentum(state)
+        r, phi = coordinate(state).list()
+        p_r, p_phi = momentum(state).list()
         T = 1 / 2 * square(p_r) / m + 1 / 2 * square(p_phi) / (m * square(r))
         return T + V(r)
 
@@ -73,13 +60,13 @@ H = H_central_polar(m, V)
 
 _ = var("r phi p_r p_phi", domain="real")
 assume(r > 0)
-q = vector([r, phi])
-p = vector([p_r, p_phi])
+q = column_matrix([r, phi])
+p = row_matrix([p_r, p_phi])
 H_state = up(t, q, p)
 
 show(H(H_state).expand())
 show(partial(H, 1)(H_state))
 
-res = Lie_transform(H, dt, 3)(Compose(column_matrix, coordinate))(H_state).expand()
+res = Lie_transform(H, dt)(coordinate)(H_state, 3).expand()
 show(res[0][0])
 show(res[1][0])
