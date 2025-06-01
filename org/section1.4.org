@@ -78,7 +78,7 @@ print(x)
 #+end_src
 
 #+RESULTS:
-: <__main__.Function object at 0x71122066e470>
+: <__main__.Function object at 0x71a078ddf550>
 
 Here are some operations on ~x~.
 
@@ -91,6 +91,15 @@ show(square(x)(t))
 
 #+RESULTS:
 #+begin_export latex
+\begin{dmath*}
+x
+\end{dmath*}
+\begin{dmath*}
+2 \, x
+\end{dmath*}
+\begin{dmath*}
+x^{2}
+\end{dmath*}
 #+end_export
 
 Note that, to keep the notation brief, the $t$ is suppressed in the LaTeX output.

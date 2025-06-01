@@ -2,6 +2,16 @@ load("utils1.4.sage")
 
 t = var("t", domain="real")
 
+x = literal_function("x")
+print(x)
+
+show(x(t))
+show((x + x)(t))
+show(square(x)(t))
+
+quit()
+
+
 q = column_path(
     [
         literal_function("x"),
@@ -24,8 +34,10 @@ show(compose(L_free_particle(m), Gamma(q))(t))
 
 T = var("T", domain="positive")
 
+
 def Lagrangian_action(L, q, t1, t2):
     return definite_integral(compose(L, Gamma(q))(t), t, t1, t2)
+
 
 show(Lagrangian_action(L_free_particle(m), q, 0, T))
 
@@ -38,6 +50,7 @@ result = Lagrangian_action(L_free_particle(mass=3), hard_path, 0, 10)
 show(result)
 show(float(result))
 
+
 @Func
 def make_eta(nu, t1, t2):
     return lambda t: (t - t1) * (t - t2) * nu(t)
@@ -45,15 +58,19 @@ def make_eta(nu, t1, t2):
 
 nu = Function(lambda t: vector([sin(t), cos(t), t ^ 2]))
 
-show((1 / 3 * make_eta(nu, 3, 4)  + test_path)(t))
+show((1 / 3 * make_eta(nu, 3, 4) + test_path)(t))
+
 
 def varied_free_particle_action(mass, q, nu, t1, t2):
     eta = make_eta(nu, t1, t2)
 
     def f(eps):
-        return Lagrangian_action(L_free_particle(mass), q + eps * eta, t1, t2).n()
+        return Lagrangian_action(
+            L_free_particle(mass), q + eps * eta, t1, t2
+        ).n()
 
     return f
+
 
 show(varied_free_particle_action(3.0, test_path, nu, 0.0, 10.0)(0.001))
 
@@ -71,10 +88,12 @@ Sin = [lp.derivative(x)(x=t).n() for t in ts]
 Zero = [abs(Cos[i] ^ 2 + Sin[i] ^ 2 - 1) for i in range(len(ts))]
 show(max(Zero))
 
+
 def make_path(t0, q0, t1, q1, qs):
     ts = np.linspace(t0, t1, len(qs) + 2)
     qs = np.r_[q0, qs, q1]
     return lambda t: vector([Lagrangian_polynomial(ts, qs)(t)])
+
 
 def parametric_path_action(Lagrangian, t0, q0, t1, q1):
     def f(qs):
@@ -83,11 +102,13 @@ def parametric_path_action(Lagrangian, t0, q0, t1, q1):
 
     return f
 
+
 t0, t1 = 0, pi / 2
 q0, q1 = cos(t0), cos(t1)
 T = np.linspace(0, pi / 2, 5)
 initial_qs = [cos(t).n() for t in T][1:-1]
 parametric_path_action(L_harmonic(m=1, k=1), t0, q0, t1, q1)(initial_qs)
+
 
 def find_path(Lagrangian, t0, q0, t1, q1, n):
     ts = np.linspace(t0, t1, n)
@@ -97,6 +118,7 @@ def find_path(Lagrangian, t0, q0, t1, q1, n):
         initial_qs,
     )
     return make_path(t0, q0, t1, q1, minimizing_qs)
+
 
 best_path = find_path(L_harmonic(m=1, k=1), t0=0, q0=1, t1=pi / 2, q1=0, n=5)
 result = [

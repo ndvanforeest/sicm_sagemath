@@ -59,6 +59,7 @@ def _square(x):
 @_square.register(float)
 @_square.register(Expression)
 @_square.register(Integer)
+@_square.register(Function)
 def _(x):
     return x ^ 2
 

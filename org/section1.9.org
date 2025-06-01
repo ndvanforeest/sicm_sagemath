@@ -214,7 +214,7 @@ The second function to build is ~osculating_path~. This is the Taylor series of 
 \begin{align*}
 O(t, q, v, a, \ldots)(\cdot) = q + v(\cdot -t) + a/2 (\cdot - t)^{2} + \cdots.
 \end{align*}
-I write $\cdot$ instead of $t'$ to make explicit that $O(l)$ is still a function, of $t'$ in this case.
+I write a `$\cdot$' instead of $t'$ to make explicit that $O(t, q, v, a, \ldots)$ is still a function, of $t'$ in this case.
 
 Clearly, the RHS is a sum of vectors all of which have the same dimension as the space of coordinates.
 
