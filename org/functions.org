@@ -136,7 +136,8 @@ sin = Function(lambda x: sage.functions.trig.sin(x))
 cos = Function(lambda x: sage.functions.trig.cos(x))
 #+end_src
 
-We will use quadratic functions often.
+As we will find ample use for quadratic functions, we define a function ~square~.
+At the result depends on the type of the argument, we use a dispatch mechanism to handle the different cases.
 #+attr_latex: :options label=../sage/functions.sage
 #+begin_src sage :tangle ../sage/functions.sage
 from functools import singledispatch

@@ -9,7 +9,7 @@
 #+PROPERTY: header-args:sage :session section72 :eval never-export :exports code :results none :tangle ../sage/section7.2.sage :dir ../sage/
 
 
-* Pendulum as a Perturbed Rotoer
+* Pendulum as a Perturbed Rotor
 
 We just follow the code of the book.
 
@@ -191,7 +191,7 @@ def C(alpha, beta, epsilon, order):
 
 Instead we can apply the Lie transform $e^{\epsilon L_W}$ up to a given order to the functions ~coordinate~ and ~momentum~, and then use that to build an up tuple which we can return.
 We have seen above that time remains invariant under the Lie transform; therefore we can just use ~t~ in the up tuple.
-Note that to stick to our conventions,  we cast the result of the Lie transfrom of the coordinate (mommentum) to a column (row) matrix,
+Note that to stick to our conventions,  we cast the result of the Lie transform of the coordinate (momentum) to a column (row) matrix,
 #+attr_latex: :options label=../sage/section7.2.sage
 #+begin_src sage
 def C(alpha, beta, epsilon, order):
@@ -278,3 +278,5 @@ show(coordinate(sol)[0,0].expand())
 \frac{\alpha \beta \epsilon p^{2} \cos\left(\frac{\alpha \beta \epsilon \sin\left(\theta\right)}{p^{2}}\right) \cos\left(\theta\right) \sin\left(-\frac{\beta {\d t} \epsilon \cos\left(\theta\right)}{p} + \frac{\beta \epsilon t \cos\left(\theta\right)}{p} + \frac{{\d t} p}{\alpha} - \frac{p t}{\alpha}\right)}{\alpha^{2} \beta^{2} \epsilon^{2} \cos\left(\theta\right)^{2} - 2 \, \alpha \beta \epsilon p^{2} \cos\left(\theta\right) + p^{4}} - \frac{\alpha \beta \epsilon p^{2} \cos\left(-\frac{\beta {\d t} \epsilon \cos\left(\theta\right)}{p} + \frac{\beta \epsilon t \cos\left(\theta\right)}{p} + \frac{{\d t} p}{\alpha} - \frac{p t}{\alpha}\right) \cos\left(\theta\right) \sin\left(\frac{\alpha \beta \epsilon \sin\left(\theta\right)}{p^{2}}\right)}{\alpha^{2} \beta^{2} \epsilon^{2} \cos\left(\theta\right)^{2} - 2 \, \alpha \beta \epsilon p^{2} \cos\left(\theta\right) + p^{4}} + \frac{\alpha \beta \epsilon p^{2} \cos\left(-\frac{\beta {\d t} \epsilon \cos\left(\theta\right)}{p} + \frac{\beta \epsilon t \cos\left(\theta\right)}{p} + \frac{{\d t} p}{\alpha} - \frac{p t}{\alpha}\right) \cos\left(\frac{\alpha \beta \epsilon \sin\left(\theta\right)}{p^{2}}\right) \sin\left(\theta\right)}{\alpha^{2} \beta^{2} \epsilon^{2} \cos\left(\theta\right)^{2} - 2 \, \alpha \beta \epsilon p^{2} \cos\left(\theta\right) + p^{4}} + \frac{\alpha \beta \epsilon p^{2} \sin\left(-\frac{\beta {\d t} \epsilon \cos\left(\theta\right)}{p} + \frac{\beta \epsilon t \cos\left(\theta\right)}{p} + \frac{{\d t} p}{\alpha} - \frac{p t}{\alpha}\right) \sin\left(\frac{\alpha \beta \epsilon \sin\left(\theta\right)}{p^{2}}\right) \sin\left(\theta\right)}{\alpha^{2} \beta^{2} \epsilon^{2} \cos\left(\theta\right)^{2} - 2 \, \alpha \beta \epsilon p^{2} \cos\left(\theta\right) + p^{4}} - \frac{\beta {\d t} \epsilon \cos\left(\theta\right)}{p} + \frac{\beta \epsilon t \cos\left(\theta\right)}{p} - \frac{\alpha \beta \epsilon \sin\left(\theta\right)}{p^{2}} + \frac{{\d t} p}{\alpha} - \frac{p t}{\alpha} + \theta
 \end{dmath*}
 #+end_export
+
+This long formula is an apt end to this adventure of translating most of the Scheme code of the book to Python and Sagemath.

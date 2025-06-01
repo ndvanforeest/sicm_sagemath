@@ -55,7 +55,7 @@ class Tuple:
                 raise TypeError("can't add incompatible Tuples")
             else:
                 return self.__class__(
-                    ,*(
+                    *(
                         s + o
                         for (s, o) in zip(self._components, other._components)
                     )
@@ -92,7 +92,7 @@ They may be wrong, so I don't include them in the sage files. However I keep the
 #+begin_src sage :tangle no
     def __call__(self, *args, **kwargs):
         return self.__class__(
-            ,*(
+            *(
                 (c(*args, **kwargs) if isinstance(c, Expr) else c)
                 for c in self._components
             )
@@ -105,7 +105,7 @@ They may be wrong, so I don't include them in the sage files. However I keep the
     def derivative(self, var):
         "Compute the derivative of all components and put the result in a tuple."
         return self.__class__(
-            ,*[derivative(comp, var) for comp in self._components]
+            *[derivative(comp, var) for comp in self._components]
         )
 #+end_src
 
