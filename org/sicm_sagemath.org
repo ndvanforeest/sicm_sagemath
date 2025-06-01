@@ -36,7 +36,7 @@
                            "section5.1.org"
                            "section5.2.org"
                            "section6.4.org"
-                           ;; "section7.2.org"
+                           "section7.2.org"
                            )))
 
 (export-all)
@@ -97,5 +97,5 @@ In the next sections we provide Python and Sagemath code for background function
 
 * Chapter 7
 
-# \setcounter{section}{1}
-# \subfile{section7.2}
+\setcounter{section}{1}
+\subfile{section7.2}

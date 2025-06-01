@@ -75,6 +75,21 @@ class Tuple:
     def __isub__(self, other):
         return self - other
 
+    def list(self):
+        "Convert the tuple and its components to one list."
+        result = []
+        for comp in self._components:
+            if isinstance(comp, (Tuple, Matrix, Vector)):
+                result.extend(comp.list())
+            else:
+                result.append(comp)
+        return result
+#+end_src
+
+Here are three methods of ~Tuple~ that I built while developing the Python code.
+They may be wrong, so I don't include them in the sage files. However I keep them just in case I need them later, perhaps just to serve as an example.
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :tangle no
     def __call__(self, *args, **kwargs):
         return self.__class__(
             ,*(
@@ -84,18 +99,8 @@ class Tuple:
         )
 
     def subs(self, args):
-        # substitute variables with args
+        "Substitute variables with args."
         return self.__class__(*(c.subs(args) for c in self._components))
-
-    def list(self):
-        "convert tuple and its components to one list."
-        result = []
-        for comp in self._components:
-            if isinstance(comp, (Tuple, Matrix, Vector)):
-                result.extend(comp.list())
-            else:
-                result.append(comp)
-        return result
 
     def derivative(self, var):
         "Compute the derivative of all components and put the result in a tuple."

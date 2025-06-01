@@ -1,0 +1,280 @@
+#+TITLE: Section 7.2
+#+AUTHOR: Nicky
+
+#+OPTIONS: toc:nil author:nil date:nil title:t
+
+#+LATEX_CLASS: subfiles
+#+LATEX_CLASS_OPTIONS: [sicm_sagemath]
+
+#+PROPERTY: header-args:sage :session section72 :eval never-export :exports code :results none :tangle ../sage/section7.2.sage :dir ../sage/
+
+
+* Pendulum as a Perturbed Rotoer
+
+We just follow the code of the book.
+
+#+attr_latex: :options label=../sage/section7.2.sage
+#+begin_src sage
+load("utils6.4.sage")
+
+var("t", domain="real")
+#+end_src
+
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :exports code  :tangle no
+load("show_expression.sage")
+#+end_src
+
+
+The free Hamiltonian and the perturbation terms are like this.
+#+attr_latex: :options label=../sage/section7.2.sage
+#+begin_src sage
+def H0(alpha):
+    def f(state):
+        p = momentum(state)[0, 0]
+        return square(p) / 2 / alpha
+
+    return f
+
+
+def H1(beta):
+    def f(state):
+        theta = coordinate(state)[0, 0]
+        return -beta * cos(theta)
+
+    return f
+#+end_src
+
+The series expansion of the Hamiltonian for the pendulum contains the two terms up to first order in $\epsilon$.
+#+attr_latex: :options label=../sage/section7.2.sage
+#+begin_src sage
+def H_pendulum_series(alpha, beta, epsilon):
+    def f(state):
+        return H0(alpha)(state) + epsilon * H1(beta)(state)
+
+    return f
+#+end_src
+
+This is the Lie generator.
+#+attr_latex: :options label=../sage/section7.2.sage
+#+begin_src sage
+def W(alpha, beta):
+    def f(state):
+        theta = coordinate(state)[0, 0]
+        p = momentum(state)[0, 0]
+        return -alpha * beta * sin(theta) / p
+
+    return f
+#+end_src
+
+We check that $W$ satisfies $L_W H_0 + H_1 = 0$, i.e., $L_W H_0 = -H_1$. The check is passed.
+#+attr_latex: :options label=../sage/section7.2.sage
+#+begin_src sage :exports both :results replace latex
+_ = var("theta p", domain="real")
+_ = var("alpha beta", domain="positive")
+epsilon = var("epsilon", domain="positive")
+
+
+state = up(t, column_matrix([theta]), row_matrix([p]))
+show(Lie_derivative(W(alpha, beta))(H0(alpha))(state))
+show(H1(beta)(state))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{c}
+\beta \cos\left(\theta\right)
+\end{array}\right]
+\end{dmath*}
+\begin{dmath*}
+-\beta \cos\left(\theta\right)
+\end{dmath*}
+#+end_export
+
+We can also see that $e^{\epsilon L_W} H$ has no term proportional to $\epsilon$.
+#+attr_latex: :options label=../sage/section7.2.sage
+#+begin_src sage :exports both :results replace latex
+show(
+    Lie_transform(W(alpha, beta), epsilon)(
+        H_pendulum_series(alpha, beta, epsilon)
+    )(state, 2).expand()
+)
+#+end_src
+
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{c}
+\frac{\alpha \beta^{2} \epsilon^{2} \sin\left(\theta\right)^{2}}{2 \, p^{2}} + \frac{p^{2}}{2 \, \alpha}
+\end{array}\right]
+\end{dmath*}
+#+end_export
+
+We can also check that the $L_W T= t$, where $T$ is the time operator on $\text{up}(t, q, p)$.
+
+#+attr_latex: :options label=../sage/section7.2.sage
+#+begin_src sage :exports both :results replace latex
+show(Lie_transform(W(alpha, beta), epsilon)(time)(state, 2))
+#+end_src
+
+
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\left[\begin{array}{c}
+t
+\end{array}\right]
+\end{dmath*}
+#+end_export
+
+The function ~solution0~ is a bit tricky.
+It takes $\alpha$ and $\beta$ are arguments and returns a function ~f~ that depends on $t$.
+The function ~f~ returns another function ~g~ that takes a state as argument and returns an up tuple. Thus, the proper way to call it is like this ~solution0(alpha, beta)(t)(state)~.
+
+#+attr_latex: :options label=../sage/section7.2.sage
+#+begin_src sage
+def solution0(alpha, beta):
+    def f(t):
+        def g(state0):
+            t0 = time(state0)
+            theta0 = coordinate(state0)[0, 0]
+            p0 = momentum(state0)[0, 0]
+
+            return up(
+                t,
+                column_matrix([theta0 + p0 * (t - t0) / alpha]),
+                row_matrix([p0]),
+            )
+
+        return g
+
+    return f
+#+end_src
+
+A test will not hurt.
+#+attr_latex: :options label=../sage/section7.2.sage
+#+begin_src sage :exports both :results replace latex
+_ = var("delta_t", domain=RR, latex_name=r"\d t")
+sol0 = solution0(alpha, beta)(delta_t)(state)
+show(sol0)
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\begin{array}{c}\begin{array}{c} {\d t} \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+\frac{{\left({\d t} - t\right)} p}{\alpha} + \theta
+\end{array}\right] \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+p
+\end{array}\right] \end{array} \\ \end{array}
+\end{dmath*}
+#+end_export
+
+
+
+The book defines now the transformation ~C~ from primed to unpprimed phase-space coordinates.
+In our Python code we did not yet build a complete set of rules to differentiate up (or down) tuples.
+For this reason we cannot just code ~C~ like this.
+
+#+attr_latex: :options label=don't tangle
+#+begin_src sage :tangle no :eval never
+# Don't do this.
+def C(alpha, beta, epsilon, order):
+    def f(state):
+        return Lie_transform(W(alpha, beta), epsilon)(identity)(state, order)
+
+    return f
+#+end_src
+
+Instead we can apply the Lie transform $e^{\epsilon L_W}$ up to a given order to the functions ~coordinate~ and ~momentum~, and then use that to build an up tuple which we can return.
+We have seen above that time remains invariant under the Lie transform; therefore we can just use ~t~ in the up tuple.
+Note that to stick to our conventions,  we cast the result of the Lie transfrom of the coordinate (mommentum) to a column (row) matrix,
+#+attr_latex: :options label=../sage/section7.2.sage
+#+begin_src sage
+def C(alpha, beta, epsilon, order):
+    def f(state):
+        return up(
+            t,
+            column_matrix(
+                Lie_transform(W(alpha, beta), epsilon)(coordinate)(
+                    state, order
+                ).list()
+            ),
+            row_matrix(
+                Lie_transform(W(alpha, beta), epsilon)(momentum)(
+                    state, order
+                ).list()
+            ),
+        )
+
+    return f
+#+end_src
+
+
+We can test it.
+#+attr_latex: :options label=../sage/section7.2.sage
+#+begin_src sage :exports both :results replace latex
+show(C(alpha, beta, epsilon, 2)(state))
+#+end_src
+
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\begin{array}{c}\begin{array}{c} t \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+-\frac{\alpha^{2} \beta^{2} \epsilon^{2} \cos\left(\theta\right) \sin\left(\theta\right)}{2 \, p^{4}} + \frac{\alpha \beta \epsilon \sin\left(\theta\right)}{p^{2}} + \theta
+\end{array}\right] \end{array} \\ \begin{array}{c} \left[\begin{array}{c}
+-\frac{\alpha^{2} \beta^{2} \epsilon^{2}}{2 \, p^{3}} + \frac{\alpha \beta \epsilon \cos\left(\theta\right)}{p} + p
+\end{array}\right] \end{array} \\ \end{array}
+\end{dmath*}
+#+end_export
+
+
+The inverse of ~C~ is simple.
+#+attr_latex: :options label=../sage/section7.2.sage
+#+begin_src sage
+def C_inv(alpha, beta, epsilon, order):
+    return C(alpha, beta, -epsilon, order)
+#+end_src
+
+
+Now we can form the perturbative solution. Check how the brackets are organized; the composition is not completely trivial.
+#+attr_latex: :options label=../sage/section7.2.sage
+#+begin_src sage
+def solution(epsilon, order):
+    def f(alpha, beta):
+        def g(delta_t):
+            return compose(
+                C(alpha, beta, epsilon, order),
+                solution0(alpha, beta)(delta_t),
+                C_inv(alpha, beta, epsilon, order),
+            )
+
+        return g
+
+    return f
+#+end_src
+
+We can print this solution up to first order.
+The second order solution is already very long.
+#+attr_latex: :options label=../sage/section7.2.sage
+#+begin_src sage :exports both :results replace latex
+order = 1
+sol = solution(epsilon, order)(alpha, beta)(delta_t)(state)
+#+end_src
+
+#+attr_latex: :options label=../sage/section7.2.sage
+#+begin_src sage :exports both :results replace latex
+show(coordinate(sol)[0,0].expand())
+#+end_src
+
+
+#+RESULTS:
+#+begin_export latex
+\begin{dmath*}
+\frac{\alpha \beta \epsilon p^{2} \cos\left(\frac{\alpha \beta \epsilon \sin\left(\theta\right)}{p^{2}}\right) \cos\left(\theta\right) \sin\left(-\frac{\beta {\d t} \epsilon \cos\left(\theta\right)}{p} + \frac{\beta \epsilon t \cos\left(\theta\right)}{p} + \frac{{\d t} p}{\alpha} - \frac{p t}{\alpha}\right)}{\alpha^{2} \beta^{2} \epsilon^{2} \cos\left(\theta\right)^{2} - 2 \, \alpha \beta \epsilon p^{2} \cos\left(\theta\right) + p^{4}} - \frac{\alpha \beta \epsilon p^{2} \cos\left(-\frac{\beta {\d t} \epsilon \cos\left(\theta\right)}{p} + \frac{\beta \epsilon t \cos\left(\theta\right)}{p} + \frac{{\d t} p}{\alpha} - \frac{p t}{\alpha}\right) \cos\left(\theta\right) \sin\left(\frac{\alpha \beta \epsilon \sin\left(\theta\right)}{p^{2}}\right)}{\alpha^{2} \beta^{2} \epsilon^{2} \cos\left(\theta\right)^{2} - 2 \, \alpha \beta \epsilon p^{2} \cos\left(\theta\right) + p^{4}} + \frac{\alpha \beta \epsilon p^{2} \cos\left(-\frac{\beta {\d t} \epsilon \cos\left(\theta\right)}{p} + \frac{\beta \epsilon t \cos\left(\theta\right)}{p} + \frac{{\d t} p}{\alpha} - \frac{p t}{\alpha}\right) \cos\left(\frac{\alpha \beta \epsilon \sin\left(\theta\right)}{p^{2}}\right) \sin\left(\theta\right)}{\alpha^{2} \beta^{2} \epsilon^{2} \cos\left(\theta\right)^{2} - 2 \, \alpha \beta \epsilon p^{2} \cos\left(\theta\right) + p^{4}} + \frac{\alpha \beta \epsilon p^{2} \sin\left(-\frac{\beta {\d t} \epsilon \cos\left(\theta\right)}{p} + \frac{\beta \epsilon t \cos\left(\theta\right)}{p} + \frac{{\d t} p}{\alpha} - \frac{p t}{\alpha}\right) \sin\left(\frac{\alpha \beta \epsilon \sin\left(\theta\right)}{p^{2}}\right) \sin\left(\theta\right)}{\alpha^{2} \beta^{2} \epsilon^{2} \cos\left(\theta\right)^{2} - 2 \, \alpha \beta \epsilon p^{2} \cos\left(\theta\right) + p^{4}} - \frac{\beta {\d t} \epsilon \cos\left(\theta\right)}{p} + \frac{\beta \epsilon t \cos\left(\theta\right)}{p} - \frac{\alpha \beta \epsilon \sin\left(\theta\right)}{p^{2}} + \frac{{\d t} p}{\alpha} - \frac{p t}{\alpha} + \theta
+\end{dmath*}
+#+end_export

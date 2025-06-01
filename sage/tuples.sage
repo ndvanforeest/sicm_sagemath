@@ -56,20 +56,8 @@ class Tuple:
     def __isub__(self, other):
         return self - other
 
-    def __call__(self, **kwargs):
-        return self.__class__(
-            *(
-                (c(**kwargs) if isinstance(c, Expr) else c)
-                for c in self._components
-            )
-        )
-
-    def subs(self, args):
-        # substitute variables with args
-        return self.__class__(*(c.subs(args) for c in self._components))
-
     def list(self):
-        "convert tuple and its components to one list."
+        "Convert the tuple and its components to one list."
         result = []
         for comp in self._components:
             if isinstance(comp, (Tuple, Matrix, Vector)):
@@ -77,12 +65,6 @@ class Tuple:
             else:
                 result.append(comp)
         return result
-
-    def derivative(self, var):
-        "Compute the derivative of all components and put the result in a tuple."
-        return self.__class__(
-            *[derivative(comp, var) for comp in self._components]
-        )
 
 class UpTuple(Tuple):
     def __repr__(self):
